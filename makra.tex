@@ -63,6 +63,14 @@
   }{\usepackage[usenames]{xcolor}} % barevná sazba / color typesetting
 \makeatother
 \usepackage{multicol}       % práce s více sloupci na stránce / work with multiple columns on a page
+
+%%% Glossaries for acronyms
+\usepackage[acronym,nonumberlist,nopostdot,nogroupskip]{glossaries}
+\setglossarystyle{long}
+\renewcommand{\glsnamefont}[1]{\textbf{#1}}  % Bold acronyms
+\setlength{\glsdescwidth}{0.8\textwidth}     % Left-aligned descriptions
+\makeglossaries
+\input{acronyms}
 \usepackage{multirow}
 \usepackage{lettrine}
 \usepackage{caption}
