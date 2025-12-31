@@ -1,2 +1,42 @@
-\chapter{Name of another appendix}
+\chapter{Generative AI Prompts}
+\label{app:prompts}
+
+This appendix contains prompts used with Claude Code to generate diagrams and code samples in this thesis. These prompts can be used to regenerate or modify the artifacts.
+
+\section{Architecture Diagram Prompt}
+
+The following prompt was used to generate the TikZ architecture diagram in Figure~\ref{fig:architecture}:
+
+\begin{lstlisting}[frame=single, backgroundcolor=\color{backcolour}, rulecolor=\color{framecolour}, basicstyle=\small\ttfamily, breaklines=true]
+Create a TikZ architecture diagram for a data lakehouse security
+framework with these specifications:
+
+Layout: Vertical flow, top-to-bottom
+
+Components (in order):
+1. Top row: 5 external source boxes horizontally: GitHub,
+   SonarQube, Snyk, NVD, EPSS
+2. Ingestion: "dlt Connectors" box (orange tint)
+3. Bronze layer: Blue background strip containing 3 yellow boxes
+   (github.*, sonarqube.*, nvd.*/epss.*)
+4. Silver layer: Blue background strip containing 3 gray boxes
+   (dimensions, facts, relationships)
+5. Gold layer: Blue background strip containing 2 green boxes
+   (ml_enriched, metrics)
+6. Wrap Bronze/Silver/Gold in a larger box labeled "Databricks"
+7. Below Databricks: Lakebase (ops.views), FastAPI Backend,
+   React Frontend
+
+Arrows: Connect layers with labeled arrows showing data flow:
+- Sources to dlt Connectors
+- dlt Connectors to Bronze
+- Bronze to Silver (label: DLT)
+- Silver to Gold (label: DLT + ML)
+- Gold to Lakebase (label: Materialization)
+- Lakebase to Backend (label: SQL)
+- Backend to Frontend (label: REST API)
+
+Style: Use soft colors, rounded corners, small fonts for
+compact display.
+\end{lstlisting}
 

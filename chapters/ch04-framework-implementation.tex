@@ -1,0 +1,32 @@
+\chapter{Framework Implementation}
+\label{ch:framework-implementation}
+
+\section{Data Connectors}
+
+The framework uses dlt (data load tool) for ingesting data from security tools into the Bronze layer. Listing~\ref{code:github-connector} shows an example connector implementation for GitHub security data.
+
+\begin{code}{Python}{GitHub Security Connector Implementation}{code:github-connector}
+import dlt
+from dlt.sources.helpers.rest_client import paginate
+
+@dlt.source
+def github_security_source(org: str, token: str):
+    """Extract security data from GitHub organization."""
+
+    @dlt.resource(write_disposition="merge", primary_key="id")
+    def repos():
+        """Repository inventory"""
+        yield from paginate(f"/orgs/{org}/repos")
+
+    @dlt.resource(write_disposition="merge", primary_key="number")
+    def code_scanning_alerts():
+        """GitHub Code Scanning (SAST) alerts"""
+        yield from paginate(f"/orgs/{org}/code-scanning/alerts")
+
+    @dlt.resource(write_disposition="merge", primary_key="number")
+    def dependabot_alerts():
+        """Dependabot (SCA) vulnerability alerts"""
+        yield from paginate(f"/orgs/{org}/dependabot/alerts")
+
+    return repos, code_scanning_alerts, dependabot_alerts
+\end{code}

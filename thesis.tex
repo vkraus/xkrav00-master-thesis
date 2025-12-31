@@ -44,12 +44,12 @@
 
 %%% Studijní program - specializace
 %%% Study program - specialization
-\def\Specializace{Specialization title if included in the study programme division}
+\def\Specializace{Retail and E-Commerce Data Analytics}
 
 %%% Nepovinné poděkování (vedoucímu práce, konzultantovi, tomu, kdo zapůjčil software, literaturu apod.)
 %%% Optional thanks (the supervisor, the consultant, the borrower of software, literature, etc.)
 \def\Podekovani{%
-Thanks.
+My sincere thanks go to Ing. Aleš Kotuč for his guidance, valuable feedback, and willingness to share his expertise.
 }
 
 %%% Abstract (recommended range of about 150-250 words; this is not a thesis assignment)
@@ -99,9 +99,17 @@ Note: The list of programme code excerpts should be used if the number of progra
 \include{recommendation}
 \include{introduction}
 }
-\include{tables-figures}
-\include{bibliography-management}
-\include{pdf-a}
+
+%%% Cislovane kapitoly
+\include{chapters/ch01-research-and-literature-review}
+\include{chapters/ch02-analysis-of-application-security-challenges}
+\include{chapters/ch03-framework-design}
+\include{chapters/ch04-framework-implementation}
+\include{chapters/ch05-framework-evaluation}
+
+% \include{tables-figures}
+% \include{bibliography-management}
+% \include{pdf-a}
 % \include{...}
 % \include{...}
 {%

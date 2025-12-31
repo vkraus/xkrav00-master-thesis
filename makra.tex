@@ -27,6 +27,10 @@
 			\usepackage[utf8]{inputenc}
 			\usepackage[autostyle,english=british,czech=quotes]{csquotes}
 	 }
+
+%%% Fira Sans + Fira Mono fonts
+\usepackage[sfdefault]{FiraSans}
+\usepackage{FiraMono}
 \ifluatex
 \makeatletter
 \let\pdfstrcmp\pdf@strcmp
@@ -51,6 +55,8 @@
 \usepackage{tabularx}       % vhodné pro tabulky s delšími texty / suitable for tables with longer texts
 \usepackage{longtable}      % vhodné pro vícestránkové tabulky / suitable for multi-page tables
 \usepackage{dirtree}        % vykreslování adresářových stromů / rendering directory trees
+\usepackage{tikz}           % diagramy / diagrams
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds}
 \makeatletter
 \@ifpackageloaded{xcolor}{
    \@ifpackagewith{xcolor}{usenames}{}{\PassOptionsToPackage{usenames}{xcolor}}
@@ -178,10 +184,10 @@
 %% Most settings are preset by the pdfx package.
 \hypersetup{unicode}
 \hypersetup{breaklinks=true}
-\hypersetup{hidelinks}
+%% \hypersetup{hidelinks}
 %% odkazy barevně
 %% links in color
-\hypersetup{colorlinks=true,urlcolor=blue}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
 %% odkazy černě
 %% links in black
 %% \hypersetup{colorlinks=true,allcolors=black} 
@@ -197,7 +203,33 @@
 %%% programů. (Vyžaduje balíček listings -- fancy verbatim.)
 %%% Environment for source code typesetting, or computer input/output
 %%% programs. (Requires package listings - fancy verbatim.)
-\lstnewenvironment{code}[3]{\lstset{language=#1, caption=#2, label=#3, basicstyle=\small\ttfamily, numbers=left, xleftmargin=2em, frame=single, framexleftmargin=2em}}{}
+
+%%% Syntax highlighting colors
+\definecolor{codegreen}{rgb}{0.25,0.5,0.35}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codeblue}{rgb}{0.13,0.29,0.53}
+\definecolor{backcolour}{rgb}{0.99,0.99,0.99}
+\definecolor{framecolour}{rgb}{0.85,0.85,0.85}
+
+\lstset{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{codeblue}\bfseries,
+    stringstyle=\color{codepurple},
+    numberstyle=\footnotesize\color{codegray},
+    basicstyle=\small\ttfamily,
+    breakatwhitespace=false,
+    breaklines=true,
+    keepspaces=true,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    rulecolor=\color{framecolour},
+}
+
+\lstnewenvironment{code}[3]{\lstset{language=#1, caption=#2, label=#3, numbers=left, xleftmargin=2em, frame=single, framexleftmargin=2em}}{}
 \makeatletter
 \xpatchcmd\l@lstlisting{1.5em}{0em}{}{}
 \makeatother
