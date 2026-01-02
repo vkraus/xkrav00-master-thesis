@@ -1,9 +1,21 @@
-\chapter{Framework Design}
-\label{ch:framework-design}
+\chapter{Design}
+\label{ch:design}
+
+Framework design is conceptual, i.e. solution-agnostic - can be implemented on any data platform (dbx, snowflake, fabric, google bigquery)
+
+Needs to support both OLTP/OLAP use cases
+
+Silver layer : Entities (dimensions), Findings (facts), Relationships (entity-to-entity, finding-to-entity)
+
+\section{Architecture Context}
+
+It will be used to pull data from data sources (those are naturally out of scope)
+
+It needs to be ready to support an application security management dashboard with a combination of OLTP and OLAP use cases (dashboard application also out of scope).
 
 \section{High-Level Architecture}
 
-Figure~\ref{fig:architecture} illustrates the high-level architecture of the Secubricks framework, showing the data flow from external security tools through the medallion lakehouse architecture to the user interface.
+Figure~\ref{fig:architecture} illustrates high-level architecture of the framework, showing the data flow from external security tools through the medallion architecture to the appsec application (out of scope).
 
 \begin{figure}[htbp]
 \centering
@@ -81,6 +93,21 @@ Figure~\ref{fig:architecture} illustrates the high-level architecture of the Sec
 \end{scope}
 
 \end{tikzpicture}
-\caption{Secubricks Framework Architecture}
+\caption{High-Level Architecture}
 \label{fig:architecture}
 \end{figure}
+
+\section{Data Sources}
+
+\section{Connectors}
+
+Different patterns and tools optimal for different data sources
+
+As a service: Fivetran if it satisfies requirements (easiest to do, no need to reinvent the wheel)
+
+Reuse existing: e.g. from DefectDojo https://github.com/DefectDojo/django-DefectDojo/tree/master/dojo/tools
+
+Databricks Partner
+
+dlt as default tool for custom connectors to REST APIs
+

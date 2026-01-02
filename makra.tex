@@ -66,9 +66,13 @@
 
 %%% Glossaries for acronyms
 \usepackage[acronym,nonumberlist,nopostdot,nogroupskip]{glossaries}
+\usepackage[normalem]{ulem}  % For dotted underline (normalem keeps \emph as italic)
 \setglossarystyle{long}
 \renewcommand{\glsnamefont}[1]{\textbf{#1}}  % Bold acronyms
 \setlength{\glsdescwidth}{0.8\textwidth}     % Left-aligned descriptions
+% Black text with muted gray dotted underline
+\definecolor{glsunderline}{RGB}{180,180,180}
+\renewcommand{\glstextformat}[1]{{\color{glsunderline}\dotuline{\textcolor{black}{#1}}}}
 \makeglossaries
 \input{acronyms}
 \usepackage{multirow}

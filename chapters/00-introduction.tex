@@ -1,12 +1,28 @@
 \chapter*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
 
-In the introduction of the thesis, the author explains why she/he choose the 
-chosen topic, thus the \textbf{motivation} of the whole thesis. The introduction must not 
-miss the precisely formulated \textbf{main goal} of the thesis (or sub-goals), the 
-\textbf{methodology} of the whole thesis (or research questions of hypotheses) should be 
-outlined. It is also common practice to outline the \textbf{main results/outcomes} of the 
-thesis.
+Why I chose this topic / motivation:
+\begin{itemize}
+    \item my appsec experience, what I see as a problem + back it up with some research
+    \item explain that fundamentally, ASPM+VMDR are data problems, and having control over the data layer makes sense
+    \item security vendor agnostic solution doesn't exist (there's DefectDojo but it's "just" a Django web app without proper data architecture, limited scaling abilities, no data pull capability, need to push with custom integration or upload results manually - DefectDojo Pro required for that)
+\end{itemize}
 
-The introduction is followed by individual \textbf{numbered chapters} divided into 
-subchapters.
+Main goal: design and implement a framework (needs to be precisely formulated)
+
+Subgoals:
+\begin{itemize}
+    \item Analyze appsec domain, expectations from the framework, produce a PRD
+    \item Propose a reusable and extensible architecture, domain driven design (name things as they are in appsec world), accommodating both OLTP and OLAP requirements, streaming for time critical use cases? - will come out of PRD
+    \item Build a reference implementation of the framework in Databricks using Claude Code and Databricks AI Assistant
+    \item Evaluate whether feasible/usable as a product + possible future improvements
+\end{itemize}
+
+Methodology + outline hypotheses?
+\begin{itemize}
+    \item First a quick review of existing literature and resources - include vendor documentation as it will need to be referenced later
+    \item Requirement analysis - document req's for an appsec integration framework, what it should have
+    \item Design, implement, evaluate the framework
+\end{itemize}
+
+Outline main results/outcomes of the thesis
