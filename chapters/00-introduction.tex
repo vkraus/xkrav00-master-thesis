@@ -1,22 +1,29 @@
 \chapter*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
 
-Why I chose this topic / motivation:
+\section*{Motivation}
+
+Why I chose this topic:
 \begin{itemize}
     \item my appsec experience, what I see as a problem + back it up with some research
     \item explain that fundamentally, ASPM+VMDR are data problems, and having control over the data layer makes sense
     \item security vendor agnostic solution doesn't exist (there's DefectDojo but it's "just" a Django web app without proper data architecture, limited scaling abilities, no data pull capability, need to push with custom integration or upload results manually - DefectDojo Pro required for that)
 \end{itemize}
 
-Main goal: design and implement a framework (needs to be precisely formulated)
+\section*{Objective}
+
+Main goal: design and implement the model and pipeline (needs to be precisely formulated)
 
 Subgoals:
 \begin{itemize}
-    \item Analyze appsec domain, expectations from the framework, produce a PRD
-    \item Propose a reusable and extensible architecture, domain driven design (name things as they are in appsec world), accommodating both OLTP and OLAP requirements, streaming for time critical use cases? - will come out of PRD
-    \item Build a reference implementation of the framework in Databricks using Claude Code and Databricks AI Assistant
+    \item Summarize existing literature in ch1
+    \item Analyze appsec domain, expectations from the framework, produce a PRD and BDD spec in ch2
+    \item In ch3, propose a reusable and extensible framework, domain driven design (name things as they are in appsec world), accommodating both OLTP and OLAP requirements, streaming for time critical use cases?
+    \item Validate output of ch3 uild a reference implementation of the framework in Databricks using Claude Code and Databricks AI Assistant
     \item Evaluate whether feasible/usable as a product + possible future improvements
 \end{itemize}
+
+\section*{Methodology}
 
 Methodology + outline hypotheses?
 \begin{itemize}
@@ -25,4 +32,6 @@ Methodology + outline hypotheses?
     \item Design, implement, evaluate the framework
 \end{itemize}
 
-Outline main results/outcomes of the thesis
+Outline main results/outcomes of the thesis: business impact is that security teams can self-service deploy their data and ML pipeline and not rely on vendors' proprietary data design
+
+\section*{Structure}

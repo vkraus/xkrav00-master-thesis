@@ -1,15 +1,15 @@
-\chapter{Implementation}
+\chapter{Reference Implementation}
 \label{ch:implementation}
 
 \section{Technology Selection}
 
-Databricks, but could be also other platforms
+Databricks, but could also be other platforms
 
-We will use \gls{dltables}, a data engineering pipeline framework running on top of Delta Lake that combines incremental ingestion, streamlined ETL, and automated data quality processes like expectations \cite{Lee2024}. The advantage of \gls{dltables} is...
+We will use \gls{dltables}, a data engineering pipeline framework running on top of Delta Lake that combines incremental ingestion, streamlined ETL, and automated data quality processes such as expectations \cite{Lee2024}. The advantage of \gls{dltables} is...
 
 \section{Data Connectors}
 
-The framework uses \gls{dltool} for ingesting data from security tools into the Bronze layer. Listing~\ref{code:github-connector} shows an example connector implementation for GitHub security data.
+The framework uses \gls{dltool} to ingest data from security tools into the Bronze layer. The list~\ref{code:github-connector} shows an example implementation of a connector for GitHub security data.
 
 \begin{code}{Python}{GitHub Security Connector Implementation}{code:github-connector}
 import dlt
@@ -36,3 +36,6 @@ def github_security_source(org: str, token: str):
 
     return repos, code_scanning_alerts, dependabot_alerts
 \end{code}
+
+\section{Implementation Evaluation}
+
