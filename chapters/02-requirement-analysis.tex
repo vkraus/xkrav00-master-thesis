@@ -1,32 +1,80 @@
 \chapter{Requirement Analysis and Specification}
 \label{ch:requirement-analysis}
 
-The goal of this chapter is to produce specifications \gls{prd} (high level) and \gls{bdd} (low level) which we will later use to design the data model and framework.
+The goal of this chapter is to produce specifications \gls{prd} (high level) and \gls{bdd} (low level) which we will later use to design the data framework.
 
-Functional and non-functional requirements. Data perspective / data design in the next chapter, not here.
+Appsec vendors, products and their capabilities, APIs and their maturity/completeness
 
-\section{Application Security}
+Capture data formats and integration patterns of the tools
+
+\section{Data Sources}
+
+\subsection{Software Development and Deployment}
+
+important data sources for inventory
 
 start with SCM and issue tracking tools
 
-Looking at things from a business application perspective
+Github, Gitlab, Bitbucket, Azure DevOps
 
-Even infra (AWS/Azure) portrayed from app angle - what does the app run on, how is it secure, whats the security context
+Jira, Azure DevOps, Github and Gitlab issues
+
+CI/CD pipelines - Jenkins, Github Actions, Azure DevOps
+
+\subsection{Runtime Environments}
+
+\subsection{Runtime Infrastructure and Security Tools}
+
+We need infra portrayed from app angle - what does the app run on, how is it secure, whats the security context
+
+AWS - EC2, serverless
+Azure
+GCP
+
+Also how secure is it (infra VMDR like Qualys, Wiz...) can impact risk of app vulns if they run on vulnerable infra too
+
+\subsection{Container Runtime}
+
+How to get data from Kubernetes, Docker
+
+\subsection{Application Inventory}
+
+Start with looking at things from a business application perspective
 
 Business application inventory + business impact assessment
 
-source systems: Primary vulnerability discovery tools (secret scanning, \gls{sast}, \gls{dast}, \gls{sca}...)
+source systems: Primary vulnerability discovery tools (secret scanning, , , ...)
 
-target systems: \gls{aspm} + \gls{vmdr}
+\subsection{Secret Scanning Tools}
 
-\section{Secret Scanning}
+\subsection{Static Application Security Testing (SAST) Tools}
 
-\section{Static Application Security Testing (SAST)}
+\gls{sast}
 
-\section{Software Composition Analysis (SCA)}
+\subsection{Software Composition Analysis (SCA) Tools}
 
-\section{Dynamic Application Security Testing (DAST)}
+\gls{sca}
 
-\section{Application Security Products}
+\subsection{Dynamic Application Security Testing (DAST) Tools}
 
-Appsec vendors, products and their capabilities, APIs and their maturity/completeness
+\gls{dast}
+
+\subsection{Penetration Testing}
+
+Need a way to upload manual findings, e.g. PDF report from external pentesters
+
+\section{Data Transformations}
+
+\subsection{Data Ingestion and Validation}
+
+\subsection{Business Application Mapping}
+
+\subsection{Triage}
+
+\section{Data Consumers}
+
+\subsection{Application Security Posture Management (ASPM)}
+
+\gls{aspm}
+
+\subsection{SOAR and SIEM}
