@@ -8,13 +8,30 @@ Appsec vendors, products and their capabilities, APIs and their maturity/complet
 Capture data formats and integration patterns of the tools
 
 
+%%%%%%%%%%%
+%%% 2.1 %%%
+%%%%%%%%%%%
 
-%%% 2.1
 \section{Stakeholder Analysis}
 
+\subsection{Application Owners}
 
+\subsection{Application Developers}
 
-%%% 2.2
+\subsection{Security Experts}
+
+Architects and Engineers assigned to application teams
+
+Including security compliance / auditors
+
+\subsection{Development and Security Leadership}
+
+Dashboards, metrics, trends, quantified risk
+
+%%%%%%%%%%%
+%%% 2.2 %%%
+%%%%%%%%%%%
+
 \section{Data Sources}
 
 \subsection{Tools for Software Development and Delivery}
@@ -70,40 +87,78 @@ source systems: Primary vulnerability discovery tools (secret scanning, , , ...)
 Need a way to upload manual findings, e.g. PDF report from external pentesters
 
 
+%%%%%%%%%%%
+%%% 2.3 %%%
+%%%%%%%%%%%
 
-%%% 2.3
 \section{Data Transformations}
 
 \subsection{Data Ingestion and Validation}
+
+Filtering?
+
+\subsection{Data Normalization}
+
+Standard format for each object and finding type
+
+\subsection{Finding Deduplication}
+
+When 2 tools find the same thing, link it, don't create 2 issues
 
 \subsection{Business Application Mapping}
 
 \subsection{Triage}
 
 
+%%%%%%%%%%%
+%%% 2.4 %%%
+%%%%%%%%%%%
 
-%%% 2.4
 \section{Data Consumers}
 
-\subsection{Application Security Posture Management (ASPM)}
+\subsection{Remediation Tracking Systems}
 
-\gls{aspm}
+Jira, ServiceNow
 
 \subsection{SOAR and SIEM}
 
 
+%%%%%%%%%%%
+%%% 2.5 %%%
+%%%%%%%%%%%
 
-%%% 2.5
 \section{Non-Functional Requirements}
 
-Scalability - intended for large enterprises, 10k's of repos +
+\subsection{Data Quality}
 
-Performance - Some use cases require low latency
+Data validations and transformations on input are critical
 
-Security - obviously with this use case
+\subsection{Extensibility}
 
+Important feature of the whole framework
 
-%%% 2.6
+\subsection{Scalability}
+
+it's intended for large enterprises, 10k's of repos +
+
+\subsection{Performance}
+
+Some use cases require low latency
+
+\subsection{Security}
+
+Obviously, with this use case
+
+\subsection{Maintainability}
+
+SaaS preferred over manual maintenance - Databricks is ideal
+
+All source code versioned in git and following best practices
+
+%%%%%%%%%%%
+%%% 2.6 %%%
+%%%%%%%%%%%
+
 \section{Requirement Prioritization}
 
 MoSCoW method
