@@ -7,9 +7,17 @@ Appsec vendors, products and their capabilities, APIs and their maturity/complet
 
 Capture data formats and integration patterns of the tools
 
+
+
+%%% 2.1
+\section{Stakeholder Analysis}
+
+
+
+%%% 2.2
 \section{Data Sources}
 
-\subsection{Software Development and Deployment}
+\subsection{Tools for Software Development and Delivery}
 
 important data sources for inventory
 
@@ -21,9 +29,7 @@ Jira, Azure DevOps, Github and Gitlab issues
 
 CI/CD pipelines - Jenkins, Github Actions, Azure DevOps
 
-\subsection{Runtime Environments}
-
-\subsection{Runtime Infrastructure and Security Tools}
+\subsection{Runtime Infrastructure Platforms and Security Tools}
 
 We need infra portrayed from app angle - what does the app run on, how is it secure, whats the security context
 
@@ -33,9 +39,7 @@ GCP
 
 Also how secure is it (infra VMDR like Qualys, Wiz...) can impact risk of app vulns if they run on vulnerable infra too
 
-\subsection{Container Runtime}
-
-How to get data from Kubernetes, Docker
+How to get data from Kubernetes, Docker even if on prem
 
 \subsection{Application Inventory}
 
@@ -45,24 +49,29 @@ Business application inventory + business impact assessment
 
 source systems: Primary vulnerability discovery tools (secret scanning, , , ...)
 
-\subsection{Secret Scanning Tools}
+\subsection{Security Testing Tools}
 
-\subsection{Static Application Security Testing (SAST) Tools}
+\subsubsection{Secret Scanning Tools}
+
+\subsubsection{Static Application Security Testing (SAST) Tools}
 
 \gls{sast}
 
-\subsection{Software Composition Analysis (SCA) Tools}
+\subsubsection{Software Composition Analysis (SCA) Tools}
 
 \gls{sca}
 
-\subsection{Dynamic Application Security Testing (DAST) Tools}
+\subsubsection{Dynamic Application Security Testing (DAST) Tools}
 
 \gls{dast}
 
-\subsection{Penetration Testing}
+\subsubsection{Penetration Testing}
 
 Need a way to upload manual findings, e.g. PDF report from external pentesters
 
+
+
+%%% 2.3
 \section{Data Transformations}
 
 \subsection{Data Ingestion and Validation}
@@ -71,6 +80,9 @@ Need a way to upload manual findings, e.g. PDF report from external pentesters
 
 \subsection{Triage}
 
+
+
+%%% 2.4
 \section{Data Consumers}
 
 \subsection{Application Security Posture Management (ASPM)}
@@ -78,3 +90,20 @@ Need a way to upload manual findings, e.g. PDF report from external pentesters
 \gls{aspm}
 
 \subsection{SOAR and SIEM}
+
+
+
+%%% 2.5
+\section{Non-Functional Requirements}
+
+Scalability - intended for large enterprises, 10k's of repos +
+
+Performance - Some use cases require low latency
+
+Security - obviously with this use case
+
+
+%%% 2.6
+\section{Requirement Prioritization}
+
+MoSCoW method
