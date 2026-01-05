@@ -51,15 +51,15 @@ All generated code was reviewed, tested, and modified by the author before inclu
 
 \section{Product Requirement Document}
 
-The Product Requirement Document (Appendix~\ref{app:prd}) is automatically generated using Claude Code with the \texttt{vkraus/superpowers} plugin, which includes an embedded BDD (Behavior-Driven Development) skill.
+The Product Requirement Document (Appendix~\ref{app:bdd}) is automatically generated using Claude Code with the \texttt{vkraus/superpowers} plugin, which includes an embedded BDD (Behavior-Driven Development) skill.
 
 \subsection*{Generation Workflow}
 
 \begin{enumerate}
     \item Requirements are discussed and refined in Claude Code conversation
     \item The BDD skill generates Gherkin specifications from requirement descriptions
-    \item Claude Code outputs structured PRD with requirement IDs, priorities, and embedded Gherkin scenarios
-    \item Generated PRD is exported to \LaTeX{} format for thesis inclusion
+    \item Claude Code outputs structured specification with requirement IDs, priorities, and embedded Gherkin scenarios
+    \item Generated specification is exported to \LaTeX{} format for thesis inclusion
     \item Test results from pytest-bdd are mapped back to requirement IDs to update status
 \end{enumerate}
 
