@@ -241,17 +241,6 @@
     rulecolor=\color{framecolour},
 }
 
-%%% Gherkin syntax highlighting for BDD specifications
-\lstdefinelanguage{Gherkin}{
-  keywords={Feature, Background, Scenario, Scenario Outline, Examples, Given, When, Then, And, But},
-  keywordstyle=\bfseries\color{codeblue},
-  sensitive=true,
-  morestring=[b]",
-  stringstyle=\color{codepurple},
-  morecomment=[l]{\#},
-  commentstyle=\color{codegreen}\itshape,
-}
-
 \lstnewenvironment{code}[3]{\lstset{language=#1, caption=#2, label=#3, numbers=left, xleftmargin=2em, frame=single, framexleftmargin=2em}}{}
 \makeatletter
 \xpatchcmd\l@lstlisting{1.5em}{0em}{}{}

@@ -49,37 +49,6 @@ Implementation code was written by the author with assistance from:
 
 All generated code was reviewed, tested, and modified by the author before inclusion.
 
-\section{Behavior-Driven Development (BDD) Specification}
+\section{Requirements Specification}
 
-The \gls{bdd} specification (Appendix~\ref{app:bdd}) is automatically generated using Claude Code with the \texttt{vkraus/superpowers} plugin, which includes an embedded BDD (Behavior-Driven Development) skill.
-
-\subsection*{Generation Workflow}
-
-\begin{enumerate}
-    \item Requirements are discussed and refined in Claude Code conversation
-    \item The BDD skill generates Gherkin specifications from requirement descriptions
-    \item Claude Code outputs structured specification with requirement IDs, priorities, and embedded Gherkin scenarios
-    \item Generated specification is exported to \LaTeX{} format for thesis inclusion
-    \item Test results from pytest-bdd are mapped back to requirement IDs to update status
-\end{enumerate}
-
-\subsection*{Tools and Configuration}
-
-\begin{itemize}
-    \item \textbf{Claude Code} (Anthropic) with Opus 4.5 model
-    \item \textbf{Plugin:} \texttt{vkraus/superpowers} fork with embedded BDD skill
-    \item \textbf{Test Framework:} pytest-bdd for Gherkin scenario execution
-    \item \textbf{Output Format:} \LaTeX{} with Gherkin syntax highlighting
-\end{itemize}
-
-\subsection*{Human Review}
-
-All generated requirements and Gherkin specifications were reviewed by the author for:
-\begin{itemize}
-    \item Correctness of requirement descriptions
-    \item Completeness of acceptance criteria
-    \item Feasibility of Gherkin scenarios for automated testing
-    \item Alignment with thesis objectives
-\end{itemize}
-
-Requirement prioritization (MoSCoW) and implementation status were determined by the author based on actual implementation progress.
+Requirements in Chapter~\ref{ch:requirements} follow a test-centric traceability approach. Tests reference requirement IDs via pytest markers, and a generator script produces the traceability matrix by scanning test results. Implementation status is derived from test execution rather than manual tracking.
