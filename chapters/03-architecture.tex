@@ -1,2 +1,147 @@
-\chapter{Architecture Blueprint}
+\chapter{Architecture}
 \label{ch:architecture}
+
+generic concepts and open industry standards instead of proprietary concepts/technology unless necessary
+
+Needs to support both OLTP/OLAP use cases based on requirements
+
+%%%%%%%%%%%
+%%% 3.1 %%%
+%%%%%%%%%%%
+\section{Architecture Context}
+
+It will be used to pull data from data sources (those are naturally out of scope)
+
+It needs to be ready to support an application security management dashboard with a combination of OLTP and OLAP use cases (dashboard application also out of scope).
+
+%%%%%%%%%%%
+%%% 3.2 %%%
+%%%%%%%%%%%
+\section{Architecture Principles and Constraints}
+
+%%%%%%%%%%%
+%%% 3.3 %%%
+%%%%%%%%%%%
+\section{High-Level Architecture}
+
+Figure~\ref{fig:architecture} illustrates high-level architecture of the framework, showing the data flow from external security tools through the medallion architecture to the appsec application (out of scope).
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=0.8cm and 1cm,
+    box/.style={rectangle, draw=black!60, fill=white, minimum width=2.2cm, minimum height=0.8cm, font=\small},
+    layer/.style={rectangle, draw=black!40, fill=gray!8, minimum width=12cm, minimum height=1.4cm, rounded corners=3pt},
+    layerlabel/.style={font=\small\bfseries, text=black!70},
+    arrow/.style={-{Stealth[length=2mm]}, thick, black!60},
+    source/.style={rectangle, draw=black!50, fill=gray!15, minimum width=1.8cm, minimum height=0.7cm, font=\footnotesize, rounded corners=2pt},
+    % Custom colors from palette (lighter versions)
+    bronze/.style={fill={rgb,255:red,159;green,122;blue,52}, fill opacity=0.35, draw={rgb,255:red,159;green,122;blue,52}},
+    silver/.style={fill={rgb,255:red,192;green,192;blue,192}, fill opacity=0.4, draw={rgb,255:red,192;green,192;blue,192}},
+    gold/.style={fill={rgb,255:red,212;green,175;blue,55}, fill opacity=0.35, draw={rgb,255:red,212;green,175;blue,55}},
+]
+
+% External Sources (centered above the diagram)
+\node[source] (snyk) {Snyk};
+\node[source, left=0.3cm of snyk] (sonar) {SonarQube};
+\node[source, left=0.3cm of sonar] (github) {GitHub};
+\node[source, right=0.3cm of snyk] (nvd) {NVD};
+\node[source, right=0.3cm of nvd] (epss) {EPSS};
+
+\node[above=0.1cm of snyk, font=\small\bfseries, text=black!70] {External Security Tools};
+
+% dlt connectors
+\node[box, below=1cm of snyk, fill=gray!15] (dlt) {dlt Connectors};
+
+% Bronze Layer
+\node[layer, bronze, below=0.8cm of dlt] (bronze-bg) {};
+\node[layerlabel, left] at (bronze-bg.west) {Bronze};
+\node[box, fill=white] at ($(bronze-bg.center) + (-3cm,0)$) (b1) {github.*};
+\node[box, fill=white] at (bronze-bg.center) (b2) {sonarqube.*};
+\node[box, fill=white] at ($(bronze-bg.center) + (3cm,0)$) (b3) {nvd.*, epss.*};
+
+% Silver Layer
+\node[layer, silver, below=0.8cm of bronze-bg] (silver-bg) {};
+\node[layerlabel, left] at (silver-bg.west) {Silver};
+\node[box, fill=white] at ($(silver-bg.center) + (-3cm,0)$) (s1) {dimensions};
+\node[box, fill=white] at (silver-bg.center) (s2) {facts};
+\node[box, fill=white] at ($(silver-bg.center) + (3cm,0)$) (s3) {relationships};
+
+% Gold Layer
+\node[layer, gold, below=0.8cm of silver-bg] (gold-bg) {};
+\node[layerlabel, left] at (gold-bg.west) {Gold};
+\node[box, fill=white] at ($(gold-bg.center) + (-2cm,0)$) (g1) {ml\_enriched};
+\node[box, fill=white] at ($(gold-bg.center) + (2cm,0)$) (g2) {metrics};
+
+% Lakebase
+\node[box, below=1cm of gold-bg, fill=gray!15, minimum width=4cm] (lakebase) {Lakebase (ops.views)};
+
+% Backend
+\node[box, below=0.8cm of lakebase, fill=gray!15, minimum width=3cm] (backend) {FastAPI Backend};
+
+% Frontend
+\node[box, below=0.8cm of backend, fill=gray!15, minimum width=3cm] (frontend) {React Frontend};
+
+% Arrows from sources to dlt (converging at center)
+\draw[arrow] (github.south) -- ++(0,-0.4) -| (dlt.north);
+\draw[arrow] (sonar.south) -- ++(0,-0.25) -| (dlt.north);
+\draw[arrow] (snyk.south) -- (dlt.north);
+\draw[arrow] (nvd.south) -- ++(0,-0.25) -| (dlt.north);
+\draw[arrow] (epss.south) -- ++(0,-0.4) -| (dlt.north);
+
+\draw[arrow] (dlt.south) -- (bronze-bg.north);
+\draw[arrow] (bronze-bg.south) -- node[right, font=\scriptsize, text=black!60] {DLT} (silver-bg.north);
+\draw[arrow] (silver-bg.south) -- node[right, font=\scriptsize, text=black!60] {DLT + ML} (gold-bg.north);
+\draw[arrow] (gold-bg.south) -- node[right, font=\scriptsize, text=black!60] {Materialization} (lakebase.north);
+\draw[arrow] (lakebase.south) -- node[right, font=\scriptsize, text=black!60] {SQL} (backend.north);
+\draw[arrow] (backend.south) -- node[right, font=\scriptsize, text=black!60] {REST API} (frontend.north);
+
+% Databricks box
+\begin{scope}[on background layer]
+\node[draw=black!30, fill=gray!3, rounded corners=5pt, fit=(bronze-bg)(silver-bg)(gold-bg), inner sep=8pt, label={[font=\footnotesize\bfseries, text=black!50]above right:Databricks}] {};
+\end{scope}
+
+\end{tikzpicture}
+\caption{High-Level Architecture}
+\label{fig:architecture}
+\end{figure}
+
+%%%%%%%%%%%
+%%% 3.4 %%%
+%%%%%%%%%%%
+\section{Component Design}
+
+\subsection{Data Ingestion Layer}
+
+The various connectors
+
+\subsection{Data Processing Layer}
+
+Medallion architecture, see Chapter 5
+
+\subsection{Data Serving Layer}
+
+Lakebase
+
+%%%%%%%%%%%
+%%% 3.5 %%%
+%%%%%%%%%%%
+\section{Integration Architecture}
+
+
+\subsection{Connector Strategy}
+
+dlt, Fivetran, custom
+
+
+%%%%%%%%%%%
+%%% 3.6 %%%
+%%%%%%%%%%%
+\section{Extensibility Architecture}
+
+Add new integrations via API
+
+%%%%%%%%%%%
+%%% 3.7 %%%
+%%%%%%%%%%%
+\section{Security Architecture}
