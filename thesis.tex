@@ -2,7 +2,7 @@
 \documentclass[11pt,a4paper]{report}
 \usepackage[top=25mm,bottom=25mm,right=25mm,left=30mm,head=12.5mm,foot=12.5mm]{geometry}
 \usepackage{tikz}
-\usetikzlibrary{calc,positioning}
+\usetikzlibrary{calc,positioning,backgrounds,fit,arrows.meta}
 \let\openright=\clearpage
 
 %%% Two-side print:
@@ -22,7 +22,7 @@
 
 %%% Název práce v jazyce práce (přesně podle zadání)
 %%% Title of the thesis in the language used in the text (exact according to assignment)
-\def\NazevPrace{A Data Model and Pipeline\\for Unified Application Security}
+\def\NazevPrace{A Data Framework\\for Enterprise Application Security}
 
 %%% Jméno autora
 %%% Author's name - First name Surname
@@ -56,9 +56,9 @@ My sincere thanks go to Ing. Aleš Kotuč for his guidance and valuable feedback
 
 %%% Abstract (recommended range of about 150-250 words; this is not a thesis assignment)
 \def\Abstrakt{%
-Research shows that enterprises manage on average 83 different cybersecurity solutions from 29 vendors, making a consolidated and complete overview of enterprise security posture one of the most prevalent challenges. Data on threats, risks, assets, security controls, vulnerabilities, and incidents from these disparate tools must all be integrated to accurately assess security posture. This thesis presents Secubricks, a security analytics project built on Databricks platform that addresses these challenges through lakehouse architecture and standardized data models, providing a practical framework for security data analytics that's extensible, reusable, and fully agnostic to primary cybersecurity products and vendors.
+To protect their business-critical applications from cybersecurity threats, enterprise security teams rely on numerous tools to detect and resolve vulnerabilities in application source code, configuration, CI/CD pipelines, and in underlying infrastructure. These tools use different integration patterns, protocols, and data formats, making it difficult to consistently parse, deduplicate, triage, and group their findings. In large environments, additional challenges emerge when linking all findings to the corresponding business applications. This thesis presents a data framework to tackle those challenges, delivering three distinct contributions: (1) a requirement specification for an application security data platform, (2) a reusable and extensible design covering architecture, data model, and medallion-based data pipeline, and (3) a reference implementation built on the Databricks platform. Together, these contributions offer application security teams a foundation for building a robust data platform independent of individual cybersecurity vendors, relieving them of risks usually associated with vendor lock-in.
 }
-\def\KlicovaSlova{application security posture management, data lakehouse, security data consolidation, medallion architecture, vendor-agnostic framework, DevSecOps analytics}
+\def\KlicovaSlova{application security, ASPM, VMDR, software security, DevSecOps, security integration, data consolidation, medallion architecture, Databricks}
 
 
 %%% Titulní strana a různé povinné informativní strany
@@ -102,9 +102,10 @@ Research shows that enterprises manage on average 83 different cybersecurity sol
 %%% Cislovane kapitoly
 \include{chapters/01-literature-review}
 \include{chapters/02-requirement-analysis}
-\include{chapters/03-model-design}
-\include{chapters/03-pipeline-design}
-\include{chapters/05-implementation}
+\include{chapters/03-architecture}
+\include{chapters/04-model}
+\include{chapters/05-pipeline}
+\include{chapters/06-implementation}
 
 % \include{tables-figures}
 % \include{bibliography-management}
@@ -113,7 +114,7 @@ Research shows that enterprises manage on average 83 different cybersecurity sol
 % \include{...}
 {%
 \pagestyle{plain}
-\include{chapters/06-conclusion}
+\include{chapters/07-conclusion}
 }
 
 %%% Seznam použité literatury
@@ -126,9 +127,9 @@ Research shows that enterprises manage on average 83 different cybersecurity sol
 %%% least once in your own text. The appendices are numbered.
 \part*{\Prilohy\thispagestyle{empty}}
 \appendix
-\include{chapters/07-prd}
-\include{chapters/08-design}
-\include{chapters/09-genai}
+\include{chapters/08-prd}
+\include{chapters/09-design}
+\include{chapters/10-genai}
 % \include{...}
 % \include{...}
 

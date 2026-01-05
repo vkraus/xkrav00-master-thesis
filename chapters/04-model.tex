@@ -1,5 +1,5 @@
 \chapter{Data Model Design}
-\label{ch:model-design}
+\label{ch:model}
 
 Framework design is conceptual, i.e. solution-agnostic - can be implemented on any data platform (dbx, snowflake, fabric, google bigquery) - use generic concepts and open industry standards instead of assuming proprietary technology
 
@@ -47,22 +47,22 @@ Figure~\ref{fig:architecture} illustrates high-level architecture of the framewo
 % Bronze Layer
 \node[layer, bronze, below=0.8cm of dlt] (bronze-bg) {};
 \node[layerlabel, left] at (bronze-bg.west) {Bronze};
-\node[box, fill=white] at ([xshift=-3cm]bronze-bg.center) (b1) {github.*};
-\node[box, fill=white] at ([xshift=0cm]bronze-bg.center) (b2) {sonarqube.*};
-\node[box, fill=white] at ([xshift=3cm]bronze-bg.center) (b3) {nvd.*, epss.*};
+\node[box, fill=white] at ($(bronze-bg.center) + (-3cm,0)$) (b1) {github.*};
+\node[box, fill=white] at (bronze-bg.center) (b2) {sonarqube.*};
+\node[box, fill=white] at ($(bronze-bg.center) + (3cm,0)$) (b3) {nvd.*, epss.*};
 
 % Silver Layer
 \node[layer, silver, below=0.8cm of bronze-bg] (silver-bg) {};
 \node[layerlabel, left] at (silver-bg.west) {Silver};
-\node[box, fill=white] at ([xshift=-3cm]silver-bg.center) (s1) {dimensions};
-\node[box, fill=white] at ([xshift=0cm]silver-bg.center) (s2) {facts};
-\node[box, fill=white] at ([xshift=3cm]silver-bg.center) (s3) {relationships};
+\node[box, fill=white] at ($(silver-bg.center) + (-3cm,0)$) (s1) {dimensions};
+\node[box, fill=white] at (silver-bg.center) (s2) {facts};
+\node[box, fill=white] at ($(silver-bg.center) + (3cm,0)$) (s3) {relationships};
 
 % Gold Layer
 \node[layer, gold, below=0.8cm of silver-bg] (gold-bg) {};
 \node[layerlabel, left] at (gold-bg.west) {Gold};
-\node[box, fill=white] at ([xshift=-2cm]gold-bg.center) (g1) {ml\_enriched};
-\node[box, fill=white] at ([xshift=2cm]gold-bg.center) (g2) {metrics};
+\node[box, fill=white] at ($(gold-bg.center) + (-2cm,0)$) (g1) {ml\_enriched};
+\node[box, fill=white] at ($(gold-bg.center) + (2cm,0)$) (g2) {metrics};
 
 % Lakebase
 \node[box, below=1cm of gold-bg, fill=gray!15, minimum width=4cm] (lakebase) {Lakebase (ops.views)};
