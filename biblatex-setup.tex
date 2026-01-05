@@ -16,6 +16,12 @@
 
 \bibliography{bibliography}
 
+% Custom heading for aligned TOC entry (phantom numberline)
+\defbibheading{bibintocaligned}[\bibnamex]{%
+  \chapter*{#1}%
+  \addcontentsline{toc}{chapter}{\protect\numberline{}#1}%
+}
+
 %\makeatletter
 %\RequireBibliographyStyle{numeric}
 %\makeatother

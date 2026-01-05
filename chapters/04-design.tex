@@ -3,7 +3,7 @@
 
 \section{Pipeline Overview}
 
-Each layer implemented as a Unity catalog
+Each medallion layer is implemented as a schema within a single Unity Catalog.
 
 \begin{figure}[htbp]
 \centering
@@ -94,6 +94,8 @@ Error handling
 
 Normalization
 
+Deduplication
+
 \subsection{Schema}
 
 Vendor-agnostic, unified for each entity and finding
@@ -112,8 +114,6 @@ Implemented as facts?
 
 \section{Gold Layer}
 
-Lakebase
-
 \subsection{Transformation}
 
 \subsubsection{ML Enrichment}
@@ -122,15 +122,13 @@ Risk scoring
 
 Triage
 
-Deduplication?
-
 \subsection{Schema}
 
 \subsubsection{Aggregations}
 
 Metrics, counts, summaries...
 
-Sliced by severity, app, owner, team, etc
+Sliced by severity, app, owner, team, etc (requirement of grouping)
 
 SLAs, trends, MTTR - what matters to stakeholders per stakeholder analysis
 
