@@ -3,13 +3,80 @@
 
 \section{Pipeline Overview}
 
-Each layer as a Unity catalog
+Each layer implemented as a Unity catalog
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=1cm,
+    layer/.style={rectangle, draw=black!50, minimum width=11cm, minimum height=2.2cm, rounded corners=3pt},
+    schemabox/.style={rectangle, draw=black!40, fill=white, minimum width=2.8cm, minimum height=0.6cm, font=\footnotesize},
+    arrow/.style={-{Stealth[length=2.5mm]}, thick, black!60},
+    transformation/.style={font=\scriptsize, text=black!70, align=center},
+    layerlabel/.style={font=\small\bfseries, text=black!80},
+    bronze/.style={fill={rgb,255:red,159;green,122;blue,52}, fill opacity=0.25},
+    silver/.style={fill={rgb,255:red,192;green,192;blue,192}, fill opacity=0.3},
+    gold/.style={fill={rgb,255:red,212;green,175;blue,55}, fill opacity=0.25},
+]
+
+% Bronze Layer
+\node[layer, bronze] (bronze-bg) {};
+\node[layerlabel] at ($(bronze-bg.north) + (0,-0.3)$) {Bronze Layer};
+\node[schemabox] at ($(bronze-bg.center) + (-3.2cm,0)$) {github.*};
+\node[schemabox] at ($(bronze-bg.center) + (0,0)$) {snyk.*};
+\node[schemabox] at ($(bronze-bg.center) + (3.2cm,0)$) {sonarqube.*};
+\node[font=\scriptsize, text=black!60] at ($(bronze-bg.south) + (0,0.35)$) {Raw data, source schemas preserved};
+
+% Bronze to Silver transformation
+\node[transformation, below=0.8cm of bronze-bg] (b2s) {
+    \textbf{Normalization}\\
+    Schema mapping, type casting\\
+    Deduplication, entity resolution
+};
+
+% Silver Layer
+\node[layer, silver, below=0.8cm of b2s] (silver-bg) {};
+\node[layerlabel] at ($(silver-bg.north) + (0,-0.3)$) {Silver Layer};
+\node[schemabox] at ($(silver-bg.center) + (-3.2cm,0)$) {Entities};
+\node[schemabox] at ($(silver-bg.center) + (0,0)$) {Findings};
+\node[schemabox] at ($(silver-bg.center) + (3.2cm,0)$) {Relationships};
+\node[font=\scriptsize, text=black!60] at ($(silver-bg.south) + (0,0.35)$) {Unified schema, vendor-agnostic};
+
+% Silver to Gold transformation
+\node[transformation, below=0.8cm of silver-bg] (s2g) {
+    \textbf{Enrichment \& Aggregation}\\
+    ML risk scoring, triage classification\\
+    Metric computation, materialization
+};
+
+% Gold Layer
+\node[layer, gold, below=0.8cm of s2g] (gold-bg) {};
+\node[layerlabel] at ($(gold-bg.north) + (0,-0.3)$) {Gold Layer};
+\node[schemabox] at ($(gold-bg.center) + (-2.5cm,0)$) {ML Enriched};
+\node[schemabox] at ($(gold-bg.center) + (2.5cm,0)$) {Aggregations};
+\node[font=\scriptsize, text=black!60] at ($(gold-bg.south) + (0,0.35)$) {Consumption-ready, query-optimized};
+
+% Arrows
+\draw[arrow] (bronze-bg.south) -- (b2s.north);
+\draw[arrow] (b2s.south) -- (silver-bg.north);
+\draw[arrow] (silver-bg.south) -- (s2g.north);
+\draw[arrow] (s2g.south) -- (gold-bg.north);
+
+% DLT label
+\node[font=\scriptsize\bfseries, text=black!50, right=0.3cm of b2s] {DLT};
+\node[font=\scriptsize\bfseries, text=black!50, right=0.3cm of s2g] {DLT + ML};
+
+\end{tikzpicture}
+\caption{Medallion Layer Design}
+\label{fig:medallion-design}
+\end{figure}
+
 
 \section{Bronze Layer}
 
 \subsection{Transformation}
 
-Filtering
+Data source request filtering / configuration
 
 Ingestion
 
@@ -49,7 +116,7 @@ Lakebase
 
 \subsection{Transformation}
 
-\subsubsection{MLEnrichment}
+\subsubsection{ML Enrichment}
 
 Risk scoring
 
