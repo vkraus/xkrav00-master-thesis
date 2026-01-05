@@ -19,10 +19,61 @@ It needs to be ready to support an application security management dashboard wit
 %%%%%%%%%%%
 \section{Architecture Principles and Constraints}
 
+
 %%%%%%%%%%%
 %%% 3.3 %%%
 %%%%%%%%%%%
-\section{High-Level Architecture}
+\section{Technology Selection}
+
+What I'm choosing and why, what were the alternatives and reasons not to choose them
+
+I will use \gls{dltables}, a data engineering pipeline framework running on top of Delta Lake that combines incremental ingestion, streamlined ETL, and automated data quality processes such as expectations \cite{Lee2024}. The advantage of \gls{dltables} is...
+
+
+
+Connectors - dlt, Fivetran?, Databricks Partners?
+
+I use \gls{dltool} to ingest data from security tools into the Bronze layer. The code snippet \ref{code:github-connector} shows an example implementation of a connector for GitHub security data.
+
+\begin{code}{Python}{GitHub Security Connector Implementation}{code:github-connector}
+import dlt
+from dlt.sources.helpers.rest_client import paginate
+
+@dlt.source
+def github_security_source(org: str, token: str):
+    """Extract security data from GitHub organization."""
+
+    @dlt.resource(write_disposition="merge", primary_key="id")
+    def repos():
+        """Repository inventory"""
+        yield from paginate(f"/orgs/{org}/repos")
+
+    @dlt.resource(write_disposition="merge", primary_key="number")
+    def code_scanning_alerts():
+        """GitHub Code Scanning (SAST) alerts"""
+        yield from paginate(f"/orgs/{org}/code-scanning/alerts")
+
+    @dlt.resource(write_disposition="merge", primary_key="number")
+    def dependabot_alerts():
+        """Dependabot (SCA) vulnerability alerts"""
+        yield from paginate(f"/orgs/{org}/dependabot/alerts")
+
+    return repos, code_scanning_alerts, dependabot_alerts
+\end{code}
+
+Databricks
+
+Unity Catalog
+
+Delta Lake
+
+Python vs Scala vs SQL
+
+
+%%%%%%%%%%%
+%%% 3.4 %%%
+%%%%%%%%%%%
+\section{High-Level Solution Architecture}
 
 Figure~\ref{fig:architecture} illustrates high-level architecture of the framework, showing the data flow from external security tools through the medallion architecture to the appsec application (out of scope).
 
@@ -106,8 +157,10 @@ Figure~\ref{fig:architecture} illustrates high-level architecture of the framewo
 \label{fig:architecture}
 \end{figure}
 
+
+
 %%%%%%%%%%%
-%%% 3.4 %%%
+%%% 3.5 %%%
 %%%%%%%%%%%
 \section{Component Design}
 
@@ -117,31 +170,47 @@ The various connectors
 
 \subsection{Data Processing Layer}
 
+\subsubsection{Pipeline Architecture}
+
 Medallion architecture, see Chapter 5
+
+\gls{dltables} for defining transformations
+
+\subsubsection{Pipeline Orchestration}
+
+Databricks Workflows, don't think my workflows will be complex enough to use Airflow DAGs
 
 \subsection{Data Serving Layer}
 
 Lakebase
 
 %%%%%%%%%%%
-%%% 3.5 %%%
+%%% 3.6 %%%
 %%%%%%%%%%%
 \section{Integration Architecture}
 
 
 \subsection{Connector Strategy}
 
-dlt, Fivetran, custom
+Different patterns and tools optimal for different data sources
+
+As a service: Fivetran if it satisfies requirements (easiest to do, no need to reinvent the wheel)
+
+Reuse existing: e.g. from DefectDojo https://github.com/DefectDojo/django-DefectDojo/tree/master/dojo/tools
+
+Databricks Partner
+
+dlt as default tool for custom connectors to REST APIs
 
 
 %%%%%%%%%%%
-%%% 3.6 %%%
+%%% 3.7 %%%
 %%%%%%%%%%%
 \section{Extensibility Architecture}
 
 Add new integrations via API
 
 %%%%%%%%%%%
-%%% 3.7 %%%
+%%% 3.8 %%%
 %%%%%%%%%%%
 \section{Security Architecture}

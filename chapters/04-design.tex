@@ -1,0 +1,72 @@
+\chapter{Pipeline and Model Design}
+\label{ch:design}
+
+\section{Pipeline Overview}
+
+Each layer as a Unity catalog
+
+\section{Bronze Layer}
+
+\subsection{Transformation}
+
+Filtering
+
+Ingestion
+
+\subsection{Schema}
+
+by systems
+
+\section{Silver Layer}
+
+\subsection{Transformation}
+
+Data Quality
+
+Error handling
+
+Normalization
+
+\subsection{Schema}
+
+Vendor-agnostic, unified for each entity and finding
+
+\subsubsection{Entities}
+
+Implemented as dimensions
+
+\subsubsection{Findings}
+
+Implemented as facts?
+
+\subsubsection{Relationships}
+
+(entity-to-entity, finding-to-entity)
+
+\section{Gold Layer}
+
+Lakebase
+
+\subsection{Transformation}
+
+\subsubsection{MLEnrichment}
+
+Risk scoring
+
+Triage
+
+Deduplication?
+
+\subsection{Schema}
+
+\subsubsection{Aggregations}
+
+Metrics, counts, summaries...
+
+Sliced by severity, app, owner, team, etc
+
+SLAs, trends, MTTR - what matters to stakeholders per stakeholder analysis
+
+\subsubsection{Read-Optimized Views}
+
+For dashboard queries, materialized, cached
