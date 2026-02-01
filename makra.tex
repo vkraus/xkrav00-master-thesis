@@ -11,21 +11,21 @@
 %%% Settings for using a separate bibliographic database.
 \input biblatex-setup
 
-%% Přepneme na českou sazbu, fonty Latin Modern a kódování češtiny
+%% Set up fonts and encoding for English
 \ifthenelse{\boolean{xetex}\OR\boolean{luatex}}
    { % use fontspec and OpenType fonts with utf8 engines
-			\usepackage[english,slovak,czech]{babel}
-			\usepackage[autostyle,english=british,czech=quotes]{csquotes}
+			\usepackage[english]{babel}
+			\usepackage[autostyle,english=british]{csquotes}
 			\usepackage{fontspec}
 			\defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
    }
    {
-			\usepackage[english,slovak,czech]{babel}
+			\usepackage[english]{babel}
 			\usepackage{lmodern}
 			\usepackage[T1]{fontenc}
 			\usepackage{textcomp}
 			\usepackage[utf8]{inputenc}
-			\usepackage[autostyle,english=british,czech=quotes]{csquotes}
+			\usepackage[autostyle,english=british]{csquotes}
 	 }
 
 %%% Fira Sans + Fira Mono fonts
@@ -259,8 +259,7 @@
 \captionsetup[figure]{labelfont=bf,textfont=it,justification=justified,singlelinecheck=false,labelsep=spaced,skip=1ex}
 \captionsetup[lstlisting]{labelfont=bf,textfont=it,justification=justified,singlelinecheck=false,labelsep=spaced,skip=2ex}
 
-%%% Tato část obsahuje texty závislé na typu práce, jazyku a pohlaví %%%
-%%% This part contains texts depending on the type of work, language and gender %%%
+%%% English text definitions for thesis type and labels %%%
 
 \newcommand{\ifstringequal}[4]{%
   \ifnum\pdfstrcmp{#1}{#2}=0
@@ -270,66 +269,23 @@
   \fi
 }
 
-\def\TypPraceBP{BAKALÁŘSKÁ PRÁCE}
-\def\TypPraceDP{DIPLOMOVÁ PRÁCE}
-\def\SeznamZkratek{Seznam použitých zkratek}
-\def\Prilohy{Přílohy}
-\def\VSE{Vysoká škola ekonomická v Praze}
-\def\FIS{Fakulta informatiky a statistiky}
-\def\StudijniProgramText{Studijní program}
-\def\SpecializaceText{Specializace}
-\def\AutorText{Autor}
-\def\VedouciText{Vedoucí práce}
-\def\KonzultantText{Konzultant práce}
-\def\Praha{Praha}
-\def\PodekovaniText{Poděkování}
-\def\bibnamex{Použitá literatura}
-\renewcommand*{\lstlistlistingname}{Seznam zdrojových kódů}
-\def\lstlistingname{Výpis}
+\def\TypPraceBP{BACHELOR THESIS}
+\def\TypPraceDP{MASTER THESIS}
+\def\SeznamZkratek{List of abbreviations}
+\def\Prilohy{Appendices}
+\def\VSE{Prague University of Economics and Business}
+\def\FIS{Faculty of Informatics and Statistics}
+\def\StudijniProgramText{Study program}
+\def\SpecializaceText{Specialization}
+\def\AutorText{Author}
+\def\VedouciText{Supervisor}
+\def\KonzultantText{Consultant}
+\def\Praha{Prague}
+\def\PodekovaniText{Acknowledgements}
+\def\bibnamex{References}
+\renewcommand*{\lstlistlistingname}{List of source codes}
+\def\lstlistingname{Source code}
+\ifdef{\finalnamedelim}{\renewcommand*{\finalnamedelim}{\addspace and \addspace}}%
 
-\makeatletter
-\ifstringequal{\Jazyk}{eng}{\main@language{english}}{}
-\ifstringequal{\Jazyk}{slo}{\main@language{slovak}}{}
-\makeatother
-
-\ifstringequal{\Jazyk}{eng}{
-         \def\TypPraceBP{BACHELOR THESIS}
-         \def\TypPraceDP{MASTER THESIS}
-				 \def\SeznamZkratek{List of abbreviations}
-				 \def\Prilohy{Appendices}
-				 \def\VSE{Prague University of Economics and Business}
-				 \def\FIS{Faculty of Informatics and Statistics}
-				 \def\StudijniProgramText{Study program}
-				 \def\SpecializaceText{Specialization}
-				 \def\AutorText{Author}
-				 \def\VedouciText{Supervisor}
-         \def\KonzultantText{Consultant}
-				 \def\Praha{Prague}
-				 \ifstringequal{\TypPrace}{BP}{\def\Praci{bachelor thesis }}{}
-         \ifstringequal{\TypPrace}{DP}{\def\Praci{master thesis }}{}
-				 \def\PodekovaniText{Acknowledgements}
-				 \def\bibnamex{References}
-         \renewcommand*{\lstlistlistingname}{List of source codes}
-         \def\lstlistingname{Source code}
-				 \ifdef{\finalnamedelim}{\renewcommand*{\finalnamedelim}{\addspace and \addspace}}%
-}{}
-
-\ifstringequal{\Jazyk}{slo}{
-         \def\TypPraceBP{BAKALÁRSKA PRÁCA}
-         \def\TypPraceDP{DIPLOMOVÁ PRÁCA}
-				 \def\SeznamZkratek{Zoznam použitých skratiek}
-				 \def\Prilohy{Prílohy}
-				 \def\StudijniProgramText{Študijný program}
-				 \def\SpecializaceText{Špecializácia}
-				 \def\VedouciText{Vedúci práce}
-         \def\KonzultantText{Konzultant práce}
-				 \ifstringequal{\TypPrace}{BP}{\def\Praci{bakalársku prácu }}{}
-         \ifstringequal{\TypPrace}{DP}{\def\Praci{diplomovú prácu }}{}
-				 \def\PodekovaniText{Poďakovanie}
-				 \def\bibnamex{Použitá literatúra}
-				 \renewcommand*{\lstlistlistingname}{Zoznam zdrojových kódov}
-				 \def\lstlistingname{Výpis}
-}{}
-
-\ifstringequal{\TypPrace}{BP}{\def\TypPraceText{\TypPraceBP}}{}
-\ifstringequal{\TypPrace}{DP}{\def\TypPraceText{\TypPraceDP}}{}
+\ifstringequal{\TypPrace}{BP}{\def\TypPraceText{\TypPraceBP}\def\Praci{bachelor thesis }}{}
+\ifstringequal{\TypPrace}{DP}{\def\TypPraceText{\TypPraceDP}\def\Praci{master thesis }}{}

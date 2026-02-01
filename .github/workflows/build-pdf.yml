@@ -1,0 +1,40 @@
+name: Build Thesis PDF
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Compile LaTeX
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: thesis.tex
+          latexmk_use_lualatex: false
+          latexmk_shell_escape: false
+
+      - name: Install Pandoc
+        run: sudo apt-get install -y pandoc
+
+      - name: Convert to Markdown
+        run: pandoc thesis.tex -o thesis.md --to gfm
+
+      - name: Generate TOC
+        run: |
+          npx doctoc thesis.md --github --title '## Table of Contents'
+          sed -i 's/^    - \[/- [/' thesis.md
+          sed -i 's/^      - \[/  - [/' thesis.md
+
+      - name: Commit PDF and Markdown
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Build thesis PDF and Markdown [skip ci]"
+          file_pattern: "thesis.pdf thesis.md"
