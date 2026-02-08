@@ -14,6 +14,13 @@
 %\renewcommand*{\multinamedelim}{, \addspace}             % ISO-690
 %\renewcommand*{\finalnamedelim}{\addspace a \addspace}   % ISO-690
 
+\DeclareCiteCommand{\parencite}[\mkbibparens]
+  {\usebibmacro{prenote}}
+  {\printtext[bibhyperref]{\usebibmacro{citeindex}%
+   \usebibmacro{cite}}}
+  {\multicitedelim}
+  {\usebibmacro{postnote}}
+
 \bibliography{bibliography}
 
 % Custom heading for aligned TOC entry (phantom numberline)
