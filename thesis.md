@@ -141,7 +141,7 @@ Faculty of Informatics and Statistics
 **A Data Integration Framework  
 for Enterprise Application Security**
 
-MASTER THESIS
+MASTER’S THESIS
 
 |                |                                                    |
 |---------------:|:---------------------------------------------------|
@@ -205,11 +205,11 @@ applications for exploitable weaknesses, and secret scanning tools
 identify exposed credentials in code.
 
 Further detection mechanisms need to be applied to software integration
-and deployment pipelines, which are prone to their own classes of
-threats. Increasingly, security teams employ mechanisms that identify
-problems before they even reach the version control system, either in
-the form of IDE plugins or as security context tools integrated into AI
-coding assistants like Github Copilot or Claude Code.
+and deployment pipelines that are prone to their own classes of threats.
+Increasingly, security teams employ mechanisms that identify problems
+before they even reach the version control system, either in the form of
+IDE plugins or as security context tools integrated into AI coding
+assistants like Github Copilot or Claude Code.
 
 In large enterprises, there may be dozens of such vulnerability
 detection tools, each producing findings through different
@@ -218,7 +218,7 @@ formats, and integration patterns .
 
 As application security architect in a large organization managing tens
 of thousands of code repositories and thousands of developers, I have
-witnessed firsthand how challenging it is to keep such complex
+witnessed firsthand how challenging it is to keep such a complex
 environment secure. Most notably:
 
 - Different detection tools of the same class capture different results
@@ -231,59 +231,146 @@ environment secure. Most notably:
   project or its threat exposure, both of which are critical
   determinants of how urgently a vulnerability needs to be remediated
 
-Why I chose this topic:
+- TODO more
 
-- my appsec experience, what I see as a problem + back it up with some
-  research
+I argue that the challenge of consolidating application security data
+is, at its core, a data engineering problem. While the industry is
+addressing this with commercial products categorized as
+<span acronym-label="aspm" acronym-form="singular+short">aspm</span>
+that offer dashboards and aggregated views, these solutions are
+proprietary, expensive, and inflexible. They introduce vendor lock-in
+and limit the ability of security teams to customize data pipelines,
+apply their own machine learning models, or integrate with internal
+systems on their own terms.
 
-- explain that fundamentally, ASPM+VMDR are data problems, and having
-  control over the data layer makes sense
+The most notable open-source alternative, DefectDojo, takes a different
+approach: it is a Django-based web application designed primarily as a
+vulnerability management interface. However, it was not built with a
+data-first architecture in mind. Its scaling capabilities are limited by
+the constraints of a traditional relational database backend, and its
+data ingestion model relies predominantly on push-based integrations or
+manual report uploads. Pull-based connectors that actively fetch data
+from security tool <span acronym-label="api"
+acronym-form="plural+short">apis</span> are available only in the
+commercial DefectDojo Pro offering, further fragmenting the landscape
+between open and proprietary solutions.
 
-- security vendor agnostic solution doesn’t exist (there’s DefectDojo
-  but it’s "just" a Django web app without proper data architecture,
-  limited scaling abilities, no data pull capability, need to push with
-  custom integration or upload results manually - DefectDojo Pro
-  required for that)
+What is missing is a vendor-agnostic, data-first framework that treats
+application security data as a first-class data engineering problem. One
+that provides a reusable architecture for ingestion, normalization,
+deduplication, and serving of security findings at enterprise scale.
+This thesis aims to fill that gap.
 
 ### Objective
 
-Main goal: design and implement the model and pipeline (needs to be
-precisely formulated)
+The main goal of this thesis is to design and implement a
+vendor-agnostic data integration framework for enterprise application
+security. The framework consolidates security findings from
+heterogeneous tools into a unified data platform, enabling consistent
+normalization, deduplication, triage, and correlation of vulnerabilities
+across business applications.
 
-Subgoals:
+To achieve this goal, I define the following subgoals:
 
-- Summarize existing literature in ch1
+1.  **Literature review**
+    (<a href="#ch:literature-review" data-reference-type="autoref"
+    data-reference="ch:literature-review">[ch:literature-review]</a>):
+    Survey existing literature across three domains: software
+    development practices, application security, and data engineering.
+    Identify the theoretical foundations and the gap that motivates this
+    work.
 
-- Analyze appsec domain, expectations from the framework, produce a
-  requirements specification in ch2
+2.  **Requirement specification**
+    (<a href="#ch:requirement-analysis" data-reference-type="autoref"
+    data-reference="ch:requirement-analysis">[ch:requirement-analysis]</a>):
+    Analyze the application security domain to identify personas, data
+    sources, required data transformations, data consumers, and
+    non-functional requirements. Produce a requirements specification
+    for the framework, with the full specification included in the
+    appendix.
 
-- In ch3, propose a reusable and extensible framework, domain driven
-  design (name things as they are in appsec world), accommodating both
-  OLTP and OLAP requirements, streaming for time critical use cases?
+3.  **Architecture**
+    (<a href="#ch:architecture" data-reference-type="autoref"
+    data-reference="ch:architecture">[ch:architecture]</a>): Propose a
+    reusable and extensible architecture that satisfies both analytical
+    and transactional use cases.
 
-- Validate output of ch3 build a reference implementation of the
-  framework in Databricks using Claude Code and Databricks AI Assistant
+4.  **Pipeline and model design**
+    (<a href="#ch:design" data-reference-type="autoref"
+    data-reference="ch:design">[ch:design]</a>): Design the data model
+    and processing pipeline following the medallion architecture
+    pattern .
 
-- Evaluate whether feasible/usable as a product + possible future
-  improvements
+5.  **Implementation and validation**
+    (<a href="#ch:implementation" data-reference-type="autoref"
+    data-reference="ch:implementation">[ch:implementation]</a>): Use
+    AI-assisted coding to build a reference implementation on the
+    Databricks platform  and validate it against the requirements
+    specification through automated testing with requirement
+    traceability.
 
 ### Methodology
 
-Methodology + outline hypotheses?
+This thesis follows a design-science research methodology , structured
+into three phases.
 
-- First a quick review of existing literature and resources - include
-  vendor documentation as it will need to be referenced later
+In the first phase, I conduct a **literature review** of academic and
+industry sources across three domains: software development practices
+and lifecycle, application security tools and standards, and data
+engineering approaches, including data architecture and pipeline design.
+This review establishes the theoretical foundation for the framework and
+includes vendor documentation for the technologies used in the
+implementation.
 
-- Requirement analysis - document req’s for an appsec integration
-  framework, what it should have
+In the second phase, I perform a **requirements analysis and design**. I
+analyze the application security landscape to identify the key personas,
+data sources, required transformations, and non-functional requirements.
+Requirements are prioritized using the MoSCoW method. Based on the
+requirements, I propose an architecture and design a data model with a
+medallion-based processing pipeline.
 
-- Design, implement, evaluate the framework
+In the third phase, I build a **reference implementation** on the
+Databricks platform to demonstrate feasibility of the proposed design. I
+validate the implementation through automated tests with requirement
+traceability, mapping individual tests to requirements, and through data
+quality expectations enforced by <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span>.
 
-Outline main results/outcomes of the thesis: business impact is that
-security teams can self-service deploy their data and ML pipeline and
-not rely on vendors’ proprietary data design
+The thesis delivers three distinct contributions:
+
+1.  A **requirements specification** for an application security data
+    platform that other organizations can adapt to their own needs.
+
+2.  A **reusable design** covering architecture, data model, and
+    pipeline that is not tied to a specific platform or vendor.
+
+3.  A **reference implementation** on Databricks that proves the
+    feasibility of the design and serves as a starting point for
+    production deployments.
 
 ### Structure
+
+This thesis is organized as follows.
+<a href="#ch:literature-review" data-reference-type="autoref"
+data-reference="ch:literature-review">[ch:literature-review]</a> surveys
+the relevant literature on software development, application security,
+and data engineering, and identifies the research gap.
+<a href="#ch:requirement-analysis" data-reference-type="autoref"
+data-reference="ch:requirement-analysis">[ch:requirement-analysis]</a>
+defines the personas, data sources, transformations, consumers, and
+non-functional requirements, culminating in a prioritized requirements
+specification. <a href="#ch:architecture" data-reference-type="autoref"
+data-reference="ch:architecture">[ch:architecture]</a> presents the
+platform architecture, including technology selection and component
+design. <a href="#ch:design" data-reference-type="autoref"
+data-reference="ch:design">[ch:design]</a> details the medallion-based
+data model and pipeline transformations across the bronze, silver, and
+gold layers. <a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a> describes the
+reference implementation on Databricks, covering connector development,
+pipeline orchestration, and testing. The Conclusion evaluates the
+outcomes against the objectives defined above, discusses limitations,
+and suggests directions for future work.
 
 ## Literature Review
 
