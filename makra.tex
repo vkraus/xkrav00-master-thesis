@@ -89,6 +89,8 @@
 \setlength\cftbeforechapskip{1.5ex}
 \setlength\cftfigindent{0pt}
 \setlength\cfttabindent{0pt}
+\setlength\cftbeforefigskip{0pt}
+\setlength\cftbeforetabskip{0pt}
 \setlength\cftbeforeloftitleskip{0pt}
 \setlength\cftbeforelottitleskip{0pt}
 \setlength\cftbeforetoctitleskip{0pt}
@@ -100,6 +102,10 @@
 % differentiation of new paragraphs
 \parindent=0pt
 \parskip=11pt
+
+% Fix list of figures/tables spacing (must be after parskip is set)
+\setlength\cftbeforefigskip{-11pt}
+\setlength\cftbeforetabskip{-11pt}
 
 % zakaz vdov a sirotku - jednoradkovych pocatku ci koncu odstavcu na prechodu mezi strankami
 % Prohibition of widows and orphans - single-line beginning and end of paragraph at the transition between pages
