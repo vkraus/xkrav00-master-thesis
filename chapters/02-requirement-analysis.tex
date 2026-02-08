@@ -1,7 +1,71 @@
-\chapter{Requirement Analysis and Specification}
+\chapter{Requirement Analysis}
 \label{ch:requirement-analysis}
 
-The goal of this chapter is to produce a requirements specification which we will later use to...
+The goal of this chapter is to conduct a requirement analysis and produce a structured requirements specification which we will later use to design the data framework.
+
+%%%%%%%%%%%
+%%% 2.1 %%%
+%%%%%%%%%%%
+
+\section{Requirements Methodology}
+
+Requirements are gathered through application security domain analysis, drawing from my personal experience, consultations with my professional network, and by having researched literature and industry reports in \autoref{ch:literature-review}.
+
+This thesis adopts a test-bound approach to requirements traceability. Rather than maintaining disconnected requirement documents that are prone to becoming stale, implementation status is derived directly from test execution results.
+
+\subsection{Specification Format}
+
+Each requirement is assigned a unique identifier following the pattern \texttt{REQ-AREA-NNN}, where:
+\begin{itemize}
+    \item \texttt{AREA} indicates the functional domain (ING for ingestion, PROC for processing, SRV for serving)
+    \item \texttt{NNN} is a sequential number within that domain
+\end{itemize}
+
+\subsection{Requirement Prioritization}
+
+Requirements are documented with priority using the MoSCoW method (Must Have, Should Have, Could Have, Won't Have).
+
+\subsection{Test-to-Requirement Linking}
+
+The framework employs two complementary verification mechanisms aligned with Databricks development patterns.
+
+\subsubsection{Unit and Integration Tests}
+
+Python modules containing connector logic and transformation functions are tested using pytest with custom requirement markers. \autoref{code:req-marker} demonstrates how tests reference requirement IDs.
+
+\begin{code}{Python}{Requirement Marker Example}{code:req-marker}
+@pytest.mark.requirement("REQ-ING-002")
+def test_sonarqube_pagination():
+    """Validate pagination handling for large result sets."""
+    ...
+\end{code}
+
+\subsubsection{Data Quality Expectations}
+
+Data quality requirements are verified using Delta Live Tables expectations, which execute during pipeline runs. \autoref{code:dlt-expectation} shows how expectations map to requirements via code comments.
+
+\begin{code}{Python}{DLT Expectation Example}{code:dlt-expectation}
+@dlt.table
+@dlt.expect_or_fail("valid_severity", "severity IN ('critical', 'high', 'medium', 'low')")
+@dlt.expect("has_finding_id", "finding_id IS NOT NULL")
+def silver_findings():
+    # REQ-NFR-001: Data Quality Validation
+    return transform_findings(dlt.read("bronze_raw"))
+\end{code}
+
+Expectation results are captured in the pipeline event log and reflected in requirement status.
+
+\subsection{Traceability Generation}
+
+A generator script produces the traceability matrix by:
+\begin{enumerate}
+    \item Scanning test files for \texttt{@pytest.mark.requirement} markers
+    \item Parsing DLT pipeline code for expectation comments referencing requirement IDs
+    \item Collecting pytest results and DLT pipeline event logs
+    \item Merging with requirement descriptions from specification
+\end{enumerate}
+
+
 
 Appsec vendors, products and their capabilities, APIs and their maturity/completeness
 
@@ -9,7 +73,7 @@ Capture data formats and integration patterns of the tools
 
 
 %%%%%%%%%%%
-%%% 2.1 %%%
+%%% 2.2 %%%
 %%%%%%%%%%%
 
 \section{Personas}
@@ -29,10 +93,18 @@ Including security compliance / auditors
 Dashboards, metrics, trends, quantified risk
 
 %%%%%%%%%%%
-%%% 2.2 %%%
+%%% 2.3 %%%
 %%%%%%%%%%%
 
 \section{Data Sources}
+
+\subsection{Application Inventory}
+
+Start with looking at things from a business application perspective
+
+Business application inventory + business impact assessment
+
+source systems: 
 
 \subsection{Tools for Software Development and Delivery}
 
@@ -58,15 +130,9 @@ Also how secure is it (infra VMDR like Qualys, Wiz...) can impact risk of app vu
 
 How to get data from Kubernetes, Docker even if on prem
 
-\subsection{Application Inventory}
-
-Start with looking at things from a business application perspective
-
-Business application inventory + business impact assessment
-
-source systems: Primary vulnerability discovery tools (secret scanning, , , ...)
-
 \subsection{Security Testing Tools}
+
+Primary vulnerability discovery tools (secret scanning, , , ...)
 
 \subsubsection{Secret Scanning Tools}
 
@@ -88,7 +154,7 @@ Need a way to upload manual findings, e.g. PDF report from external pentesters
 
 
 %%%%%%%%%%%
-%%% 2.3 %%%
+%%% 2.4 %%%
 %%%%%%%%%%%
 
 \section{Data Transformations}
@@ -111,24 +177,27 @@ When 2 tools find the same thing, link it, don't create 2 issues
 
 
 %%%%%%%%%%%
-%%% 2.4 %%%
+%%% 2.5 %%%
 %%%%%%%%%%%
 
 \section{Data Consumers}
 
+%%% 2.5.1 %%%
 \subsection{Remediation Tracking Systems}
 
 Jira, ServiceNow
 
+%%% 2.5.2 %%%
 \subsection{Application Security Posture Management (ASPM)}
 
 Can pull from data platform already cleaned data instead of from each source separately
 
+%%% 2.5.3 %%%
 \subsection{SOAR and SIEM}
 
 
 %%%%%%%%%%%
-%%% 2.5 %%%
+%%% 2.6 %%%
 %%%%%%%%%%%
 
 \section{Non-Functional Requirements}
@@ -139,7 +208,7 @@ Data validations and transformations on input are critical
 
 \subsection{Extensibility}
 
-Important feature of the whole framework
+Important feature of the whole framework, especially on data source integrations and ML models
 
 \subsection{Scalability}
 
@@ -159,10 +228,18 @@ SaaS preferred over manual maintenance - Databricks is ideal
 
 All source code versioned in git and following best practices
 
+
+
 %%%%%%%%%%%
-%%% 2.6 %%%
+%%% 2.8 %%%
 %%%%%%%%%%%
 
-\section{Requirement Prioritization}
+\section{Requirement Specification}
 
-MoSCoW method
+\subsection{Data Ingestion}
+
+\subsection{Data Processing}
+
+\subsection{Data Serving}
+
+\subsection{Non-Functional Requirements}

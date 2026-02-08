@@ -1,9 +1,9 @@
-\chapter{Architecture}
+\chapter{Solution Architecture}
 \label{ch:architecture}
 
 generic concepts and open industry standards instead of proprietary concepts/technology unless necessary
 
-Needs to support both OLTP/OLAP use cases based on requirements
+Needs to support both OLTP/OLAP use cases on data serving tier 
 
 %%%%%%%%%%%
 %%% 3.1 %%%
@@ -27,13 +27,25 @@ It needs to be ready to support an application security management dashboard wit
 
 What I'm choosing and why, what were the alternatives and reasons not to choose them
 
-I will use \gls{dltables}, a data engineering pipeline framework running on top of Delta Lake that combines incremental ingestion, streamlined ETL, and automated data quality processes such as expectations \cite{Lee2024}. The advantage of \gls{dltables} is...
+\subsection{Data Engineering Platform}
 
+Choosing \textbf{Databricks} over Snowflake, Fabric, BigQuery
 
+Contains a strong data governance framework - \textbf{Unity Catalog}, good for security non-functional requirement
 
-Connectors - dlt, Fivetran?, Databricks Partners?
+\subsection{Pipeline Framework}
 
-I use \gls{dltool} to ingest data from security tools into the Bronze layer. The code snippet \ref{code:github-connector} shows an example implementation of a connector for GitHub security data.
+I will use \gls{dltables}, a "data engineering pipeline framework running on top of Delta Lake that combines incremental ingestion, streamlined ETL, and automated data quality processes such as expectations" \cite{Lee2024}.
+
+The advantages of \gls{dltables} are...
+
+\subsection{Connectors}
+
+(general plan, more details in Integration Architecture)
+
+dlt, Fivetran?, Databricks Partners?
+
+\gls{dltool} is utilized to ingest data from security tools into the Bronze layer. Source code~\ref{code:github-connector} shows an example implementation of a connector for GitHub security data.
 
 \begin{code}{Python}{GitHub Security Connector Implementation}{code:github-connector}
 import dlt
@@ -61,8 +73,6 @@ def github_security_source(org: str, token: str):
     return repos, code_scanning_alerts, dependabot_alerts
 \end{code}
 
-Databricks
-
 Unity Catalog
 
 Delta Lake
@@ -81,99 +91,9 @@ Python vs Scala vs SQL
 %%%%%%%%%%%
 \section{Component Design}
 
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}[
-    node distance=0.6cm and 0.5cm,
-    tier/.style={rectangle, draw=black!40, fill=gray!8, minimum width=11cm, minimum height=1.2cm, rounded corners=3pt},
-    tierbox/.style={rectangle, draw=black!60, fill=white, minimum width=2.4cm, minimum height=0.7cm, font=\small},
-    source/.style={rectangle, draw=black!50, fill=gray!15, minimum width=1.5cm, minimum height=0.6cm, font=\footnotesize, rounded corners=2pt},
-    external/.style={rectangle, draw=black!50, fill=blue!8, minimum width=2.2cm, minimum height=0.7cm, font=\small, rounded corners=2pt},
-    consumer/.style={rectangle, draw=black!50, fill=gray!15, minimum width=1.8cm, minimum height=0.6cm, font=\footnotesize, rounded corners=2pt},
-    arrow/.style={-{Stealth[length=2mm]}, thick, black!60},
-    tierlabel/.style={font=\small\bfseries, text=black!70},
-    bronze/.style={fill={rgb,255:red,159;green,122;blue,52}, fill opacity=0.35, text=black, text opacity=1},
-    silver/.style={fill={rgb,255:red,192;green,192;blue,192}, fill opacity=0.4, text=black, text opacity=1},
-    gold/.style={fill={rgb,255:red,212;green,175;blue,55}, fill opacity=0.35, text=black, text opacity=1},
-]
+See Figure~\ref{fig:component-design}
 
-% External Sources - centered row
-\node[source] (snyk) {Snyk};
-\node[source, left=0.4cm of snyk] (sonar) {SonarQube};
-\node[source, left=0.4cm of sonar] (github) {GitHub};
-\node[source, right=0.4cm of snyk] (nvd) {NVD};
-\node[source, right=0.4cm of nvd] (other) {...};
-\node[above=0.15cm of snyk, font=\small\bfseries, text=black!70] {Data Sources};
-
-% Fivetran (external) - centered below sources
-\node[external, below=0.7cm of snyk] (fivetran) {Fivetran};
-
-% Ingestion Tier
-\node[tier, below=0.7cm of fivetran] (ingestion-bg) {};
-\node[tierlabel, left] at (ingestion-bg.west) {Ingestion};
-\node[tierbox] at ($(ingestion-bg.center) + (-3.2cm,0)$) (fiv-conn) {Fivetran Conn.};
-\node[tierbox] at (ingestion-bg.center) {dlt Connectors};
-\node[tierbox] at ($(ingestion-bg.center) + (3.2cm,0)$) {Custom APIs};
-
-% Processing Tier
-\node[tier, below=0.5cm of ingestion-bg, minimum height=1.3cm] (processing-bg) {};
-\node[tierlabel, left] at (processing-bg.west) {Processing};
-\node[tierbox, bronze, minimum width=2.8cm] at ($(processing-bg.center) + (-3.2cm,0)$) (bronze) {Bronze};
-\node[tierbox, silver, minimum width=2.8cm] at (processing-bg.center) (silver) {Silver};
-\node[tierbox, gold, minimum width=2.8cm] at ($(processing-bg.center) + (3.2cm,0)$) (gold) {Gold};
-
-% Serving Tier
-\node[tier, below=0.5cm of processing-bg] (serving-bg) {};
-\node[tierlabel, left] at (serving-bg.west) {Serving};
-\node[tierbox] at ($(serving-bg.center) + (-1.8cm,0)$) {Lakebase};
-\node[tierbox] at ($(serving-bg.center) + (1.8cm,0)$) {REST API};
-
-% Consumers
-\node[consumer, below=0.7cm of serving-bg] (aspm) {ASPM};
-\node[consumer, left=0.3cm of aspm] (jira) {Jira};
-\node[consumer, right=0.3cm of aspm] (siem) {SIEM};
-\node[below=0.15cm of aspm, font=\small\bfseries, text=black!70] {Data Consumers};
-
-% Arrows from sources - clean vertical drops
-% Sources that go through Fivetran
-\draw[arrow] (github.south) -- ++(0,-0.25) -| ($(fivetran.north) + (-0.5cm,0)$);
-\draw[arrow] (sonar.south) -- ++(0,-0.25) -| ($(fivetran.north) + (0.5cm,0)$);
-
-% Fivetran to its connector
-\draw[arrow] (fivetran.south) -- (fiv-conn.north);
-
-% Sources that go directly to ingestion (bypass Fivetran)
-\draw[arrow] (snyk.south) -- ($(ingestion-bg.north) + (0,0)$);
-\draw[arrow] (nvd.south) -- ++(0,-1.05) -| ($(ingestion-bg.north) + (1.8cm,0)$);
-\draw[arrow] (other.south) -- ++(0,-1.05) -| ($(ingestion-bg.north) + (2.8cm,0)$);
-
-% Tier arrows
-\draw[arrow] (ingestion-bg.south) -- (processing-bg.north);
-\draw[arrow] (processing-bg.south) -- (serving-bg.north);
-
-% Internal processing arrows
-\draw[arrow] (bronze.east) -- (silver.west);
-\draw[arrow] (silver.east) -- (gold.west);
-
-% To consumers
-\draw[arrow] ($(serving-bg.south) + (-1.2cm,0)$) -- ++(0,-0.25) -| (jira.north);
-\draw[arrow] (serving-bg.south) -- (aspm.north);
-\draw[arrow] ($(serving-bg.south) + (1.2cm,0)$) -- ++(0,-0.25) -| (siem.north);
-
-% Databricks boundary
-\begin{scope}[on background layer]
-\node[draw=black!30, fill=gray!3, rounded corners=5pt, fit=(ingestion-bg)(processing-bg)(serving-bg), inner sep=8pt, label={[font=\footnotesize\bfseries, text=black!50]above right:Databricks Platform}] {};
-\end{scope}
-
-\end{tikzpicture}
-\caption{Pipeline Architecture}
-\label{fig:pipeline-architecture}
-\end{figure}
-
-
-
-
-
+\input{figures/component-design}
 
 \subsection{Data Ingestion Tier}
 
@@ -213,6 +133,15 @@ Databricks Partner
 
 dlt as default tool for custom connectors to REST APIs
 
+\subsubsection{Application Inventory}
+
+\subsubsection{ServiceNow CMDB}
+
+Call ServiceNow API vs build ServiceNow app
+
+
+
+\subsubsection{}
 
 %%%%%%%%%%%
 %%% 3.7 %%%

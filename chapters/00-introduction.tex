@@ -4,6 +4,20 @@
 \section*{Motivation}
 \addcontentsline{toc}{section}{\protect\numberline{}Motivation}
 
+To protect business-critical applications from cybersecurity threats, security teams need to use a large set of application security tools: \gls{sast} scanners analyze source code for vulnerabilities, \gls{sca} tools detect issues in software dependencies, \gls{dast} solutions scan running applications for exploitable weaknesses, and secret scanning tools identify exposed credentials in code.
+
+Further detection mechanisms need to be applied to software integration and deployment pipelines, which are prone to their own classes of threats. Increasingly, security teams employ mechanisms that identify problems before they even reach the version control system, either in the form of IDE plugins or as security context tools integrated into AI coding assistants like Github Copilot or Claude Code.
+
+In large enterprises, there may be dozens of such vulnerability detection tools, each producing findings through different \glspl{api}, data formats, and integration patterns \cite{Anderson2020, Stallings2024}.
+
+As application security architect in a large organization managing tens of thousands of code repositories and thousands of developers, I have witnessed firsthand how challenging it is to keep such complex environment secure. Most notably:
+\begin{itemize}
+    \item Different detection tools of the same class capture different results as they employ different fundamental scanning paradigms
+    \item The same vulnerability may be reported by multiple tools, requiring careful deduplication
+    \item Findings lack context regarding business criticality of the software project or its threat exposure, both of which are critical determinants of how urgently a vulnerability needs to be remediated
+    
+\end{itemize}
+
 Why I chose this topic:
 \begin{itemize}
     \item my appsec experience, what I see as a problem + back it up with some research
@@ -19,7 +33,7 @@ Main goal: design and implement the model and pipeline (needs to be precisely fo
 Subgoals:
 \begin{itemize}
     \item Summarize existing literature in ch1
-    \item Analyze appsec domain, expectations from the framework, produce a requirements specification in ch2 and include full spec in App A
+    \item Analyze appsec domain, expectations from the framework, produce a requirements specification in ch2
     \item In ch3, propose a reusable and extensible framework, domain driven design (name things as they are in appsec world), accommodating both OLTP and OLAP requirements, streaming for time critical use cases?
     \item Validate output of ch3 build a reference implementation of the framework in Databricks using Claude Code and Databricks AI Assistant
     \item Evaluate whether feasible/usable as a product + possible future improvements
