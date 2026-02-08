@@ -14,26 +14,33 @@
 - [Software Development Literature](#software-development-literature)
   - [Source Code Management](#source-code-management)
   - [Software Development Lifecycle](#software-development-lifecycle)
+  - [Application Security Data Standards](#application-security-data-standards)
 - [Application Security Literature](#application-security-literature)
   - [Code Security](#code-security)
   - [Software Supply Chain Security](#software-supply-chain-security)
   - [Software Lifecycle Security](#software-lifecycle-security)
   - [Application Penetration Testing](#application-penetration-testing)
-  - [Application Security Data Standards](#application-security-data-standards)
 - [Data Modeling and Engineering Literature](#data-modeling-and-engineering-literature)
   - [Data Architecture](#data-architecture)
   - [Data Modeling and Pipelines](#data-modeling-and-pipelines)
 - [Related Work and Gap Analysis](#related-work-and-gap-analysis)
-  - [Requirement Analysis and Specification](#requirement-analysis-and-specification)
+  - [Requirement Analysis](#requirement-analysis)
+- [Requirements Methodology](#requirements-methodology)
+  - [Specification Format](#specification-format)
+  - [Requirement Prioritization](#requirement-prioritization)
+  - [Test-to-Requirement Linking](#test-to-requirement-linking)
+        - [Unit and Integration Tests](#unit-and-integration-tests)
+        - [Data Quality Expectations](#data-quality-expectations)
+  - [Traceability Generation](#traceability-generation)
 - [Personas](#personas)
   - [Application Owners](#application-owners)
   - [Application Developers](#application-developers)
   - [Security Experts](#security-experts)
   - [Development and Security Leadership](#development-and-security-leadership)
 - [Data Sources](#data-sources)
+  - [Application Inventory](#application-inventory)
   - [Tools for Software Development and Delivery](#tools-for-software-development-and-delivery)
   - [Runtime Infrastructure Platforms and Security Tools](#runtime-infrastructure-platforms-and-security-tools)
-  - [Application Inventory](#application-inventory)
   - [Security Testing Tools](#security-testing-tools)
         - [Secret Scanning Tools](#secret-scanning-tools)
         - [Static Application Security Testing (SAST) Tools](#static-application-security-testing-sast-tools)
@@ -57,11 +64,18 @@
   - [Performance](#performance)
   - [Security](#security)
   - [Maintainability](#maintainability)
-- [Requirement Prioritization](#requirement-prioritization)
-  - [Architecture](#architecture)
+- [Requirement Specification](#requirement-specification)
+  - [Data Ingestion](#data-ingestion)
+  - [Data Processing](#data-processing)
+  - [Data Serving](#data-serving)
+  - [Non-Functional Requirements](#non-functional-requirements-1)
+  - [Solution Architecture](#solution-architecture)
 - [Architecture Context](#architecture-context)
 - [Architecture Principles and Constraints](#architecture-principles-and-constraints)
 - [Technology Selection](#technology-selection)
+  - [Data Engineering Platform](#data-engineering-platform)
+  - [Pipeline Framework](#pipeline-framework)
+  - [Connectors](#connectors)
 - [High-Level Solution Architecture](#high-level-solution-architecture)
 - [Component Design](#component-design)
   - [Data Ingestion Tier](#data-ingestion-tier)
@@ -71,6 +85,9 @@
   - [Data Serving Tier](#data-serving-tier)
 - [Integration Architecture](#integration-architecture)
   - [Connector Strategy](#connector-strategy)
+        - [Application Inventory](#application-inventory-1)
+        - [ServiceNow CMDB](#servicenow-cmdb)
+        - [](#)
 - [Extensibility Architecture](#extensibility-architecture)
 - [Security Architecture](#security-architecture)
   - [Pipeline and Model Design](#pipeline-and-model-design)
@@ -95,7 +112,7 @@
 - [Connector Implementation](#connector-implementation)
 - [Pipeline Implementation](#pipeline-implementation)
 - [Pipeline Orchestration](#pipeline-orchestration-1)
-- [Data Serving](#data-serving)
+- [Data Serving](#data-serving-1)
 - [Testing and Validation](#testing-and-validation)
   - [Conclusion](#conclusion)
 - [Thesis Outcomes and Contributions](#thesis-outcomes-and-contributions)
@@ -145,7 +162,7 @@ Prague, month YYYY
 
 ### Acknowledgements
 
-My sincere thanks go to Ing. Aleš Kotuč for his guidance and valuable
+I would like to thank Ing. Aleš Kotuč for his guidance and valuable
 feedback.
 
 ### Abstract
@@ -159,7 +176,7 @@ it difficult to consistently parse, deduplicate, triage, and group their
 findings. In large environments, additional challenges emerge when
 linking all findings to the corresponding business applications. This
 thesis presents a data framework to tackle those challenges, delivering
-three distinct contributions: (1) a requirement specification for an
+three distinct contributions: (1) a requirements specification for an
 application security data platform, (2) a reusable and extensible design
 covering architecture, data model, and medallion-based data pipeline,
 and (3) a reference implementation built on the Databricks platform.
@@ -176,6 +193,43 @@ integration, data consolidation, medallion architecture, Databricks
 ## Introduction
 
 ### Motivation
+
+To protect business-critical applications from cybersecurity threats,
+security teams need to use a large set of application security tools:
+<span acronym-label="sast" acronym-form="singular+short">sast</span>
+scanners analyze source code for vulnerabilities,
+<span acronym-label="sca" acronym-form="singular+short">sca</span> tools
+detect issues in software dependencies, <span acronym-label="dast"
+acronym-form="singular+short">dast</span> solutions scan running
+applications for exploitable weaknesses, and secret scanning tools
+identify exposed credentials in code.
+
+Further detection mechanisms need to be applied to software integration
+and deployment pipelines, which are prone to their own classes of
+threats. Increasingly, security teams employ mechanisms that identify
+problems before they even reach the version control system, either in
+the form of IDE plugins or as security context tools integrated into AI
+coding assistants like Github Copilot or Claude Code.
+
+In large enterprises, there may be dozens of such vulnerability
+detection tools, each producing findings through different
+<span acronym-label="api" acronym-form="plural+short">apis</span>, data
+formats, and integration patterns .
+
+As application security architect in a large organization managing tens
+of thousands of code repositories and thousands of developers, I have
+witnessed firsthand how challenging it is to keep such complex
+environment secure. Most notably:
+
+- Different detection tools of the same class capture different results
+  as they employ different fundamental scanning paradigms
+
+- The same vulnerability may be reported by multiple tools, requiring
+  careful deduplication
+
+- Findings lack context regarding business criticality of the software
+  project or its threat exposure, both of which are critical
+  determinants of how urgently a vulnerability needs to be remediated
 
 Why I chose this topic:
 
@@ -201,7 +255,7 @@ Subgoals:
 - Summarize existing literature in ch1
 
 - Analyze appsec domain, expectations from the framework, produce a
-  requirements specification in ch2 and include full spec in App A
+  requirements specification in ch2
 
 - In ch3, propose a reusable and extensible framework, domain driven
   design (name things as they are in appsec world), accommodating both
@@ -247,6 +301,21 @@ git book, software engineering at Google, ...
 
 Traditional vs devops and CI/CD pipelines, list books on each
 
+#### Application Security Data Standards
+
+Standard data formats for vulnerabilities like <span acronym-label="cve"
+acronym-form="singular+short">cve</span>
+
+SARIF, CycloneDX, OCSF
+
+Citing test , ,
+
+<span acronym-label="aspm" acronym-form="singular+short">aspm</span>
+mentioned for the first time, <span acronym-label="aspm"
+acronym-form="singular+short">aspm</span> mentioned second time.
+
+<span acronym-label="api" acronym-form="singular+short">api</span>
+
 ### Application Security Literature
 
 In this section we focus on literature which explains the domain in
@@ -264,21 +333,6 @@ Books on general appsec
 
 Good source of wisdom for defensive teams - let’s defend against what
 the attackers are doing
-
-#### Application Security Data Standards
-
-Standard data formats for vulnerabilities like <span acronym-label="cve"
-acronym-form="singular+short">cve</span>
-
-SARIF, CycloneDX, OCSF
-
-Citing test , ,
-
-<span acronym-label="aspm" acronym-form="singular+short">aspm</span>
-mentioned for the first time, <span acronym-label="aspm"
-acronym-form="singular+short">aspm</span> mentioned second time.
-
-<span acronym-label="api" acronym-form="singular+short">api</span>
 
 ### Data Modeling and Engineering Literature
 
@@ -312,10 +366,94 @@ Does DefectDojo have any useful models?
 <span acronym-label="aspm" acronym-form="singular+short">aspm</span>
 exists but not data oriented and not very customizable
 
-## Requirement Analysis and Specification
+## Requirement Analysis
 
-The goal of this chapter is to produce a requirements specification
-which we will later use to...
+The goal of this chapter is to conduct a requirement analysis and
+produce a structured requirements specification which we will later use
+to design the data framework.
+
+### Requirements Methodology
+
+Requirements are gathered through application security domain analysis,
+drawing from my personal experience, consultations with my professional
+network, and by having researched literature and industry reports in
+<a href="#ch:literature-review" data-reference-type="autoref"
+data-reference="ch:literature-review">[ch:literature-review]</a>.
+
+This thesis adopts a test-bound approach to requirements traceability.
+Rather than maintaining disconnected requirement documents that are
+prone to becoming stale, implementation status is derived directly from
+test execution results.
+
+#### Specification Format
+
+Each requirement is assigned a unique identifier following the pattern
+`REQ-AREA-NNN`, where:
+
+- `AREA` indicates the functional domain (ING for ingestion, PROC for
+  processing, SRV for serving)
+
+- `NNN` is a sequential number within that domain
+
+#### Requirement Prioritization
+
+Requirements are documented with priority using the MoSCoW method (Must
+Have, Should Have, Could Have, Won’t Have).
+
+#### Test-to-Requirement Linking
+
+The framework employs two complementary verification mechanisms aligned
+with Databricks development patterns.
+
+##### Unit and Integration Tests
+
+Python modules containing connector logic and transformation functions
+are tested using pytest with custom requirement markers.
+<a href="#code:req-marker" data-reference-type="autoref"
+data-reference="code:req-marker">[code:req-marker]</a> demonstrates how
+tests reference requirement IDs.
+
+<div class="code">
+
+PythonRequirement Marker Examplecode:req-marker
+@pytest.mark.requirement("REQ-ING-002") def test_sonarqube_pagination():
+"""Validate pagination handling for large result sets.""" ...
+
+</div>
+
+##### Data Quality Expectations
+
+Data quality requirements are verified using Delta Live Tables
+expectations, which execute during pipeline runs.
+<a href="#code:dlt-expectation" data-reference-type="autoref"
+data-reference="code:dlt-expectation">[code:dlt-expectation]</a> shows
+how expectations map to requirements via code comments.
+
+<div class="code">
+
+PythonDLT Expectation Examplecode:dlt-expectation @dlt.table
+@dlt.expect_or_fail("valid_severity", "severity IN (’critical’, ’high’,
+’medium’, ’low’)") @dlt.expect("has_finding_id", "finding_id IS NOT
+NULL") def silver_findings(): \# REQ-NFR-001: Data Quality Validation
+return transform_findings(dlt.read("bronze_raw"))
+
+</div>
+
+Expectation results are captured in the pipeline event log and reflected
+in requirement status.
+
+#### Traceability Generation
+
+A generator script produces the traceability matrix by:
+
+1.  Scanning test files for `@pytest.mark.requirement` markers
+
+2.  Parsing DLT pipeline code for expectation comments referencing
+    requirement IDs
+
+3.  Collecting pytest results and DLT pipeline event logs
+
+4.  Merging with requirement descriptions from specification
 
 Appsec vendors, products and their capabilities, APIs and their
 maturity/completeness
@@ -339,6 +477,14 @@ Including security compliance / auditors
 Dashboards, metrics, trends, quantified risk
 
 ### Data Sources
+
+#### Application Inventory
+
+Start with looking at things from a business application perspective
+
+Business application inventory + business impact assessment
+
+source systems:
 
 #### Tools for Software Development and Delivery
 
@@ -364,16 +510,9 @@ of app vulns if they run on vulnerable infra too
 
 How to get data from Kubernetes, Docker even if on prem
 
-#### Application Inventory
-
-Start with looking at things from a business application perspective
-
-Business application inventory + business impact assessment
-
-source systems: Primary vulnerability discovery tools (secret scanning,
-, , ...)
-
 #### Security Testing Tools
+
+Primary vulnerability discovery tools (secret scanning, , , ...)
 
 ##### Secret Scanning Tools
 
@@ -433,7 +572,8 @@ Data validations and transformations on input are critical
 
 #### Extensibility
 
-Important feature of the whole framework
+Important feature of the whole framework, especially on data source
+integrations and ML models
 
 #### Scalability
 
@@ -453,16 +593,22 @@ SaaS preferred over manual maintenance - Databricks is ideal
 
 All source code versioned in git and following best practices
 
-### Requirement Prioritization
+### Requirement Specification
 
-MoSCoW method
+#### Data Ingestion
 
-## Architecture
+#### Data Processing
+
+#### Data Serving
+
+#### Non-Functional Requirements
+
+## Solution Architecture
 
 generic concepts and open industry standards instead of proprietary
 concepts/technology unless necessary
 
-Needs to support both OLTP/OLAP use cases based on requirements
+Needs to support both OLTP/OLAP use cases on data serving tier
 
 ### Architecture Context
 
@@ -480,20 +626,33 @@ application also out of scope).
 What I’m choosing and why, what were the alternatives and reasons not to
 choose them
 
+#### Data Engineering Platform
+
+Choosing **Databricks** over Snowflake, Fabric, BigQuery
+
+Contains a strong data governance framework - **Unity Catalog**, good
+for security non-functional requirement
+
+#### Pipeline Framework
+
 I will use <span acronym-label="dltables"
-acronym-form="singular+short">dltables</span>, a data engineering
+acronym-form="singular+short">dltables</span>, a "data engineering
 pipeline framework running on top of Delta Lake that combines
 incremental ingestion, streamlined ETL, and automated data quality
-processes such as expectations . The advantage of
-<span acronym-label="dltables"
-acronym-form="singular+short">dltables</span> is...
+processes such as expectations" .
 
-Connectors - dlt, Fivetran?, Databricks Partners?
+The advantages of <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> are...
 
-I use <span acronym-label="dltool"
-acronym-form="singular+short">dltool</span> to ingest data from security
-tools into the Bronze layer. The code snippet
-<a href="#code:github-connector" data-reference-type="ref"
+#### Connectors
+
+(general plan, more details in Integration Architecture)
+
+dlt, Fivetran?, Databricks Partners?
+
+<span acronym-label="dltool" acronym-form="singular+short">dltool</span>
+is utilized to ingest data from security tools into the Bronze layer.
+Source code <a href="#code:github-connector" data-reference-type="ref"
 data-reference="code:github-connector">[code:github-connector]</a> shows
 an example implementation of a connector for GitHub security data.
 
@@ -520,8 +679,6 @@ return repos, code_scanning_alerts, dependabot_alerts
 
 </div>
 
-Databricks
-
 Unity Catalog
 
 Delta Lake
@@ -532,9 +689,12 @@ Python vs Scala vs SQL
 
 ### Component Design
 
-<figure id="fig:pipeline-architecture">
+See Figure <a href="#fig:component-design" data-reference-type="ref"
+data-reference="fig:component-design">3.1</a>
 
-<figcaption>Pipeline Architecture</figcaption>
+<figure id="fig:component-design">
+
+<figcaption>Component Design</figcaption>
 </figure>
 
 #### Data Ingestion Tier
@@ -577,6 +737,14 @@ https://github.com/DefectDojo/django-DefectDojo/tree/master/dojo/tools
 Databricks Partner
 
 dlt as default tool for custom connectors to REST APIs
+
+##### Application Inventory
+
+##### ServiceNow CMDB
+
+Call ServiceNow API vs build ServiceNow app
+
+##### 
 
 ### Extensibility Architecture
 
@@ -726,10 +894,11 @@ for this thesis.
 ### Text Content
 
 All textual content in this thesis was drafted and written exclusively
-by the author in `Overleaf Online LaTex editor` with logged history of
-incremental manual edits. For language revision, Overleaf AI Assist tool
-with OpenAI GPT language model was used and customized with following
-prompt:
+by the author in **Overleaf Online LaTex editor** with logged history of
+incremental manual edits.
+
+For language revision, Overleaf embedded **AI Assist tool** with
+**OpenAI GPT** language model was used with following custom prompt:
 
 ```
 Article usage rules:
@@ -744,13 +913,14 @@ Article usage rules:
 
 ### Diagrams and Figures
 
-All `TikZ` diagrams were generated by Claude Opus 4.5 (Anthropic)
-through iterative prompting. The author provided structural
-specifications, reviewed outputs, and requested modifications until
-diagrams accurately represented the intended architecture. An example
-prompt for
-Figure <a href="#fig:pipeline-architecture" data-reference-type="ref"
-data-reference="fig:pipeline-architecture">3.1</a>:
+All `TikZ` diagrams were generated by Anthropic **Claude Opus 4.5**
+model through iterative prompting. The author provided specifications,
+reviewed outputs, and iterated until the outcome met structural and
+visual requirements.
+
+An example prompt for
+Figure <a href="#fig:component-design" data-reference-type="ref"
+data-reference="fig:component-design">3.1</a>:
 
 ```
 Create a TikZ pipeline architecture diagram with vertical flow:
@@ -773,8 +943,7 @@ Style: Soft colors, rounded corners, compact layout.
 Implementation code was written by the author with assistance from:
 
 - **Claude Code** (Anthropic) with Opus 4.5 model for code generation,
-  review, and debugging. Custom skills installed: `vkraus/superpowers`
-  fork with embedded BDD skill and Databricks development skill.
+  review, and debugging.
 
 - **Databricks AI Assistant** for in-editor code debugging and SQL
   optimization.
