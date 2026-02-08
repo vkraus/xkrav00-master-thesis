@@ -217,6 +217,8 @@
 \do\X\do\Y\do\Z\do\1\do\2\do\3\do\4\do\5\do\6\do\7\do\8\do\9\do\0}
 \urlstyle{tt}
 
+\AtBeginDocument{\renewcommand{\chapterautorefname}{Chapter}}
+
 %%% Prostředí pro sazbu kódu, případně vstupu/výstupu počítačových
 %%% programů. (Vyžaduje balíček listings -- fancy verbatim.)
 %%% Environment for source code typesetting, or computer input/output
@@ -275,8 +277,8 @@
   \fi
 }
 
-\def\TypPraceBP{BACHELOR THESIS}
-\def\TypPraceDP{MASTER THESIS}
+\def\TypPraceBP{BACHELOR'S THESIS}
+\def\TypPraceDP{MASTER'S THESIS}
 \def\SeznamZkratek{List of abbreviations}
 \def\Prilohy{Appendices}
 \def\VSE{Prague University of Economics and Business}
@@ -293,5 +295,5 @@
 \def\lstlistingname{Source code}
 \ifdef{\finalnamedelim}{\renewcommand*{\finalnamedelim}{\addspace and \addspace}}%
 
-\ifstringequal{\TypPrace}{BP}{\def\TypPraceText{\TypPraceBP}\def\Praci{bachelor thesis }}{}
-\ifstringequal{\TypPrace}{DP}{\def\TypPraceText{\TypPraceDP}\def\Praci{master thesis }}{}
+\ifstringequal{\TypPrace}{BP}{\def\TypPraceText{\TypPraceBP}\def\Praci{bachelor's thesis }}{}
+\ifstringequal{\TypPrace}{DP}{\def\TypPraceText{\TypPraceDP}\def\Praci{master's thesis }}{}
