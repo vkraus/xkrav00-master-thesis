@@ -1,91 +1,138 @@
 \chapter{Literature Review}
 \label{ch:literature-review}
 
+This chapter presents the literature across three domains fundamental to this thesis. \autoref{sec:sw-dev-literature} reviews software development practices. \autoref{sec:appsec-literature} examines security testing approaches, tools, and data standards. \autoref{sec:data-literature} covers data architecture and engineering patterns. Finally, \autoref{sec:related-work} analyzes related work and identifies the gap this thesis addresses.
 
 %%%%%%%%%%%
 %%% 1.1 %%%
 %%%%%%%%%%%
 
-\section{Software Development Literature}
+\section{Software Development}
+\label{sec:sw-dev-literature}
 
-What process/activities are we securing with appsec?
+Before discussing how to secure software, it is necessary to define what modern software development entails. This section surveys the literature on software engineering practices and the \gls{sdlc}.
 
-Books like Code Complete, Clean Code, Pragmatic Programmer...
+\subsection{Software Engineering}
+
+\textcite{Sommerville2015} and \textcite{Pressman2019} provide comprehensive treatments of the field, covering requirements engineering, design, testing, and project management. At a more theoretical level, \textcite{Hoffman2001} collect Parnas's foundational papers on modularity and information hiding, while \textcite{Scott2015} offers a rigorous treatment of programming language design underpinning modern development tools.
+
+On the practical side, \textcite{McConnell2004} provides guidelines for software construction covering code quality and collaborative practices, \textcite{Martin2008} proposed principles of clean, maintainable code widely adopted in industry, and \textcite{Hunt2019} provided a broader pragmatic philosophy for professional development. \textcite{Oram2007} present practitioner essays on elegant solutions to real-world problems, illustrating the craft nature of software development. These works agree that software is built collaboratively from source code, organized in repositories, and deployed through increasingly automated pipelines.
 
 \subsection{Source Code Management}
 
-git book, software engineering at Google, ...
+\textcite{Chacon2014} provides a thorough treatment of Git, covering branching strategies, merging, and distributed workflows, while \textcite{Skoulikari2024} offers a more recent, visually oriented introduction. \textcite{Winters2020} extend this perspective to organizational scale, describing how Google manages a monolithic repository with tens of thousands of contributors. For this thesis, repositories are significant as the primary unit around which security findings are grouped and tracked, a relationship central to the data model in \autoref{ch:design}.
 
 \subsection{Software Development Lifecycle}
 
-Traditional vs devops and CI/CD pipelines, list books on each
+\gls{sdlc} focused literature documents a shift from sequential "waterfall" models to iterative methodologies and DevOps practices. \textcite{Forsgren2018} present empirical evidence that high-performing teams deploy more frequently with shorter lead times, achieved largely via \gls{cicd} automation. \textcite{Kim2021} complement this with practical guidance for implementing DevOps at scale, covering deployment pipelines and feedback loops. The resulting \gls{cicd} pipe\-line---an automated sequence of commit, build, test, and deploy stages---is directly relevant to this thesis: each stage is an integration point where security tools produce findings that the proposed framework consolidates.
 
 %%%%%%%%%%%
 %%% 1.2 %%%
 %%%%%%%%%%%
 
-\subsection{Application Security Data Standards}
+\section{Application Security}
+\label{sec:appsec-literature}
 
-Standard data formats for vulnerabilities like \gls{cve}
+This section reviews the literature across the application security domains relevant to this thesis and concludes with data standards for representing security findings.
 
-SARIF, CycloneDX, OCSF
-
-Citing test \cite{Anderson2020}, \cite{Strengholt2025},
-
-\gls{aspm} mentioned for the first time, \gls{aspm} mentioned second time.
-
-\Gls{api}
-
-\section{Application Security Literature}
-
-In this section we focus on literature which explains the domain in which we're solving identified problems.
-
-Books on general appsec
+\textcite{Anderson2020} provides broad coverage of security engineering, including threat models and software security. \textcite{Stallings2024} offer a comprehensive textbook on computer security principles. \textcite{McGraw2006} introduces software security activities like code review, architectural risk analysis, or penetration testing that should be embedded throughout the \gls{sdlc}, while \textcite{Howard2006} complement this with practical guidelines for defensive coding. \textcite{Shostack2014} addresses threat modeling as a structured approach to identifying security issues early in design. The OWASP Top~10~\parencite{OWASP2021} is a widely referenced classification of critical web application security risks that influences how many tools categorize their findings.
 
 \subsection{Code Security}
+\label{sec:code-security}
+
+\Gls{sast} examines source code, bytecode, or binary code for vulnerabilities without executing the program. \textcite{Chess2007} provide the foundational treatment of static analysis for security, covering taint analysis, control flow analysis, and pattern matching to detect injection flaws, buffer overflows, and insecure data handling.
+
+In practice, \gls{sast} is implemented by tools such as SonarQube, Checkmarx, Semgrep, and Fortify, which differ in detection approaches: rule-based pattern matching, data-flow analysis, or user-defined custom rules. As noted by \textcite{Chess2007}, a key challenge is the tradeoff between false positive rates and detection coverage. From a data integration perspective, each tool produces findings through different \glspl{api} and in different formats, a fragmentation that motivates the normalization layer proposed in this thesis.
 
 \subsection{Software Supply Chain Security}
+\label{sec:supply-chain-security}
+
+\Gls{sca} addresses vulnerabilities in third-party dependencies. Modern applications may include hundreds of transitive dependencies, and \textcite{Anderson2020} discusses the broader implications of supply chain trust, while \textcite{Ohm2020} provide a systematic review of open-source supply chain attacks including typosquatting, dependency confusion, and malicious package injection.
+
+\gls{sca} tools such as Snyk, Dependabot, and Mend analyze dependency manifests and cross-reference resolved versions against the \gls{nvd}. Several also generate a \gls{sbom}, a structured inventory of all software components, increasingly required by regulatory frameworks~\parencite{NTIA2021}. The \gls{sbom} concept is formalized through CycloneDX and \gls{spdx}, discussed further in \autoref{sec:data-standards}.
 
 \subsection{Software Lifecycle Security}
+\label{sec:lifecycle-security}
+
+The software lifecycle itself introduces security risks. Secret exposure (credentials, \gls{api} keys, and tokens committed to version control) is detected by tools such as GitLeaks, TruffleHog, and GitHub Secret Scanning, which scan commit history against known credential patterns and entropy-based heuristics.
+
+\gls{cicd} pipeline security is another concern: build systems execute arbitrary code, deployment pipelines hold production credentials, and artifact registries distribute compiled software. The SLSA framework~\parencite{SLSA2024} provides progressively stricter requirements for supply chain security, including build provenance and artifact integrity. These lifecycle tools produce findings that differ structurally from code-level vulnerabilities, adding complexity to data consolidation.
 
 \subsection{Application Penetration Testing}
+\label{sec:penetration-testing}
 
-Good source of wisdom for defensive teams - let's defend against what the attackers are doing
+\Gls{dast} and manual penetration testing examine running systems for exploitable vulnerabilities. \textcite{Stuttard2011} provide a comprehensive treatment of web application attack techniques, covering injection, authentication bypass, and business logic vulnerabilities, illustrating the attacker's perspective that informs what security data is most important to capture.
+
+Automated \gls{dast} tools such as OWASP ZAP and Burp Suite complement \gls{sast} by detecting vulnerabilities that manifest only at runtime. Manual penetration testing produces findings in unstructured formats, typically PDF reports, presenting a distinct integration challenge: while automated tools expose findings through \glspl{api}, manual results must be parsed or entered manually.
+
+\subsection{DevSecOps}
+\label{sec:devsecops}
+
+The DevSecOps paradigm~\parencite{Mack2023} extends DevOps by embedding security into every phase of the \gls{sdlc}, commonly called "shifting security left", integrating \gls{sast}, \gls{sca}, secret scanning, and \gls{dast} directly into \gls{cicd} pipelines \parencite{Kim2021}.
+
+The practical consequence is a significant increase in both volume and diversity of security data. An organization may operate dozens of tools across pipeline stages, each producing findings in different formats and severity models. \textcite{McGraw2006} anticipated this by advocating for security touchpoints spanning the entire lifecycle, but the tooling landscape has grown far beyond what a single touchpoint model can accommodate. This proliferation of fragmented security data is the core problem motivating the framework proposed in this thesis.
+
+\subsection{Application Security Data Standards}
+\label{sec:data-standards}
+
+Several standards bring consistency to how security findings are identified, scored, and exchanged.
+
+For identification and scoring, the \gls{cve} system~\parencite{MITRE2024} provides a standardized naming scheme for known vulnerabilities. The \gls{cvss}~\parencite{FIRST2019} scores severity based on attack vector, complexity, and impact, while the \gls{epss} complements it by estimating exploitation probability using \gls{ml} models trained on historical data~\parencite{Jacobs2021}.
+
+For findings interchange, \gls{sarif}~\parencite{OASIS2024} defines a \gls{json}-based format for static analysis results, supported by several \gls{sast} tools and GitHub. CycloneDX~\parencite{CycloneDX2024} and \gls{spdx}~\parencite{SPDX2024} provide schemas for \glspl{sbom} and associated vulnerability data. The \gls{ocsf}~\parencite{OCSF2024} defines a vendor-agnostic schema for cybersecurity events, though focused on \gls{siem} and \gls{soar} rather than application security.
+
+No single format covers the full spectrum of application security data. \gls{sarif} addresses static analysis but not \gls{sca} or \gls{dast}. CycloneDX and \gls{spdx} focus on composition, not code-level vulnerabilities. \gls{ocsf} targets security operations, not application vulnerability management. This gap, the absence of a unified data model across all tool categories, is a central motivation for the data modeling in \autoref{ch:design}.
 
 %%%%%%%%%%%
 %%% 1.3 %%%
 %%%%%%%%%%%
 
-\section{Data Modeling and Engineering Literature}
+\section{Data Modeling and Engineering}
+\label{sec:data-literature}
 
-What tools do we have to achieve thesis goals?
+This section examines data engineering patterns and technologies suitable for consolidating the security data described in \autoref{sec:appsec-literature}.
 
 \subsection{Data Architecture}
+\label{sec:data-architecture}
 
-DWH
+The literature documents an evolution from data warehouses through data lakes to the lakehouse paradigm. \textcite{DAMA2017} provide a comprehensive body of knowledge for data management, establishing the vocabulary and principles referenced throughout this section.
 
-Lake
+\textcite{Codd1970} established the relational model as the theoretical foundation for data management. The data warehouse, formalized by \textcite{Inmon2005}, is a subject-oriented, integrated, time-variant collection of data for analytical decision-making, using a top-down normalized approach. \textcite{Kimball2013} take a complementary bottom-up approach with dimensional modeling: star schemas organizing data into fact and dimension tables optimized for queries. Both approaches assume structured sources with stable schemas, which does not hold for heterogeneous security tool output.
 
-Lakehouse etc
+The data lake~\parencite{Miloslavskaya2016} stores raw data in its native format, deferring schema definition to consumption (schema-on-read). While this addresses format diversity, it introduces governance challenges; without proper management, data lakes risk becoming ``data swamps'' \parencite{DAMA2017}.
+
+The lakehouse architecture~\parencite{Armbrust2021} combines data lake flexibility with warehouse governance. \textcite{Lee2024} provide a definitive treatment of Delta Lake, the storage layer adding ACID transactions, schema enforcement, and time travel on top of lake storage. \textcite{Thalpati2024} offer practical guidance for lakehouse design at enterprise scale. The lakehouse paradigm suits the application security problem: it accommodates diverse, semi-structured tool output while providing governance and query performance for both dashboards and operational lookups.
 
 \subsection{Data Modeling and Pipelines}
+\label{sec:data-modeling-pipelines}
 
-Data Modeling with Snowflake
+\textcite{Kimball2013} remain the primary reference for dimensional modeling: fact tables capture measurable events, dimension tables provide descriptive context. Security findings naturally map to facts (each with severity, tool source, and detection date) while repositories, applications, and teams serve as dimensions. \textcite{DAMA2017} also discuss Data Vault, which prioritizes auditability and historical tracking relevant for compliance.
 
-DAMA-DMBOK
+\textcite{Reis2022} cover data engineering fundamentals, including \gls{etl} versus \gls{elt} patterns. \gls{etl} transforms data before loading, requiring upfront schema knowledge. \gls{elt} loads raw data first and transforms in place, aligning well with lakehouse architectures where engines such as Apache Spark perform transformations at scale \parencite{Lee2024, Thalpati2024}.
 
-Medallion Architecture
+The medallion architecture~\parencite{Strengholt2025} organizes lakehouse transformations into three layers:
+\begin{itemize}
+    \item \textbf{Bronze}: Raw data with minimal transformation, preserving original schemas.
+    \item \textbf{Silver}: Cleaned, validated, and normalized data conforming to a unified schema.
+    \item \textbf{Gold}: Consumption-ready aggregated metrics and enriched datasets.
+\end{itemize}
+\textcite{Strengholt2025} discusses this pattern with Delta Lake and Spark, covering schema evolution and incremental processing. \textcite{Thalpati2024} complement with guidance on catalog organization and compute optimization at scale. The medallion architecture is adopted as the core pattern for the pipeline in \autoref{ch:design}: bronze ingests raw security data, silver normalizes it into a vendor-agnostic schema, and gold produces metrics for stakeholder consumption.
 
 %%%%%%%%%%%
 %%% 1.4 %%%
 %%%%%%%%%%%
 
 \section{Related Work and Gap Analysis}
+\label{sec:related-work}
 
-Security data integration - who wrote about it
+This section examines existing approaches to security data consolidation and identifies the gap this thesis addresses.
 
-An industry cybersecurity data model exists but only for SOC events, not for appsec modeling
+\textbf{Commercial \gls{aspm} platforms} such as Apiiro, Cycode, ArmorCode, and Snyk AppRisk aggregate findings into unified dashboards with correlation and risk scoring. However, they are proprietary, operate as black boxes, and create vendor lock-in: organizations cannot customize pipelines, apply their own \gls{ml} models, or integrate beyond vendor-supported options.
 
-Does DefectDojo have any useful models?
+\textbf{DefectDojo}~\parencite{DefectDojo2024} is the most prominent open-source alternative, supporting imports from over 150 tools. However, it was designed as a vulnerability management interface, not a data platform. Its PostgreSQL backend limits enterprise-scale analytics, and pull-based \gls{api} connectors are available only in the commercial Pro offering.
 
-\gls{aspm} exists but not data oriented and not very customizable
+\textbf{Industry data models} such as \gls{ocsf}~\parencite{OCSF2024} target security operations (\gls{siem}, \gls{soar}) and do not model application-level entities such as repositories or development teams. Cloud-native security data lakes like AWS Security Lake adopt \gls{ocsf} for log aggregation but do not address application security consolidation.
+
+\textbf{Academic literature} on application security consolidation as a data engineering problem is limited, with most work focusing on detection techniques rather than integrating findings across heterogeneous tools at scale.
+
+No existing approach satisfies all requirements. Commercial \gls{aspm} platforms are proprietary and inflexible. DefectDojo lacks a data-first architecture for enterprise analytics. \gls{ocsf} targets security operations rather than application security. This thesis fills the gap with an open, vendor-agnostic framework that treats application security consolidation as a data engineering problem.
