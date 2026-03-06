@@ -11,16 +11,18 @@
 - [Methodology](#methodology)
 - [Structure](#structure)
   - [Literature Review](#literature-review)
-- [Software Development Literature](#software-development-literature)
+- [Software Development](#software-development)
+  - [Software Engineering](#software-engineering)
   - [Source Code Management](#source-code-management)
   - [Software Development Lifecycle](#software-development-lifecycle)
-  - [Application Security Data Standards](#application-security-data-standards)
-- [Application Security Literature](#application-security-literature)
+- [Application Security](#application-security)
   - [Code Security](#code-security)
   - [Software Supply Chain Security](#software-supply-chain-security)
   - [Software Lifecycle Security](#software-lifecycle-security)
   - [Application Penetration Testing](#application-penetration-testing)
-- [Data Modeling and Engineering Literature](#data-modeling-and-engineering-literature)
+  - [DevSecOps](#devsecops)
+  - [Application Security Data Standards](#application-security-data-standards)
+- [Data Modeling and Engineering](#data-modeling-and-engineering)
   - [Data Architecture](#data-architecture)
   - [Data Modeling and Pipelines](#data-modeling-and-pipelines)
 - [Related Work and Gap Analysis](#related-work-and-gap-analysis)
@@ -311,23 +313,21 @@ To achieve this goal, I define the following subgoals:
 
 ### Methodology
 
-This thesis follows a design-science research methodology , structured
-into three phases.
+This thesis follows a design-science research methodology as presented
+by , structured into three phases.
 
 In the first phase, I conduct a **literature review** of academic and
-industry sources across three domains: software development practices
-and lifecycle, application security tools and standards, and data
-engineering approaches, including data architecture and pipeline design.
-This review establishes the theoretical foundation for the framework and
-includes vendor documentation for the technologies used in the
-implementation.
+industry sources across three domains: software development, application
+security, and data engineering. This review establishes the theoretical
+foundation for the framework and includes vendor documentation for the
+technologies used in the implementation.
 
 In the second phase, I perform a **requirements analysis and design**. I
 analyze the application security landscape to identify the key personas,
 data sources, required transformations, and non-functional requirements.
 Requirements are prioritized using the MoSCoW method. Based on the
 requirements, I propose an architecture and design a data model with a
-medallion-based processing pipeline.
+medallion-based pipeline.
 
 In the third phase, I build a **reference implementation** on the
 Databricks platform to demonstrate feasibility of the proposed design. I
@@ -350,15 +350,14 @@ The thesis delivers three distinct contributions:
 
 ### Structure
 
-This thesis is organized as follows.
 <a href="#ch:literature-review" data-reference-type="autoref"
-data-reference="ch:literature-review">[ch:literature-review]</a> surveys
-the relevant literature on software development, application security,
-and data engineering, and identifies the research gap.
-<a href="#ch:requirement-analysis" data-reference-type="autoref"
+data-reference="ch:literature-review">[ch:literature-review]</a> of the
+thesis researches relevant literature on software development,
+application security, and data engineering, and identifies the research
+gap. <a href="#ch:requirement-analysis" data-reference-type="autoref"
 data-reference="ch:requirement-analysis">[ch:requirement-analysis]</a>
 defines the personas, data sources, transformations, consumers, and
-non-functional requirements, culminating in a prioritized requirements
+non-functional requirements, organized in a coherent requirements
 specification. <a href="#ch:architecture" data-reference-type="autoref"
 data-reference="ch:architecture">[ch:architecture]</a> presents the
 platform architecture, including technology selection and component
@@ -374,84 +373,357 @@ and suggests directions for future work.
 
 ## Literature Review
 
-### Software Development Literature
+This chapter presents the literature across three domains fundamental to
+this thesis.
+<a href="#sec:sw-dev-literature" data-reference-type="autoref"
+data-reference="sec:sw-dev-literature">[sec:sw-dev-literature]</a>
+reviews software development practices.
+<a href="#sec:appsec-literature" data-reference-type="autoref"
+data-reference="sec:appsec-literature">[sec:appsec-literature]</a>
+examines security testing approaches, tools, and data standards.
+<a href="#sec:data-literature" data-reference-type="autoref"
+data-reference="sec:data-literature">[sec:data-literature]</a> covers
+data architecture and engineering patterns. Finally,
+<a href="#sec:related-work" data-reference-type="autoref"
+data-reference="sec:related-work">[sec:related-work]</a> analyzes
+related work and identifies the gap this thesis addresses.
 
-What process/activities are we securing with appsec?
+### Software Development
 
-Books like Code Complete, Clean Code, Pragmatic Programmer...
+Before discussing how to secure software, it is necessary to define what
+modern software development entails. This section surveys the literature
+on software engineering practices and the <span acronym-label="sdlc"
+acronym-form="singular+short">sdlc</span>.
+
+#### Software Engineering
+
+and provide comprehensive treatments of the field, covering requirements
+engineering, design, testing, and project management. At a more
+theoretical level, collect Parnas’s foundational papers on modularity
+and information hiding, while offers a rigorous treatment of programming
+language design underpinning modern development tools.
+
+On the practical side, provides guidelines for software construction
+covering code quality and collaborative practices, proposed principles
+of clean, maintainable code widely adopted in industry, and provided a
+broader pragmatic philosophy for professional development. present
+practitioner essays on elegant solutions to real-world problems,
+illustrating the craft nature of software development. These works agree
+that software is built collaboratively from source code, organized in
+repositories, and deployed through increasingly automated pipelines.
 
 #### Source Code Management
 
-git book, software engineering at Google, ...
+provides a thorough treatment of Git, covering branching strategies,
+merging, and distributed workflows, while offers a more recent, visually
+oriented introduction. extend this perspective to organizational scale,
+describing how Google manages a monolithic repository with tens of
+thousands of contributors. For this thesis, repositories are significant
+as the primary unit around which security findings are grouped and
+tracked, a relationship central to the data model in
+<a href="#ch:design" data-reference-type="autoref"
+data-reference="ch:design">[ch:design]</a>.
 
 #### Software Development Lifecycle
 
-Traditional vs devops and CI/CD pipelines, list books on each
+<span acronym-label="sdlc" acronym-form="singular+short">sdlc</span>
+focused literature documents a shift from sequential "waterfall" models
+to iterative methodologies and DevOps practices. present empirical
+evidence that high-performing teams deploy more frequently with shorter
+lead times, achieved largely via <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> automation. complement this
+with practical guidance for implementing DevOps at scale, covering
+deployment pipelines and feedback loops. The resulting
+<span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+pipeline—an automated sequence of commit, build, test, and deploy
+stages—is directly relevant to this thesis: each stage is an integration
+point where security tools produce findings that the proposed framework
+consolidates.
 
-#### Application Security Data Standards
+### Application Security
 
-Standard data formats for vulnerabilities like <span acronym-label="cve"
-acronym-form="singular+short">cve</span>
+This section reviews the literature across the application security
+domains relevant to this thesis and concludes with data standards for
+representing security findings.
 
-SARIF, CycloneDX, OCSF
-
-Citing test , ,
-
-<span acronym-label="aspm" acronym-form="singular+short">aspm</span>
-mentioned for the first time, <span acronym-label="aspm"
-acronym-form="singular+short">aspm</span> mentioned second time.
-
-<span acronym-label="api" acronym-form="singular+short">api</span>
-
-### Application Security Literature
-
-In this section we focus on literature which explains the domain in
-which we’re solving identified problems.
-
-Books on general appsec
+provides broad coverage of security engineering, including threat models
+and software security. offer a comprehensive textbook on computer
+security principles. introduces software security activities like code
+review, architectural risk analysis, or penetration testing that should
+be embedded throughout the <span acronym-label="sdlc"
+acronym-form="singular+short">sdlc</span>, while complement this with
+practical guidelines for defensive coding. addresses threat modeling as
+a structured approach to identifying security issues early in design.
+The OWASP Top 10  is a widely referenced classification of critical web
+application security risks that influences how many tools categorize
+their findings.
 
 #### Code Security
 
+<span acronym-label="sast" acronym-form="singular+short">sast</span>
+examines source code, bytecode, or binary code for vulnerabilities
+without executing the program. provide the foundational treatment of
+static analysis for security, covering taint analysis, control flow
+analysis, and pattern matching to detect injection flaws, buffer
+overflows, and insecure data handling.
+
+In practice, <span acronym-label="sast"
+acronym-form="singular+short">sast</span> is implemented by tools such
+as SonarQube, Checkmarx, Semgrep, and Fortify, which differ in detection
+approaches: rule-based pattern matching, data-flow analysis, or
+user-defined custom rules. As noted by , a key challenge is the tradeoff
+between false positive rates and detection coverage. From a data
+integration perspective, each tool produces findings through different
+<span acronym-label="api" acronym-form="plural+short">apis</span> and in
+different formats, a fragmentation that motivates the normalization
+layer proposed in this thesis.
+
 #### Software Supply Chain Security
+
+<span acronym-label="sca" acronym-form="singular+short">sca</span>
+addresses vulnerabilities in third-party dependencies. Modern
+applications may include hundreds of transitive dependencies, and
+discusses the broader implications of supply chain trust, while provide
+a systematic review of open-source supply chain attacks including
+typosquatting, dependency confusion, and malicious package injection.
+
+<span acronym-label="sca" acronym-form="singular+short">sca</span> tools
+such as Snyk, Dependabot, and Mend analyze dependency manifests and
+cross-reference resolved versions against the <span acronym-label="nvd"
+acronym-form="singular+short">nvd</span>. Several also generate a
+<span acronym-label="sbom" acronym-form="singular+short">sbom</span>, a
+structured inventory of all software components, increasingly required
+by regulatory frameworks . The <span acronym-label="sbom"
+acronym-form="singular+short">sbom</span> concept is formalized through
+CycloneDX and <span acronym-label="spdx"
+acronym-form="singular+short">spdx</span>, discussed further in
+<a href="#sec:data-standards" data-reference-type="autoref"
+data-reference="sec:data-standards">[sec:data-standards]</a>.
 
 #### Software Lifecycle Security
 
+The software lifecycle itself introduces security risks. Secret exposure
+(credentials, <span acronym-label="api"
+acronym-form="singular+short">api</span> keys, and tokens committed to
+version control) is detected by tools such as GitLeaks, TruffleHog, and
+GitHub Secret Scanning, which scan commit history against known
+credential patterns and entropy-based heuristics.
+
+<span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+pipeline security is another concern: build systems execute arbitrary
+code, deployment pipelines hold production credentials, and artifact
+registries distribute compiled software. The SLSA framework  provides
+progressively stricter requirements for supply chain security, including
+build provenance and artifact integrity. These lifecycle tools produce
+findings that differ structurally from code-level vulnerabilities,
+adding complexity to data consolidation.
+
 #### Application Penetration Testing
 
-Good source of wisdom for defensive teams - let’s defend against what
-the attackers are doing
+<span acronym-label="dast" acronym-form="singular+short">dast</span> and
+manual penetration testing examine running systems for exploitable
+vulnerabilities. provide a comprehensive treatment of web application
+attack techniques, covering injection, authentication bypass, and
+business logic vulnerabilities, illustrating the attacker’s perspective
+that informs what security data is most important to capture.
 
-### Data Modeling and Engineering Literature
+Automated <span acronym-label="dast"
+acronym-form="singular+short">dast</span> tools such as OWASP ZAP and
+Burp Suite complement <span acronym-label="sast"
+acronym-form="singular+short">sast</span> by detecting vulnerabilities
+that manifest only at runtime. Manual penetration testing produces
+findings in unstructured formats, typically PDF reports, presenting a
+distinct integration challenge: while automated tools expose findings
+through <span acronym-label="api"
+acronym-form="plural+short">apis</span>, manual results must be parsed
+or entered manually.
 
-What tools do we have to achieve thesis goals?
+#### DevSecOps
+
+The DevSecOps paradigm  extends DevOps by embedding security into every
+phase of the <span acronym-label="sdlc"
+acronym-form="singular+short">sdlc</span>, commonly called "shifting
+security left", integrating <span acronym-label="sast"
+acronym-form="singular+short">sast</span>, <span acronym-label="sca"
+acronym-form="singular+short">sca</span>, secret scanning, and
+<span acronym-label="dast" acronym-form="singular+short">dast</span>
+directly into <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> pipelines .
+
+The practical consequence is a significant increase in both volume and
+diversity of security data. An organization may operate dozens of tools
+across pipeline stages, each producing findings in different formats and
+severity models. anticipated this by advocating for security touchpoints
+spanning the entire lifecycle, but the tooling landscape has grown far
+beyond what a single touchpoint model can accommodate. This
+proliferation of fragmented security data is the core problem motivating
+the framework proposed in this thesis.
+
+#### Application Security Data Standards
+
+Several standards bring consistency to how security findings are
+identified, scored, and exchanged.
+
+For identification and scoring, the <span acronym-label="cve"
+acronym-form="singular+short">cve</span> system  provides a standardized
+naming scheme for known vulnerabilities. The <span acronym-label="cvss"
+acronym-form="singular+short">cvss</span>  scores severity based on
+attack vector, complexity, and impact, while the
+<span acronym-label="epss" acronym-form="singular+short">epss</span>
+complements it by estimating exploitation probability using
+<span acronym-label="ml" acronym-form="singular+short">ml</span> models
+trained on historical data .
+
+For findings interchange, <span acronym-label="sarif"
+acronym-form="singular+short">sarif</span>  defines a
+<span acronym-label="json"
+acronym-form="singular+short">json</span>-based format for static
+analysis results, supported by several <span acronym-label="sast"
+acronym-form="singular+short">sast</span> tools and GitHub. CycloneDX 
+and <span acronym-label="spdx"
+acronym-form="singular+short">spdx</span>  provide schemas for
+<span acronym-label="sbom" acronym-form="plural+short">sboms</span> and
+associated vulnerability data. The <span acronym-label="ocsf"
+acronym-form="singular+short">ocsf</span>  defines a vendor-agnostic
+schema for cybersecurity events, though focused on
+<span acronym-label="siem" acronym-form="singular+short">siem</span> and
+<span acronym-label="soar" acronym-form="singular+short">soar</span>
+rather than application security.
+
+No single format covers the full spectrum of application security data.
+<span acronym-label="sarif" acronym-form="singular+short">sarif</span>
+addresses static analysis but not <span acronym-label="sca"
+acronym-form="singular+short">sca</span> or <span acronym-label="dast"
+acronym-form="singular+short">dast</span>. CycloneDX and
+<span acronym-label="spdx" acronym-form="singular+short">spdx</span>
+focus on composition, not code-level vulnerabilities.
+<span acronym-label="ocsf" acronym-form="singular+short">ocsf</span>
+targets security operations, not application vulnerability management.
+This gap, the absence of a unified data model across all tool
+categories, is a central motivation for the data modeling in
+<a href="#ch:design" data-reference-type="autoref"
+data-reference="ch:design">[ch:design]</a>.
+
+### Data Modeling and Engineering
+
+This section examines data engineering patterns and technologies
+suitable for consolidating the security data described in
+<a href="#sec:appsec-literature" data-reference-type="autoref"
+data-reference="sec:appsec-literature">[sec:appsec-literature]</a>.
 
 #### Data Architecture
 
-DWH
+The literature documents an evolution from data warehouses through data
+lakes to the lakehouse paradigm. provide a comprehensive body of
+knowledge for data management, establishing the vocabulary and
+principles referenced throughout this section.
 
-Lake
+established the relational model as the theoretical foundation for data
+management. The data warehouse, formalized by , is a subject-oriented,
+integrated, time-variant collection of data for analytical
+decision-making, using a top-down normalized approach. take a
+complementary bottom-up approach with dimensional modeling: star schemas
+organizing data into fact and dimension tables optimized for queries.
+Both approaches assume structured sources with stable schemas, which
+does not hold for heterogeneous security tool output.
 
-Lakehouse etc
+The data lake  stores raw data in its native format, deferring schema
+definition to consumption (schema-on-read). While this addresses format
+diversity, it introduces governance challenges; without proper
+management, data lakes risk becoming “data swamps” .
+
+The lakehouse architecture  combines data lake flexibility with
+warehouse governance. provide a definitive treatment of Delta Lake, the
+storage layer adding ACID transactions, schema enforcement, and time
+travel on top of lake storage. offer practical guidance for lakehouse
+design at enterprise scale. The lakehouse paradigm suits the application
+security problem: it accommodates diverse, semi-structured tool output
+while providing governance and query performance for both dashboards and
+operational lookups.
 
 #### Data Modeling and Pipelines
 
-Data Modeling with Snowflake
+remain the primary reference for dimensional modeling: fact tables
+capture measurable events, dimension tables provide descriptive context.
+Security findings naturally map to facts (each with severity, tool
+source, and detection date) while repositories, applications, and teams
+serve as dimensions. also discuss Data Vault, which prioritizes
+auditability and historical tracking relevant for compliance.
 
-DAMA-DMBOK
+cover data engineering fundamentals, including <span acronym-label="etl"
+acronym-form="singular+short">etl</span> versus
+<span acronym-label="elt" acronym-form="singular+short">elt</span>
+patterns. <span acronym-label="etl"
+acronym-form="singular+short">etl</span> transforms data before loading,
+requiring upfront schema knowledge. <span acronym-label="elt"
+acronym-form="singular+short">elt</span> loads raw data first and
+transforms in place, aligning well with lakehouse architectures where
+engines such as Apache Spark perform transformations at scale .
 
-Medallion Architecture
+The medallion architecture  organizes lakehouse transformations into
+three layers:
+
+- **Bronze**: Raw data with minimal transformation, preserving original
+  schemas.
+
+- **Silver**: Cleaned, validated, and normalized data conforming to a
+  unified schema.
+
+- **Gold**: Consumption-ready aggregated metrics and enriched datasets.
+
+discusses this pattern with Delta Lake and Spark, covering schema
+evolution and incremental processing. complement with guidance on
+catalog organization and compute optimization at scale. The medallion
+architecture is adopted as the core pattern for the pipeline in
+<a href="#ch:design" data-reference-type="autoref"
+data-reference="ch:design">[ch:design]</a>: bronze ingests raw security
+data, silver normalizes it into a vendor-agnostic schema, and gold
+produces metrics for stakeholder consumption.
 
 ### Related Work and Gap Analysis
 
-Security data integration - who wrote about it
+This section examines existing approaches to security data consolidation
+and identifies the gap this thesis addresses.
 
-An industry cybersecurity data model exists but only for SOC events, not
-for appsec modeling
+**Commercial <span acronym-label="aspm"
+acronym-form="singular+short">aspm</span> platforms** such as Apiiro,
+Cycode, ArmorCode, and Snyk AppRisk aggregate findings into unified
+dashboards with correlation and risk scoring. However, they are
+proprietary, operate as black boxes, and create vendor lock-in:
+organizations cannot customize pipelines, apply their own
+<span acronym-label="ml" acronym-form="singular+short">ml</span> models,
+or integrate beyond vendor-supported options.
 
-Does DefectDojo have any useful models?
+**DefectDojo**  is the most prominent open-source alternative,
+supporting imports from over 150 tools. However, it was designed as a
+vulnerability management interface, not a data platform. Its PostgreSQL
+backend limits enterprise-scale analytics, and pull-based
+<span acronym-label="api" acronym-form="singular+short">api</span>
+connectors are available only in the commercial Pro offering.
 
+**Industry data models** such as <span acronym-label="ocsf"
+acronym-form="singular+short">ocsf</span>  target security operations
+(<span acronym-label="siem" acronym-form="singular+short">siem</span>,
+<span acronym-label="soar" acronym-form="singular+short">soar</span>)
+and do not model application-level entities such as repositories or
+development teams. Cloud-native security data lakes like AWS Security
+Lake adopt <span acronym-label="ocsf"
+acronym-form="singular+short">ocsf</span> for log aggregation but do not
+address application security consolidation.
+
+**Academic literature** on application security consolidation as a data
+engineering problem is limited, with most work focusing on detection
+techniques rather than integrating findings across heterogeneous tools
+at scale.
+
+No existing approach satisfies all requirements. Commercial
 <span acronym-label="aspm" acronym-form="singular+short">aspm</span>
-exists but not data oriented and not very customizable
+platforms are proprietary and inflexible. DefectDojo lacks a data-first
+architecture for enterprise analytics. <span acronym-label="ocsf"
+acronym-form="singular+short">ocsf</span> targets security operations
+rather than application security. This thesis fills the gap with an
+open, vendor-agnostic framework that treats application security
+consolidation as a data engineering problem.
 
 ## Requirement Analysis
 
@@ -943,6 +1215,8 @@ Authentication, pagination etc, dont forget to mention
 ### Testing and Validation
 
 ## Conclusion
+
+<span id="ch:conclusion" label="ch:conclusion"></span>
 
 This thesis presented a data integration framework for enterprise
 application security...
