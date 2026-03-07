@@ -77,20 +77,25 @@ Capture data formats and integration patterns of the tools
 %%%%%%%%%%%
 
 \section{Personas}
+\label{sec:personas}
+
+The framework serves several distinct stakeholder groups, each with different data needs and expectations. Understanding these personas is essential for deriving the requirements that the framework must satisfy. The following subsections characterize the four primary persona categories whose needs shape the framework.
 
 \subsection{Application Owners}
 
+Application owners are business stakeholders responsible for the overall risk posture of one or more applications within the enterprise portfolio. They need aggregated security posture visibility, including trend data over time and composite risk metrics that communicate the security state of their applications at a glance. Rather than examining individual findings, application owners interact with dashboards that present overall health indicators, remediation progress, and compliance status. Their need for technical detail is limited; they require information in the form of actionable business terms. These needs directly drive the framework's aggregation and serving layer requirements, particularly the computation of application-level risk scores and trend visualizations.
+
 \subsection{Application Developers}
+
+Application developers are the engineers who, in the context of our framework, receive security findings and are responsible for their remediation. They need clear, actionable vulnerability information enriched with code-level context such as the affected file, line number, and remediation guidance. Developers have a low tolerance for false positives and duplicated noise, as excessive or inaccurate findings erode trust in the security tooling and reduce remediation flow. Findings must be presented in a format that integrates naturally into their existing workflows, whether through issue trackers or \gls{cicd} pipeline feedback. These needs drive the framework's normalization, de-duplication, and data quality requirements, ensuring that only validated, contextually enriched findings reach developers.
 
 \subsection{Security Experts}
 
-Architects and Engineers assigned to application teams
-
-Including security compliance / auditors
+Security experts are the security architects and security engineers who support application teams, auditors responsible for assessing security compliance on application level, or security analysts seeking context for a security event or incident. They require access to detailed findings, complete audit trails, and the ability to drill down into raw data when performing triage or validating tool output. Security engineers define and maintain security policies, evaluate tool effectiveness, and coordinate remediation priorities across teams. Compliance auditors, a closely related sub-group, need evidence of security requirement coverage, remediation timelines, and historical records that demonstrate adherence to organizational and regulatory standards. These needs drive the framework's data quality, governance, and granular access control requirements, as well as the preservation of full data lineage from source to consumption.
 
 \subsection{Development and Security Leadership}
 
-Dashboards, metrics, trends, quantified risk
+Development and security leadership, including \glspl{ciso}, engineering managers, and vice presidents, require quantified risk metrics to inform strategic decisions and resource allocation. Key indicators include \gls{mttr}, \gls{sla} compliance rates, vulnerability density trends, and team-level or portfolio-level comparisons that reveal where remediation investment is most needed. These stakeholders consume information through executive dashboards designed for rapid interpretation rather than detailed investigation. Their decisions directly affect staffing, tooling budgets, and organizational security strategy. These needs drive the framework's gold-layer aggregation and metric computation requirements, demanding reliable, well-governed data pipelines that produce trustworthy summary metrics.
 
 %%%%%%%%%%%
 %%% 2.3 %%%
