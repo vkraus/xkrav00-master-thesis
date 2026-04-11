@@ -184,15 +184,16 @@ data-reference="ch:reference-implementation">[ch:reference-implementation]</a>.
 <a href="#sec:app-inventory" data-reference-type="autoref"
 data-reference="sec:app-inventory">[sec:app-inventory]</a> establishes
 the business context underlying all security findings.
-<a href="#sec:sw-dev-literature" data-reference-type="autoref"
-data-reference="sec:sw-dev-literature">[sec:sw-dev-literature]</a> and
-<a href="#sec:appsec-literature" data-reference-type="autoref"
-data-reference="sec:appsec-literature">[sec:appsec-literature]</a>
-examine the software development and security tooling landscapes as data
-sources. <a href="#sec:data-literature" data-reference-type="autoref"
-data-reference="sec:data-literature">[sec:data-literature]</a> covers
-the data engineering patterns that underpin the framework’s design.
-Finally, <a href="#sec:related-work" data-reference-type="autoref"
+<a href="#sec:sw-dev-analysis" data-reference-type="autoref"
+data-reference="sec:sw-dev-analysis">[sec:sw-dev-analysis]</a> and
+<a href="#sec:appsec-analysis" data-reference-type="autoref"
+data-reference="sec:appsec-analysis">[sec:appsec-analysis]</a> examine
+the software development and security tooling landscapes as data
+sources. <a href="#sec:data-eng-analysis" data-reference-type="autoref"
+data-reference="sec:data-eng-analysis">[sec:data-eng-analysis]</a>
+covers the data engineering patterns that underpin the framework’s
+design. Finally,
+<a href="#sec:related-work" data-reference-type="autoref"
 data-reference="sec:related-work">[sec:related-work]</a> surveys
 existing solutions and identifies the gap this thesis addresses.
 
@@ -200,11 +201,13 @@ existing solutions and identifies the gap this thesis addresses.
 
 The application inventory is the foundational data source for any
 application security data platform. It establishes the business context
-for all security findings. Without a reliable catalog of business
-applications and their mapping to technical assets, a vulnerability
-discovered in a repository or a running service cannot be attributed to
-an owner, assessed for business impact, or prioritized against
-organizational risk criteria.
+for all security findings. Organizations typically manage this inventory
+in a <span acronym-label="cmdb"
+acronym-form="singular+short">cmdb</span> or a custom-built catalog.
+Without a reliable catalog of business applications and their mapping to
+technical assets, a vulnerability discovered in a repository or a
+running service cannot be attributed to an owner, assessed for business
+impact, or prioritized against organizational risk criteria.
 
 #### Application Portfolio Management
 
@@ -214,10 +217,12 @@ ownership information, lifecycle status, and relationships to other
 assets .
 
 These registries also capture security-relevant attributes. Information
-security is commonly assessed along three dimensions known as the CIA
+security is commonly assessed along three dimensions known as the
+<span acronym-label="cia" acronym-form="singular+short">cia</span>
 triad: confidentiality (preventing unauthorized disclosure), integrity
 (preventing unauthorized modification), and availability (ensuring
-authorized access) . Business impact assessments evaluate all three CIA
+authorized access) . Business impact assessments evaluate all three
+<span acronym-label="cia" acronym-form="singular+short">cia</span>
 dimensions to produce criticality ratings, commonly structured as tiers:
 Tier 1 for mission-critical applications, Tier 2 for important
 supporting systems, and Tier 3 for non-critical internal tools.
@@ -231,36 +236,32 @@ microservices, infrastructure components, and deployment environments.
 This mapping serves as the glue connecting technical security findings
 to business context. When the framework ingests a vulnerability from a
 <span acronym-label="sast" acronym-form="singular+short">sast</span>
-tool associated with a specific repository, the application inventory
+scanner linked to a specific repository, the application inventory
 mapping determines which business application is affected, who owns it,
 and how critical it is. This enables the risk-aware prioritization that
 stakeholders require.
 
 #### Configuration Management Databases
 
-Organizations typically maintain their application inventories in
-<span acronym-label="cmdb" acronym-form="plural+short">cmdbs</span> such
-as ServiceNow, in custom-built internal catalogs, or in a combination of
-both. A <span acronym-label="cmdb"
-acronym-form="singular+short">cmdb</span> organizes all managed assets
-as <span acronym-label="ci" acronym-form="plural+short">cis</span>, each
-with attributes describing its type, status, and ownership .
-
-ServiceNow is the leading <span acronym-label="cmdb"
+The most common <span acronym-label="cmdb"
 acronym-form="singular+short">cmdb</span> platform in enterprise
-environments, holding over 44% of the global <span acronym-label="itsm"
-acronym-form="singular+short">itsm</span> market share , and serves as
-the reference platform for this thesis. Its <span acronym-label="cmdb"
-acronym-form="singular+short">cmdb</span> arranges
-<span acronym-label="ci" acronym-form="plural+short">cis</span> in a
-class hierarchy rooted at the `cmdb_ci` base table. Each subclass
-inherits base attributes (name, `sys_id`, operational status,
-environment) and adds domain-specific fields. For application inventory
-purposes, the most relevant class is `cmdb_ci_appl` (Application), which
-extends the base <span acronym-label="ci"
-acronym-form="singular+short">ci</span> with attributes such as version,
-business unit, used-for classification, and references to the owning
-support group .
+environments is ServiceNow, holding over 44% of the global
+<span acronym-label="itsm" acronym-form="singular+short">itsm</span>
+market share . It serves as the reference platform for this thesis. A
+<span acronym-label="cmdb" acronym-form="singular+short">cmdb</span>
+organizes all managed assets as <span acronym-label="ci"
+acronym-form="plural+short">cis</span>, each with attributes describing
+its type, status, and ownership .
+
+ServiceNow arranges <span acronym-label="ci"
+acronym-form="plural+short">cis</span> in a class hierarchy rooted at
+the `cmdb_ci` base table. Each subclass inherits base attributes (name,
+`sys_id`, operational status, environment) and adds domain-specific
+fields. For application inventory purposes, the most relevant class is
+`cmdb_ci_appl` (Application), which extends the base
+<span acronym-label="ci" acronym-form="singular+short">ci</span> with
+attributes such as version, business unit, used-for classification, and
+references to the owning support group .
 
 Beyond the application record itself, the <span acronym-label="cmdb"
 acronym-form="singular+short">cmdb</span> captures relationships between
@@ -296,9 +297,9 @@ the endpoint `/api/now/table/{tableName}` . Responses are
 <span acronym-label="json"
 acronym-form="singular+short">json</span>-formatted, with support for
 server-side filtering (`sysparm_query`), field selection
-(`sysparm_fields`), and pagination (`sysparm_limit` combined with
-`sysparm_offset`, with a default maximum of 10 000 records per request).
-The `sysparm_display_value` parameter resolves reference fields to
+(`sysparm_fields`), and pagination via `sysparm_limit` and
+`sysparm_offset` (default maximum of 10 000 records per request). The
+`sysparm_display_value` parameter resolves reference fields to
 human-readable names instead of internal `sys_id` values.
 
 The <span acronym-label="cmdb" acronym-form="singular+short">cmdb</span>
@@ -364,18 +365,19 @@ to own the data export logic on the source side.
 
 ##### Integration Challenges
 
-The application inventory presents the most significant integration
-challenge among all data sources because it is the least standardized.
-Security testing tools converge around common <span acronym-label="api"
-acronym-form="singular+short">api</span> patterns and output formats,
-but each organization structures its application inventory differently:
-the hierarchy of applications, the granularity of asset mapping, and the
-attributes captured vary substantially. This makes the application
-inventory connector the hardest to generalize and the one most likely to
-require organization-specific customization.
+In implementation phase, the application inventory presents the most
+significant integration challenge among all data sources because it is
+the least standardized. Security testing tools converge around common
+<span acronym-label="api" acronym-form="singular+short">api</span>
+patterns and output formats, but each organization structures its
+application inventory differently: the hierarchy of applications, the
+granularity of asset mapping, and the attributes captured vary
+substantially . This makes the application inventory connector the
+hardest to generalize and the one most likely to require
+implementation-specific customization.
 
 Data quality in <span acronym-label="cmdb"
-acronym-form="plural+short">cmdbs</span> is a persistent concern.
+acronym-form="plural+short">cmdbs</span> is a persistent concern .
 Application records may be incomplete (missing ownership or criticality
 assignments), outdated (reflecting decommissioned applications still
 listed as active), or inconsistently maintained across business units.
@@ -390,11 +392,182 @@ governance.
 
 ### Software Development
 
+Modern software is built collaboratively from source code, organized in
+repositories, and deployed through automated pipelines . While
+<a href="#sec:app-inventory" data-reference-type="autoref"
+data-reference="sec:app-inventory">[sec:app-inventory]</a> established
+the business context for security findings, the platforms that support
+software development provide the technical entities around which those
+findings are organized. Repositories, build pipelines, and issue
+trackers form the second major data source category for the framework.
+
+These platforms share common integration patterns that simplify
+connector design. All expose <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="plural+short">apis</span> with <span acronym-label="json"
+acronym-form="singular+short">json</span> responses as the primary
+integration surface. Authentication relies on token-based mechanisms:
+OAuth tokens, <span acronym-label="pat"
+acronym-form="plural+short">pats</span>, or service account credentials.
+Pagination follows either offset-based or cursor-based patterns, and all
+platforms impose rate limits that consumers must handle through backoff
+strategies. This consistency enables shared connector logic for
+authentication, pagination, rate limiting, and error recovery across
+tools.
+
 #### Source Code Management
+
+provide a thorough treatment of Git, covering branching strategies,
+merging, and distributed workflows, while offers a more recent visual
+introduction. extend this perspective to organizational scale,
+describing how large engineering teams manage repositories with
+thousands of contributors. For this thesis, the repository is the
+primary entity around which security findings are grouped, as detailed
+in the data model in
+<a href="#ch:framework" data-reference-type="autoref"
+data-reference="ch:framework">[ch:framework]</a>.
+
+Development teams host their Git repositories on cloud-based
+<span acronym-label="scm" acronym-form="singular+short">scm</span>
+platforms. GitHub is the dominant platform, with over 150 million
+developers and adoption by 92% of Fortune 100 companies . The 2025 Stack
+Overflow Developer Survey reports GitHub at 81% adoption for code
+collaboration, followed by GitLab at 36% . Bitbucket and Azure DevOps
+serve smaller but significant enterprise segments. Most large
+organizations use more than one platform, whether through acquisitions,
+team preferences, or regulatory separation, making multi-platform
+ingestion a practical requirement.
+
+Beyond source code, <span acronym-label="scm"
+acronym-form="singular+short">scm</span> platforms expose metadata
+relevant to security governance. Repository attributes include the
+primary programming language, creation and last activity dates,
+visibility settings (public or private), and archive status. Branch
+protection rules indicate the maturity of the development process. Team
+and contributor assignments establish ownership relationships that feed
+into the application-to-team mapping described in
+<a href="#sec:app-inventory" data-reference-type="autoref"
+data-reference="sec:app-inventory">[sec:app-inventory]</a>.
+
+These platforms share common <span acronym-label="api"
+acronym-form="singular+short">api</span> patterns. GitHub exposes two
+complementary <span acronym-label="api"
+acronym-form="plural+short">apis</span> : a <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span> (v3) with resource-oriented
+endpoints and page-based pagination, and a GraphQL
+<span acronym-label="api" acronym-form="singular+short">api</span> (v4)
+that enables selective field retrieval with cursor-based pagination.
+Both use the same authentication mechanisms (OAuth tokens or
+<span acronym-label="pat" acronym-form="plural+short">pats</span>) and
+share a rate limit of 5 000 requests per hour. GitLab offers a similar
+dual <span acronym-label="rest"
+acronym-form="singular+short">rest</span>/GraphQL surface . Azure DevOps
+provides a <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span> authenticated through Azure
+Active Directory, with comparable response formats and pagination.
+Across all platforms, authentication is token-based and responses are
+<span acronym-label="json"
+acronym-form="singular+short">json</span>-formatted, enabling shared
+connector logic for authentication, pagination, and rate limit handling.
 
 #### Continuous Integration and Delivery
 
+<span acronym-label="sdlc" acronym-form="singular+short">sdlc</span>
+practices have shifted from sequential models to iterative methodologies
+and DevOps. present empirical evidence that high-performing teams deploy
+more frequently with shorter lead times, achieved through
+<span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+automation. complement this with practical guidance for implementing
+DevOps pipelines at scale. The <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> pipeline, an automated
+sequence of build, test, and deploy stages, is relevant to this thesis
+because each stage can integrate security tools whose findings the
+framework consolidates.
+
+GitHub Actions is the most widely adopted <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> platform, used by 62% of
+developers for personal projects and 41% in organizational settings .
+Jenkins remains prevalent in enterprises at 28% organizational adoption,
+followed by GitLab CI at 19%. Notably, 32% of organizations use two or
+more <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> tools, and 9% use at least
+three, reinforcing the multi-platform integration challenge observed for
+<span acronym-label="scm" acronym-form="singular+short">scm</span>
+platforms.
+
+<span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+platforms provide contextual data about when and how security scans run.
+Pipeline definitions reveal which security tools are integrated into the
+build process. Build results indicate whether security gates passed or
+failed. Execution metadata records which commit was scanned, when the
+scan ran, and how long it took. This information serves as operational
+context rather than a primary finding source: knowing that a
+repository’s last security scan ran three months ago, or that a scan
+consistently fails, signals coverage gaps and tool health that
+complement the findings from security tools.
+
+Integration patterns vary more across <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> platforms than across
+<span acronym-label="scm" acronym-form="singular+short">scm</span>
+tools. GitHub Actions exposes build data through its
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span> with
+<span acronym-label="json" acronym-form="singular+short">json</span>
+responses, consistent with the broader GitHub <span acronym-label="api"
+acronym-form="singular+short">api</span> suite. Jenkins uses an
+<span acronym-label="xml" acronym-form="singular+short">xml</span>-based
+<span acronym-label="api" acronym-form="singular+short">api</span> with
+a different authentication model. Azure Pipelines follows the Azure
+DevOps <span acronym-label="rest"
+acronym-form="singular+short">rest</span> conventions. Despite these
+differences, the retrieved data is structurally similar: pipeline
+identifiers, run statuses, timestamps, and associated commit references.
+
 #### Issue Tracking
+
+Issue tracking systems are relevant to the framework because they track
+remediation status. When a security finding is assigned for remediation,
+an issue is typically created in the team’s tracker, either manually or
+through automation. The framework must read issue status to determine
+whether a finding is under active remediation, who is responsible, and
+whether it has been resolved within the required
+<span acronym-label="sla" acronym-form="singular+short">sla</span>
+window.
+
+Jira is the dominant issue tracking platform in enterprise environments.
+The 2025 Stack Overflow Developer Survey reports Jira at 46% adoption,
+behind only GitHub (81%) and ahead of GitLab (36%) for code
+documentation and collaboration tools . Azure DevOps Work Items serves
+organizations within the Microsoft ecosystem. GitHub Issues and GitLab
+Issues provide lightweight built-in tracking tightly coupled with their
+respective <span acronym-label="scm"
+acronym-form="singular+short">scm</span> platforms. As with
+<span acronym-label="scm" acronym-form="singular+short">scm</span> and
+<span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+tools, many organizations use multiple trackers across different teams.
+
+These platforms expose <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="plural+short">apis</span> with <span acronym-label="json"
+acronym-form="singular+short">json</span> responses and paginated
+results. Jira provides <span acronym-label="jql"
+acronym-form="singular+short">jql</span>, a query language for precise
+filtering by project, status, labels, or custom fields, enabling
+retrieval of only security-relevant issues without downloading entire
+project backlogs. GitHub and GitLab expose issues through the same
+<span acronym-label="api" acronym-form="singular+short">api</span>
+surfaces used for repository data. Most trackers also support webhooks
+for real-time event notifications when issue status changes, reducing
+reliance on periodic polling.
+
+The integration with issue trackers is bidirectional. The framework
+reads remediation status and may also create new issues when findings
+require attention. This bidirectional flow introduces complexity around
+idempotency (avoiding duplicate issue creation) and state
+synchronization (keeping the framework’s view consistent with the
+tracker’s current state).
 
 ### Application Security
 
