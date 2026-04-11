@@ -76,9 +76,15 @@
 \setglossarystyle{long}
 \renewcommand{\glsnamefont}[1]{\textbf{#1}}  % Bold acronyms
 \setlength{\glsdescwidth}{0.8\textwidth}     % Left-aligned descriptions
-% Muted color on first use to subtly mark acronym introduction
-\definecolor{glsfirstuse}{RGB}{40,80,120}
-\renewcommand{\glstextformat}[1]{\textcolor{glsfirstuse}{#1}}
+% First occurrence: teal hyperlink; subsequent uses: black hyperlink
+\definecolor{glsfirstuse}{RGB}{0,105,92}
+\newif\ifglssubsequent
+\renewcommand*{\glslinkcheckfirsthyperhook}{%
+  \ifglsused{\glslabel}{\glssubsequenttrue}{\glssubsequentfalse}%
+}
+\renewcommand{\glstextformat}[1]{%
+  \ifglssubsequent\textcolor{black}{#1}\else#1\fi
+}
 \makeglossaries
 \input{acronyms}
 \usepackage{multirow}
@@ -109,9 +115,15 @@
 \parindent=0pt
 \parskip=11pt
 
-% Fix list of figures/tables spacing (must be after parskip is set)
-\setlength\cftbeforefigskip{-11pt}
-\setlength\cftbeforetabskip{-11pt}
+% Fix list of figures/tables/listings spacing: neutralize parskip and chapter-group gaps
+\makeatletter
+\let\origlistoffigures\listoffigures
+\renewcommand{\listoffigures}{\begingroup\parskip=0pt\let\addvspace\@gobble\origlistoffigures\endgroup}
+\let\origlistoftables\listoftables
+\renewcommand{\listoftables}{\begingroup\parskip=0pt\let\addvspace\@gobble\origlistoftables\endgroup}
+\let\origlstlistoflistings\lstlistoflistings
+\renewcommand{\lstlistoflistings}{\begingroup\parskip=0pt\origlstlistoflistings\endgroup}
+\makeatother
 
 % zakaz vdov a sirotku - jednoradkovych pocatku ci koncu odstavcu na prechodu mezi strankami
 % Prohibition of widows and orphans - single-line beginning and end of paragraph at the transition between pages
