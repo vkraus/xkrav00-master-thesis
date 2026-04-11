@@ -322,20 +322,75 @@ Several patterns emerge from this comparison. \gls{rest} \glspl{api} with \gls{j
 \section{Data Engineering}
 \label{sec:data-eng-analysis}
 
+The preceding sections analyzed the sources of application security data: asset inventories, development platforms, and security testing tools across static and dynamic categories. Consolidating these heterogeneous sources into a unified analytical platform is fundamentally a data integration problem. This section surveys the architectural paradigms and engineering patterns relevant to solving it, independent of any specific platform.
+
 %%% 1.5.1 %%%
 
 \subsection{Data Platform Architecture}
 \label{sec:data-architecture}
+
+The literature documents a progression from data warehouses through data lakes to the lakehouse paradigm. \textcite{DAMA2017} provide a comprehensive body of knowledge for data management, establishing the vocabulary and principles referenced throughout this section. \textcite{Codd1970} established the relational model as the theoretical foundation. The data warehouse, formalized by \textcite{Inmon2005}, stores subject-oriented, integrated data for analytical decision-making using a top-down normalized approach. \textcite{Kimball2013} take a complementary bottom-up path with dimensional modeling: star schemas that organize data into fact and dimension tables optimized for queries. Both approaches assume structured sources with stable schemas, a condition that does not hold for heterogeneous security tool output.
+
+The data lake~\cite{Miloslavskaya2016} stores raw data in its native format, deferring schema definition to consumption time (schema-on-read). This accommodates format diversity but introduces governance challenges. Without proper management, data lakes risk becoming ``data swamps'' where data is abundant but unusable~\cite{DAMA2017}.
+
+The lakehouse architecture~\cite{Armbrust2021} combines data lake flexibility with warehouse governance by introducing open table formats that add \gls{acid} transactions, schema enforcement, and time travel on top of lake storage~\cite{Lee2024, Thalpati2024}. The lakehouse paradigm suits the application security problem: it accommodates diverse, semi-structured tool output while providing the governance and query performance required for both analytical dashboards and operational lookups.
+
+The medallion architecture~\cite{Strengholt2025} organizes lakehouse data into three layers:
+\begin{itemize}
+    \item \textbf{Bronze}: Raw data with minimal transformation, preserving original source schemas.
+    \item \textbf{Silver}: Cleaned, validated, and normalized data conforming to a unified schema.
+    \item \textbf{Gold}: Consumption-ready aggregated metrics and enriched datasets.
+\end{itemize}
+This layered approach maps naturally to the security data integration problem. The bronze layer captures raw tool output in source-native schemas. The silver layer normalizes findings across tools into a vendor-agnostic model. The gold layer computes the aggregated risk metrics and enriched datasets that stakeholders consume.
+
+A security data platform must serve two distinct access patterns. \Gls{olap} queries power dashboards and trend analysis, operating over large aggregated datasets where query throughput matters more than write latency. \Gls{oltp} access supports operational workflows such as issue tracker integration and real-time risk lookups, where low-latency reads and writes to individual records are essential. The framework must accommodate both, a requirement that influences the serving architecture designed in \autoref{ch:framework}.
 
 %%% 1.5.2 %%%
 
 \subsection{Data Integration Patterns}
 \label{sec:data-integration-patterns}
 
+\textcite{Reis2022} cover data engineering fundamentals, including the distinction between \gls{etl} and \gls{elt} paradigms. \Gls{etl} transforms data before loading, requiring upfront schema knowledge and a dedicated transformation layer between source and target. \Gls{elt} loads raw data first and transforms it in place, aligning well with lakehouse architectures where distributed compute engines perform transformations at scale~\cite{Thalpati2024}. For security data integration, \gls{elt} is the natural fit: tool output varies widely in structure and evolves frequently, making upfront transformation brittle.
+
+Full re-ingestion does not scale for enterprise environments with thousands of repositories and dozens of security tools. Incremental ingestion pulls only records that are new or changed since the last synchronization. The high-water mark pattern tracks a timestamp or cursor per source, resuming extraction from the last known position. \Gls{cdc} captures changes at the source level, propagating inserts, updates, and deletes as events~\cite{Reis2022}. Both approaches reduce \gls{api} call volume and processing time, enabling more frequent pipeline runs without proportional resource growth.
+
+Source tools change their \glspl{api} and output formats regularly. A rigid schema definition would break pipelines with every upstream change. Schema-on-read stores raw data in its original structure and applies schema interpretation at query time. Additive schema evolution allows new fields to be absorbed without breaking existing queries or downstream consumers~\cite{Lee2024}. For security tool integration, this flexibility is essential: tools add new finding attributes, rename fields, and change enumerations across versions.
+
+Pipeline re-runs must produce the same result regardless of how many times they execute. This idempotency property is essential for handling retries after partial failures and for reprocessing historical data without creating duplicates. Data quality enforcement complements idempotency through validation at each pipeline layer: schema conformance at ingestion, value range checks during normalization, and referential integrity at aggregation. Records that fail validation are routed to quarantine tables rather than silently dropped or propagated downstream~\cite{DAMA2017}. This quarantine pattern ensures zero silent data loss: every ingested record is either successfully processed or isolated with a documented failure reason.
+
 %%% 1.5.3 %%%
 
 \subsection{Domain Data Model}
 \label{sec:data-entities}
+
+The security domains analyzed in \autoref{sec:app-inventory} through \autoref{sec:source-integration-summary} produce data about a common set of entities and relationships. Before designing physical schemas, a vendor-agnostic conceptual model must define what the framework represents. This subsection identifies the core entities, their relationships, and the consumption patterns that drive the serving layer.
+
+Five primary entity types form the backbone of the domain model:
+\begin{itemize}
+    \item \textbf{Applications} carry business context from asset inventories (\autoref{sec:app-inventory}): name, owning team, criticality tier, lifecycle status, and compliance scope. An application represents a business-level unit that may span multiple repositories and deployment environments.
+    \item \textbf{Repositories} represent technical assets from \gls{scm} platforms (\autoref{sec:sw-dev-analysis}): code location, primary language, visibility, activity indicators, and archive status. The repository is the primary unit around which security findings are grouped.
+    \item \textbf{Findings} capture security issues from any tool category analyzed in \autoref{sec:static-appsec} and \autoref{sec:dynamic-appsec}: severity, status, source tool, detection timestamp, affected code location, and rule or check identifier. Each finding traces to a specific tool scan.
+    \item \textbf{Vulnerabilities} are \gls{cve}-identified issues enriched with three signals: \gls{cvss} severity from the \gls{nvd}, exploitation probability from \gls{epss}, and confirmed exploitation status from \gls{cisa} \gls{kev}. Multiple findings from different tools may reference the same vulnerability.
+    \item \textbf{Teams} provide organizational ownership, linking personnel to applications and remediation responsibilities. Team structure enables filtering and aggregation by organizational unit.
+\end{itemize}
+
+Several additional entity types provide the development process and supply chain context necessary for actionable security analytics:
+\begin{itemize}
+    \item \textbf{Commits} record individual code changes with author, timestamp, and affected files. They link findings to specific code versions and establish authorship for attribution.
+    \item \textbf{Pull requests} represent code change proposals where security scans typically execute. Scan results are often reported per pull request, making it a natural grouping unit for new findings.
+    \item \textbf{Pipeline runs} capture \gls{cicd} execution records: which security tools ran, when, against which commit, and whether security gates passed. They indicate scan coverage and tool health across repositories.
+    \item \textbf{Issues} track remediation work items in systems such as Jira. Linking findings to issues enables \gls{mttr} calculation and \gls{sla} compliance monitoring.
+    \item \textbf{Dependencies} represent third-party libraries identified through \gls{sca}: package name, version, license, and associated \gls{cve} identifiers. They connect \gls{sca} findings to the specific library version that introduced the vulnerability.
+    \item \textbf{Branch protection policies} capture governance configurations from \gls{scm} platforms: required reviewers, mandatory status checks, and merge restrictions. They serve as indicators of development process maturity and security hygiene at the repository level.
+\end{itemize}
+
+These entities connect through a network of relationships. The application-to-repository mapping is the most critical: it links technical findings to business context, enabling risk-aware prioritization. This relationship is many-to-many; shared libraries serve multiple applications, and microservice applications span multiple repositories. Teams own applications, establishing the chain from organizational accountability through business applications to technical assets and their findings.
+
+Development process entities add temporal and workflow context to this core chain. Repositories contain commits and pull requests, which trigger pipeline runs and produce findings. Findings that reference \gls{cve} identifiers link to vulnerability records, enabling enrichment with external intelligence. Dependencies bridge repositories and vulnerabilities: an \gls{sca} finding links a specific library version in a repository to a known \gls{cve}. Issues track the remediation of one or more findings, closing the loop from detection to resolution.
+
+The entity structure maps naturally to dimensional modeling patterns~\cite{Kimball2013}. Findings function as fact records: measurable events with severity, detection date, and tool source. Applications, repositories, and teams serve as dimension records that provide descriptive context for analysis. Supporting entities such as commits, pull requests, and pipeline runs add temporal and process dimensions. This alignment means standard analytical techniques (filtering by dimension, aggregating facts, computing trends over time) apply directly to the security domain. When multiple tools detect the same underlying issue, cross-tool deduplication collapses related findings while preserving traceability to each source report.
+
+Different stakeholders consume this data through different access patterns. Application owners need aggregated risk dashboards showing finding counts by severity, remediation progress, and compliance status for their applications. Developers need actionable findings with code-level context, delivered through issue trackers. Security experts need drill-down access to raw findings, audit trails, and cross-tool correlation for triage. Leadership needs executive metrics: \gls{mttr}, \gls{sla} compliance rates, vulnerability density trends, and portfolio-level comparisons. These consumption patterns span the \gls{olap} and \gls{oltp} serving requirements identified in \autoref{sec:data-architecture} and drive the serving architecture designed in \autoref{ch:framework}.
 
 %%%%%%%%%%%
 %%% 1.6 %%%
@@ -344,17 +399,59 @@ Several patterns emerge from this comparison. \gls{rest} \glspl{api} with \gls{j
 \section{Related Work and Gap Analysis}
 \label{sec:related-work}
 
+Despite the maturity of individual security tools analyzed in the preceding sections, no standard approach exists for consolidating their output into a unified data platform. Organizations face a fragmented landscape of partial solutions, each addressing a subset of the integration challenge. This section surveys existing approaches, evaluates the closest platform-native offering, and identifies the research gap this thesis addresses.
+
 %%% 1.6.1 %%%
 
 \subsection{Existing Approaches}
 \label{sec:existing-approaches}
+
+\textcite{Gartner2023ASPM} define \gls{aspm} as a category of tools that continuously manage application risk through the collection, analysis, and prioritization of security issues across the software lifecycle. Commercial platforms such as Apiiro, Cycode, ArmorCode, and Snyk AppRisk aggregate findings from multiple tools into unified dashboards with correlation and risk scoring. However, they are proprietary, operate as black boxes, and create vendor lock-in: organizations cannot customize data pipelines, apply their own \gls{ml} models, or extend integrations beyond vendor-supported options.
+
+Platform-native security features offer another partial solution. GitHub Advanced Security provides code scanning via CodeQL, secret scanning, and dependency review within the GitHub ecosystem~\cite{GitHubGHAS2025}. GitLab bundles \gls{sast}, \gls{dast}, dependency scanning, container scanning, and a security dashboard into its platform~\cite{GitLabSecurity2025}. Both approaches are ecosystem-locked: they aggregate findings only from their own scanners. Organizations using multiple \gls{scm} platforms or third-party security tools cannot consolidate findings through these native dashboards.
+
+DefectDojo~\cite{DefectDojo2024} is the most prominent open-source alternative, supporting imports from over 150 tools through format-specific parsers. However, it was designed as a vulnerability management interface, not a data platform. Its PostgreSQL backend limits enterprise-scale analytics, and advanced \gls{api} connectors are available only in the commercial offering. \Gls{ocsf}~\cite{OCSF2024} standardizes security event schemas for \gls{siem} and \gls{soar} use cases but does not model application-level entities such as repositories, applications, or development teams.
+
+In practice, many enterprises build ad-hoc integrations: custom scripts that pull data from security tool \glspl{api}, \gls{etl} pipelines that load findings into data warehouses, and dashboards assembled from manual exports. These solutions are fragile. They lack schema governance, break when source \glspl{api} change, and encode institutional knowledge in unmaintained code. Each organization reinvents the same integration patterns without reusable abstractions or standard architectures.
 
 %%% 1.6.2 %%%
 
 \subsection{Databricks Lakewatch}
 \label{sec:lakewatch}
 
+Databricks announced Lakewatch in March 2026 as an open, agentic \gls{siem} built natively on the Databricks lakehouse~\cite{Databricks2026Lakewatch}. The platform unifies security, \gls{it}, and business data in a single governed environment powered by Delta Lake and Unity Catalog. Key capabilities include agentic triage (\gls{ai} agents that parse and enrich telemetry across formats), Detection-as-Code (version-controlled detection rules), and an open ecosystem with integrations from security vendors including Wiz, Palo Alto Networks, Okta, and Zscaler.
+
+Lakewatch and the framework proposed in this thesis address different security domains. Lakewatch focuses on runtime security operations: threat detection, incident response, alert triage, and log analytics. The framework focuses on application security posture: vulnerability findings from \gls{sast}, \gls{sca}, \gls{dast}, secret scanning, container scanning, and \gls{iac} tools, combined with remediation tracking and risk aggregation. Their data sources differ accordingly: Lakewatch ingests security logs and telemetry, while the framework ingests security tool findings and application metadata.
+
+The two systems are complementary rather than competing. Shared lakehouse infrastructure enables data exchange: Lakewatch could consume the framework's application risk scores as enrichment context for incident triage, while the framework could ingest Lakewatch's runtime detections as an additional finding source. Together, they cover both proactive posture management and reactive threat detection.
+
 %%% 1.6.3 %%%
 
 \subsection{Comparative Analysis and Research Gap}
 \label{sec:research-gap}
+
+\autoref{tab:related-work-comparison} compares the surveyed approaches against criteria derived from the domain analysis in \autoref{sec:app-inventory} through \autoref{sec:data-eng-analysis}. The criteria reflect requirements that emerged from analyzing security data sources, integration patterns, and stakeholder consumption needs.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison of Existing Approaches}
+\label{tab:related-work-comparison}
+\begin{tabularx}{\textwidth}{X c c c c c}
+\toprule
+\textbf{Criterion} & \textbf{ASPM} & \textbf{Platform-native} & \textbf{DefectDojo} & \textbf{Lakewatch} & \textbf{This thesis} \\
+\midrule
+Open-source              & --      & --      & Yes     & --      & Yes \\
+Vendor-agnostic model    & --      & --      & Partial & --      & Yes \\
+Extensible connectors    & --      & --      & Yes     & Partial & Yes \\
+Lakehouse architecture   & --      & --      & --      & Yes     & Yes \\
+OLAP + OLTP serving      & --      & --      & --      & --      & Yes \\
+Data quality enforcement & --      & --      & --      & --      & Yes \\
+AppSec-specific model    & Yes     & Partial & Yes     & --      & Yes \\
+Enterprise scalability   & Yes     & Partial & --      & Yes     & Yes \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+No existing approach satisfies all criteria. Commercial \gls{aspm} platforms are proprietary and inflexible, preventing organizations from customizing pipelines or applying their own analytical models. Platform-native aggregations are ecosystem-locked and cannot consolidate findings across tool boundaries. DefectDojo lacks the data architecture for enterprise-scale analytics. Lakewatch addresses a different security domain: runtime operations rather than application security posture. Academic literature on application security consolidation as a data engineering problem is limited, with most work focusing on detection techniques rather than cross-tool integration at enterprise scale.
+
+This thesis fills the gap with an open, vendor-agnostic framework that treats application security consolidation as a data engineering problem. The framework applies lakehouse architecture and medallion data organization to ingest heterogeneous security tool output, normalize it into a unified domain model, and serve it through both \gls{olap} and \gls{oltp} interfaces. The design is extensible: adding a new data source requires only a connector module, without changes to the core pipeline. \autoref{ch:framework} presents the framework design, and \autoref{ch:implementation} demonstrates its implementation.
