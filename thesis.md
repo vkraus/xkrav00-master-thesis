@@ -48,9 +48,17 @@
   - [Comparative Analysis and Research Gap](#comparative-analysis-and-research-gap)
   - [Framework](#framework)
 - [Solution Architecture](#solution-architecture)
+  - [Technology Stack](#technology-stack)
+        - [Delta Lake](#delta-lake)
+        - [Unity Catalog](#unity-catalog)
+        - [Lakeflow Declarative Pipelines](#lakeflow-declarative-pipelines)
+        - [Lakebase](#lakebase)
+        - [Platform Synergies](#platform-synergies)
   - [Component Design](#component-design)
   - [Medallion Architecture](#medallion-architecture)
-  - [Technology Stack](#technology-stack)
+        - [Bronze Layer](#bronze-layer)
+        - [Silver Layer](#silver-layer)
+        - [Gold Layer](#gold-layer)
 - [Data Model](#data-model)
   - [Schema Patterns](#schema-patterns)
   - [Entity Model](#entity-model)
@@ -1473,9 +1481,19 @@ supply chain context necessary for actionable security analytics:
   restrictions. They serve as indicators of development process maturity
   and security hygiene at the repository level.
 
-These entities connect through a network of relationships. The
-application-to-repository mapping is the most critical: it links
-technical findings to business context, enabling risk-aware
+<a href="#fig:domain-model" data-reference-type="autoref"
+data-reference="fig:domain-model">[fig:domain-model]</a> illustrates the
+entity relationships. Primary entities (bold borders) form the core
+analytical model; supporting entities provide development process and
+supply chain context.
+
+<figure id="fig:domain-model">
+
+<figcaption>Conceptual Domain Model</figcaption>
+</figure>
+
+The application-to-repository mapping is the most critical relationship:
+it links technical findings to business context, enabling risk-aware
 prioritization. This relationship is many-to-many; shared libraries
 serve multiple applications, and microservice applications span multiple
 repositories. Teams own applications, establishing the chain from
@@ -1681,13 +1699,329 @@ its implementation.
 
 ## Framework
 
+<a href="#ch:analysis" data-reference-type="autoref"
+data-reference="ch:analysis">[ch:analysis]</a> analyzed the sources,
+patterns, and gaps in enterprise application security data integration.
+This chapter presents the proposed framework: a reusable blueprint that
+defines the architecture, data model patterns, connector abstractions,
+and extension points an organization follows to build its own
+implementation. The framework is prescriptive but platform-aware; it
+targets the Databricks lakehouse but separates general patterns from
+platform-specific choices.
+<a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a> demonstrates
+a concrete instance of this blueprint.
+
 ### Solution Architecture
+
+This section presents the framework’s architecture at three levels:
+technology stack, component structure, and data layer organization. The
+architecture addresses the requirements identified across the domain
+analysis: heterogeneous source ingestion, vendor-agnostic normalization,
+dual <span acronym-label="olap"
+acronym-form="singular+short">olap</span>/<span acronym-label="oltp"
+acronym-form="singular+short">oltp</span> serving, and extensibility for
+new data sources and analytics.
+
+#### Technology Stack
+
+The framework targets the Databricks platform on
+<span acronym-label="aws" acronym-form="singular+short">aws</span>. A
+key architectural property of the platform is the separation of storage
+and compute: data resides in cloud object storage while processing
+engines scale independently, enabling cost-efficient handling of the
+bursty, heterogeneous workloads typical of security data integration .
+This subsection maps platform components to framework roles.
+
+##### Delta Lake
+
+Delta Lake is an open table format that adds <span acronym-label="acid"
+acronym-form="singular+short">acid</span> transactions, schema
+enforcement, and time travel to cloud object storage . It provides the
+storage layer for all three medallion tiers. Schema evolution support
+allows bronze tables to absorb new source fields without pipeline
+changes. Time travel enables auditing and rollback, critical for a
+security data platform where data integrity and reproducibility are
+non-negotiable. demonstrated that the lakehouse architecture built on
+Delta Lake achieves both warehouse-grade governance and data lake
+flexibility, the combination required by the heterogeneous source
+landscape analyzed in
+<a href="#sec:source-integration-summary" data-reference-type="autoref"
+data-reference="sec:source-integration-summary">[sec:source-integration-summary]</a>.
+
+##### Unity Catalog
+
+Unity Catalog provides unified data governance across the lakehouse . It
+manages a three-level namespace (`catalog.schema.table`) that maps
+directly to the medallion layer organization: one catalog per
+environment, schemas for each source (bronze) and each domain (silver,
+gold). Fine-grained access control enforces least-privilege access to
+security data, which often contains sensitive vulnerability details.
+Automated lineage tracking records data flow from source through
+transformations to consumption, supporting auditability requirements.
+Column-level tags enable classification of sensitive fields such as
+<span acronym-label="cve" acronym-form="singular+short">cve</span>
+descriptions and remediation guidance.
+
+##### Lakeflow Declarative Pipelines
+
+<span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> is the pipeline
+orchestration framework for defining batch and streaming
+transformations . Pipelines are declared as Python or
+<span acronym-label="sql" acronym-form="singular+short">sql</span>
+functions with explicit dependencies; the framework resolves execution
+order automatically. Data quality expectations are embedded directly in
+pipeline definitions as declarative constraints (e.g., “severity must be
+one of critical, high, medium, low”). Records that violate expectations
+are quarantined without stopping the pipeline, implementing the
+quarantine pattern described in
+<a href="#sec:data-integration-patterns" data-reference-type="autoref"
+data-reference="sec:data-integration-patterns">[sec:data-integration-patterns]</a>.
+<span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> handles incremental
+processing natively through change data feed, reducing reprocessing cost
+for large datasets.
+
+##### Lakebase
+
+Lakebase is a serverless PostgreSQL database that provides the
+<span acronym-label="oltp" acronym-form="singular+short">oltp</span>
+serving layer . It shares the underlying storage layer with the
+lakehouse, enabling gold-layer tables to be exposed as
+<span acronym-label="oltp"
+acronym-form="singular+short">oltp</span>-queryable tables without data
+duplication. This architecture satisfies the dual serving requirement
+identified in
+<a href="#sec:data-architecture" data-reference-type="autoref"
+data-reference="sec:data-architecture">[sec:data-architecture]</a>:
+<span acronym-label="olap" acronym-form="singular+short">olap</span>
+queries run against <span acronym-label="sql"
+acronym-form="singular+short">sql</span> warehouses for dashboards and
+trend analysis, while <span acronym-label="oltp"
+acronym-form="singular+short">oltp</span> queries run against Lakebase
+for low-latency operational workloads such as issue tracker integration,
+remediation state lookups, and serving layer <span acronym-label="api"
+acronym-form="plural+short">apis</span>. Lakebase supports
+scale-to-zero, reducing cost for bursty workloads. Instant database
+branching creates isolated copies for development and testing without
+duplicating data.
+
+##### Platform Synergies
+
+Running all components on a single platform provides governance,
+lineage, and compute benefits that would require significant integration
+effort across disparate tools. Unity Catalog governs access uniformly
+from bronze ingestion through gold serving. Lineage tracks data from
+source <span acronym-label="api"
+acronym-form="singular+short">api</span> through transformations to
+dashboard queries. The shared compute and storage model eliminates data
+movement between analytical and operational stores.
+
+The platform also enables integration with Lakewatch, the Databricks
+<span acronym-label="siem" acronym-form="singular+short">siem</span>
+analyzed in <a href="#sec:lakewatch" data-reference-type="autoref"
+data-reference="sec:lakewatch">[sec:lakewatch]</a>. Both systems share
+Delta Lake storage and Unity Catalog governance. The framework’s
+gold-layer outputs (application risk scores, remediation status) can
+serve as enrichment signals for Lakewatch threat detection, while
+Lakewatch’s runtime security events could feed back into the framework
+as an additional finding source. This bidirectional potential reinforces
+the complementarity identified in the related work analysis.
 
 #### Component Design
 
+With the platform components established, the framework organizes into
+five tiers, illustrated in
+<a href="#fig:component-design" data-reference-type="autoref"
+data-reference="fig:component-design">[fig:component-design]</a>. Data
+flows top-to-bottom from sources through the platform to consumers.
+
+<figure id="fig:component-design">
+
+<figcaption>Component Design</figcaption>
+</figure>
+
+**Data sources** are the external systems analyzed in
+<a href="#ch:analysis" data-reference-type="autoref"
+data-reference="ch:analysis">[ch:analysis]</a>: application inventories,
+<span acronym-label="scm" acronym-form="singular+short">scm</span>
+platforms, <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> tools, security scanners, and
+vulnerability databases. They are outside the framework’s boundary; the
+framework consumes their <span acronym-label="api"
+acronym-form="plural+short">apis</span> but does not control them.
+
+**The ingestion tier** hosts connectors that extract data from sources
+and land it in the bronze layer. Three connector categories serve
+different integration scenarios. Partner connectors use pre-built
+integrations from the platform ecosystem. <span acronym-label="dltool"
+acronym-form="singular+short">dltool</span> connectors use the
+open-source <span acronym-label="dltool"
+acronym-form="singular+short">dltool</span> library for custom
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span>
+extraction. Custom connectors handle non-standard sources such as
+<span acronym-label="cli" acronym-form="singular+short">cli</span>-based
+scanners or file uploads. All connectors share common concerns:
+authentication, pagination, rate limiting, and incremental state
+management. The connector framework in
+<a href="#sec:connector-framework" data-reference-type="autoref"
+data-reference="sec:connector-framework">[sec:connector-framework]</a>
+defines these patterns.
+
+**The processing tier** implements the medallion architecture
+(<a href="#sec:medallion-arch" data-reference-type="autoref"
+data-reference="sec:medallion-arch">[sec:medallion-arch]</a>). Delta
+Lake provides the storage layer; <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> orchestrates the
+transformations. Bronze stores raw ingested data in source-native
+schemas. Silver normalizes it into the vendor-agnostic entity and
+finding model defined in
+<a href="#sec:data-entities" data-reference-type="autoref"
+data-reference="sec:data-entities">[sec:data-entities]</a>. Gold
+computes aggregated metrics, <span acronym-label="ml"
+acronym-form="singular+short">ml</span>-enriched scores, and
+consumption-ready datasets. Unity Catalog governs access and tracks
+lineage across all three layers.
+
+**The serving tier** exposes processed data to downstream consumers.
+<span acronym-label="sql" acronym-form="singular+short">sql</span>
+warehouses serve <span acronym-label="olap"
+acronym-form="singular+short">olap</span> queries for dashboards and
+analytics. Lakebase serves <span acronym-label="oltp"
+acronym-form="singular+short">oltp</span> workloads: low-latency
+lookups, issue tracker integration, and operational
+<span acronym-label="api" acronym-form="plural+short">apis</span>. A
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span> layer
+provides <span acronym-label="http"
+acronym-form="singular+short">http</span> access to the
+<span acronym-label="oltp" acronym-form="singular+short">oltp</span>
+store.
+
+**Data consumers** are external systems that read from the serving tier:
+issue trackers (Jira, ServiceNow), <span acronym-label="aspm"
+acronym-form="singular+short">aspm</span> dashboards,
+<span acronym-label="siem"
+acronym-form="singular+short">siem</span>/<span acronym-label="soar"
+acronym-form="singular+short">soar</span> platforms, and custom
+reporting tools. Like data sources, consumers are outside the framework
+boundary.
+
+A direct bypass path allows data sources to reach the ingestion tier
+without an intermediate integration tool, for cases where connectors
+call source <span acronym-label="api"
+acronym-form="plural+short">apis</span> directly. This path is common
+for security scanners whose output is consumed through native
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="plural+short">apis</span> or
+<span acronym-label="cli" acronym-form="singular+short">cli</span>
+tooling.
+
 #### Medallion Architecture
 
-#### Technology Stack
+The processing tier applies the medallion architecture pattern
+introduced in
+<a href="#sec:data-architecture" data-reference-type="autoref"
+data-reference="sec:data-architecture">[sec:data-architecture]</a>. Each
+layer is implemented as a Delta Lake schema within a single Unity
+Catalog, providing unified governance and cross-layer lineage tracking.
+<a href="#fig:medallion-design" data-reference-type="autoref"
+data-reference="fig:medallion-design">[fig:medallion-design]</a>
+illustrates the layer structure and the transformations between them.
+
+<figure id="fig:medallion-design">
+
+<figcaption>Medallion Layer Design</figcaption>
+</figure>
+
+##### Bronze Layer
+
+The bronze layer stores raw data from each source system with minimal
+transformation. Each connector writes to its own schema (e.g., `github`,
+`servicenow`, `sonarqube`), preserving the source’s native data
+structure. Records are appended with standard metadata columns:
+ingestion timestamp, source system identifier, and batch identifier. No
+business logic is applied at this layer; the goal is a faithful,
+auditable copy of source data.
+
+Bronze tables use a schema-on-read approach. New fields from source
+<span acronym-label="api" acronym-form="singular+short">api</span>
+changes are absorbed through additive schema evolution without breaking
+existing pipelines. Partitioning by ingestion date enables efficient
+time-range queries and supports retention policies. Records that fail
+structural validation at ingestion (malformed <span acronym-label="json"
+acronym-form="singular+short">json</span>, missing required fields) are
+routed to per-source quarantine tables with diagnostic metadata.
+
+##### Silver Layer
+
+The silver layer is the system of record. Bronze-to-silver
+transformations normalize heterogeneous source data into the
+vendor-agnostic domain model defined in
+<a href="#sec:data-entities" data-reference-type="autoref"
+data-reference="sec:data-entities">[sec:data-entities]</a>. Three table
+categories occupy this layer:
+
+- **Entity tables** store normalized dimension data: applications,
+  repositories, teams, commits, pull requests, pipeline runs,
+  dependencies, and branch protection policies. Each entity table uses a
+  surrogate key, a natural key from the source system, and
+  `valid_from`/`valid_to` timestamps for change tracking.
+
+- **Finding tables** store normalized security findings as fact records.
+  Each finding carries a severity mapped to the canonical scale, a
+  lifecycle status, the source tool identifier, and references to the
+  affected entity (repository, application). Finding tables are
+  organized by category: <span acronym-label="sast"
+  acronym-form="singular+short">sast</span>, <span acronym-label="sca"
+  acronym-form="singular+short">sca</span>, secrets,
+  <span acronym-label="dast" acronym-form="singular+short">dast</span>,
+  containers, and <span acronym-label="iac"
+  acronym-form="singular+short">iac</span>.
+
+- **Relationship tables** store many-to-many mappings:
+  application-to-repository, finding-to-<span acronym-label="cve"
+  acronym-form="singular+short">cve</span>, and cross-tool deduplication
+  links.
+
+The silver layer applies the data quality patterns from
+<a href="#sec:data-integration-patterns" data-reference-type="autoref"
+data-reference="sec:data-integration-patterns">[sec:data-integration-patterns]</a>:
+severity harmonization, entity normalization, timestamp standardization,
+and deduplication. <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> expectations enforce
+constraints declaratively; records that violate expectations are
+quarantined rather than propagated.
+
+##### Gold Layer
+
+The gold layer computes consumption-ready datasets from silver data. Two
+categories of gold tables serve distinct purposes:
+
+- **Aggregation tables** compute metrics at defined grains: application
+  risk scores, team remediation rates, <span acronym-label="mttr"
+  acronym-form="singular+short">mttr</span> by severity,
+  <span acronym-label="sla" acronym-form="singular+short">sla</span>
+  compliance percentages, and time-series trend roll-ups. These tables
+  power the dashboards and executive reports consumed through the
+  <span acronym-label="olap" acronym-form="singular+short">olap</span>
+  serving path.
+
+- **<span acronym-label="ml"
+  acronym-form="singular+short">ml</span>-enriched tables** store model
+  outputs: composite risk scores, false positive predictions, and
+  remediation time estimates. These scores augment the aggregation
+  tables with predictive signals. The <span acronym-label="ml"
+  acronym-form="singular+short">ml</span> workflow patterns are detailed
+  in <a href="#sec:ml-workflows" data-reference-type="autoref"
+  data-reference="sec:ml-workflows">[sec:ml-workflows]</a>.
+
+Gold tables use incremental refresh where possible: new silver records
+trigger recomputation of only the affected aggregation partitions. Full
+refresh is reserved for metrics that require global recomputation, such
+as cross-application percentile rankings.
 
 ### Data Model
 
