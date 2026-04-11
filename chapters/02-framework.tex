@@ -167,20 +167,178 @@ Gold tables use incremental refresh where possible: new silver records trigger r
 \section{Data Model}
 \label{sec:data-model}
 
+This section maps the conceptual domain model from \autoref{sec:data-entities} to physical table designs across the three medallion layers. It defines reusable schema patterns first, then applies them to produce the concrete entity, finding, and aggregation tables the framework provides.
+
 %%% 2.2.1 %%%
 
 \subsection{Schema Patterns}
 \label{sec:schema-patterns}
+
+Schema patterns are reusable templates that standardize how tables are created at each medallion layer. They ensure consistency across the data model and lower the barrier for extending it with new entities or sources. Four patterns cover the framework's needs.
+
+\subsubsection{Bronze Pattern}
+
+Every bronze table follows the same structural convention. The source's native payload is stored alongside a fixed set of metadata columns:
+
+\begin{itemize}
+    \item \texttt{\_ingestion\_timestamp} — when the record was ingested (\gls{utc}).
+    \item \texttt{\_source\_system} — identifier of the originating tool or platform.
+    \item \texttt{\_batch\_id} — unique identifier for the ingestion run, supporting idempotent replays.
+    \item \texttt{\_raw\_payload} — the original \gls{json} response or record, preserved for auditability.
+\end{itemize}
+
+Additional columns from the source's native schema are included alongside the raw payload through schema-on-read. New fields are absorbed via additive schema evolution. Tables are partitioned by ingestion date to support retention policies and efficient time-range queries.
+
+\subsubsection{Silver Entity Pattern}
+
+Entity tables store normalized dimension data. Each follows a standard structure:
+
+\begin{itemize}
+    \item \texttt{id} — surrogate key (auto-generated).
+    \item \texttt{natural\_key} — the identifier from the source system (e.g., repository full name, application \texttt{sys\_id}).
+    \item \texttt{source\_system} — which tool or platform provided the record.
+    \item \texttt{valid\_from} / \texttt{valid\_to} — timestamps for change tracking (Type~2 slowly changing dimension). A \texttt{NULL} value in \texttt{valid\_to} indicates the current version.
+    \item Domain-specific columns — attributes defined by the entity type (e.g., \texttt{criticality\_tier} for applications, \texttt{primary\_language} for repositories).
+\end{itemize}
+
+The natural key plus source system combination uniquely identifies a record's origin. The surrogate key provides a stable reference for foreign keys even when source identifiers change.
+
+\subsubsection{Silver Finding Pattern}
+
+Finding tables store normalized fact data. Each follows a standard structure:
+
+\begin{itemize}
+    \item \texttt{finding\_id} — surrogate key.
+    \item \texttt{source\_finding\_id} — the identifier from the source tool.
+    \item \texttt{source\_tool} — which scanner produced the finding.
+    \item \texttt{repository\_id} — foreign key to the repository entity table.
+    \item \texttt{severity} — normalized to the canonical four-level scale (critical, high, medium, low).
+    \item \texttt{status} — normalized lifecycle state (open, confirmed, resolved, false\_positive, wontfix).
+    \item \texttt{detected\_at} / \texttt{resolved\_at} — \gls{utc} timestamps enabling \gls{mttr} calculation.
+    \item \texttt{rule\_id} — the tool-specific rule or check that triggered the finding.
+    \item Category-specific columns — attributes unique to the finding type (e.g., \texttt{file\_path} and \texttt{line\_range} for \gls{sast}, \texttt{package\_name} and \texttt{installed\_version} for \gls{sca}).
+\end{itemize}
+
+\subsubsection{Relationship Pattern}
+
+Relationship tables store many-to-many mappings between entities. Each contains foreign keys to both sides, a source system indicator, and \texttt{valid\_from}/\texttt{valid\_to} timestamps to track when the relationship was active. No payload columns are included; the table's sole purpose is to link entities. Examples include application-to-repository, finding-to-\gls{cve}, and cross-tool deduplication links.
+
+\subsubsection{Gold Aggregation Pattern}
+
+Aggregation tables follow a grain-metric-period structure:
+
+\begin{itemize}
+    \item \textbf{Grain columns} define the level of detail: the entity key (application, team, repository) and time period (day, week, month).
+    \item \textbf{Metric columns} store computed values: finding counts by severity, \gls{mttr}, \gls{sla} compliance percentage, risk score.
+    \item \textbf{Period columns} store the time window: \texttt{period\_start} and \texttt{period\_end} (\gls{utc}).
+    \item \textbf{Refresh metadata}: \texttt{computed\_at} timestamp and refresh strategy indicator (incremental or full).
+\end{itemize}
+
+This structure enables consistent querying across all gold tables: filter by grain, aggregate over periods, compare across entities.
 
 %%% 2.2.2 %%%
 
 \subsection{Entity Model}
 \label{sec:entity-model}
 
+The silver layer instantiates the schema patterns into concrete tables. This subsection specifies the key tables organized by category: entities (dimensions), findings (facts), reference data, and relationships.
+
+\subsubsection{Entity Tables}
+
+\autoref{tab:entity-tables} lists the entity tables and their key domain-specific columns. All tables include the standard silver entity pattern columns (\texttt{id}, \texttt{natural\_key}, \texttt{source\_system}, \texttt{valid\_from}/\texttt{valid\_to}).
+
+\begin{table}[htbp]
+\centering
+\caption{Silver Entity Tables}
+\label{tab:entity-tables}
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{Table} & \textbf{Source} & \textbf{Key Domain Columns} \\
+\midrule
+applications & \gls{cmdb} & name, criticality\_tier, lifecycle\_status, business\_unit, compliance\_scope \\
+repositories & \gls{scm} & full\_name, primary\_language, visibility, default\_branch, archived, last\_activity\_at \\
+teams & \gls{cmdb}/\gls{scm} & name, parent\_team\_id, contact\_email \\
+commits & \gls{scm} & sha, author, authored\_at, message, repository\_id \\
+pull\_requests & \gls{scm} & number, title, state, author, created\_at, merged\_at, repository\_id \\
+pipeline\_runs & \gls{cicd} & pipeline\_id, commit\_sha, status, started\_at, finished\_at, repository\_id \\
+dependencies & \gls{sca} & package\_name, installed\_version, license, ecosystem, repository\_id \\
+branch\_policies & \gls{scm} & required\_reviewers, require\_status\_checks, enforce\_admins, repository\_id \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection{Finding Tables}
+
+Finding tables share the silver finding pattern columns and add category-specific attributes. \autoref{tab:finding-tables} summarizes each.
+
+\begin{table}[htbp]
+\centering
+\caption{Silver Finding Tables}
+\label{tab:finding-tables}
+\begin{tabularx}{\textwidth}{l X}
+\toprule
+\textbf{Table} & \textbf{Category-Specific Columns} \\
+\midrule
+sast\_findings & file\_path, line\_start, line\_end, cwe\_id, language \\
+sca\_findings & package\_name, installed\_version, fixed\_version, cve\_id, ecosystem \\
+secret\_findings & secret\_type, file\_path, commit\_sha, validity\_status \\
+dast\_findings & url, http\_method, parameter, attack\_type \\
+container\_findings & image\_name, image\_tag, layer, cve\_id \\
+iac\_findings & resource\_type, resource\_name, file\_path, policy\_id, benchmark \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Each finding table references its repository through \texttt{repository\_id}. Business application context is derived through the relationship tables rather than stored directly on findings, preserving the many-to-many application-to-repository mapping without duplicating finding records.
+
+\subsubsection{Reference Tables}
+
+Reference tables store external intelligence used for enrichment:
+
+\begin{itemize}
+    \item \textbf{vulnerabilities} — \gls{cve} records with description, published date, and \gls{cvss} base score from the \gls{nvd}.
+    \item \textbf{epss\_scores} — daily \gls{epss} probabilities per \gls{cve}, enabling time-series analysis of exploitation likelihood.
+    \item \textbf{kev\_entries} — \gls{cisa} \gls{kev} catalog entries indicating confirmed active exploitation, with the date added.
+\end{itemize}
+
+These tables are refreshed on a scheduled basis from their respective external sources. Findings link to them through \gls{cve} identifiers, forming the three-signal enrichment model described in \autoref{sec:static-appsec}.
+
+\subsubsection{Relationship Tables}
+
+Three relationship tables implement the key mappings identified in the domain model:
+
+\begin{itemize}
+    \item \textbf{app\_repo\_mapping} — links applications to repositories (many-to-many). This is the most critical relationship for business context attribution.
+    \item \textbf{finding\_cve\_mapping} — links findings to \gls{cve} records, enabling vulnerability enrichment.
+    \item \textbf{dedup\_links} — links findings identified as duplicates across tools, preserving traceability to each source report while establishing a canonical finding.
+\end{itemize}
+
 %%% 2.2.3 %%%
 
 \subsection{Aggregation Model}
 \label{sec:aggregation-model}
+
+The gold layer computes consumption-ready metrics from silver data using the aggregation pattern. Each gold table targets a specific stakeholder need identified in \autoref{sec:data-entities}.
+
+\subsubsection{Application Risk Scores}
+
+The \texttt{app\_risk\_scores} table computes a composite risk metric per application per period. Grain columns are \texttt{application\_id} and time period. Metric columns include: open finding counts by severity, weighted risk score (combining severity, \gls{epss} probability, and application criticality tier), \gls{sla} compliance percentage, and a trend indicator (improving, stable, degrading). This table serves application owners who need a single view of their application's security posture.
+
+\subsubsection{Team Metrics}
+
+The \texttt{team\_metrics} table aggregates remediation performance per team per period. Metrics include: \gls{mttr} by severity, finding closure rate, new vs. resolved finding ratio, and \gls{sla} breach count. Leadership uses these metrics for cross-team comparisons and resource allocation decisions.
+
+\subsubsection{Vulnerability Trends}
+
+The \texttt{vulnerability\_trends} table provides time-series data at configurable grains (daily, weekly, monthly). Metrics include: new findings introduced, findings resolved, net open count, severity distribution shifts, and mean age of open findings. These trends power the longitudinal dashboards that track organizational progress.
+
+\subsubsection{Coverage Analysis}
+
+The \texttt{coverage\_analysis} table identifies gaps in security tool coverage. For each repository, it records which tool categories have produced findings or scan records (indicating active scanning) and which have not. Missing coverage is flagged per category: a repository with no \gls{sast} findings and no \gls{sast} pipeline runs likely lacks static analysis integration. This table enables security teams to prioritize tooling rollout.
+
+\subsubsection{Extension Guide}
+
+Adding a new gold table follows a consistent process: define the grain (which entity, which time period), specify the metrics (what to compute), write a silver-to-gold \gls{dltables} transformation, and configure the refresh strategy (incremental or full). The aggregation pattern ensures all gold tables share a common query interface, so dashboards and reporting tools can consume new tables without structural changes.
 
 %%%%%%%%%%%
 %%% 2.3 %%%
