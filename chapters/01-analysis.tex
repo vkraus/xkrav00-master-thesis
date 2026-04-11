@@ -384,7 +384,69 @@ Several additional entity types provide the development process and supply chain
     \item \textbf{Branch protection policies} capture governance configurations from \gls{scm} platforms: required reviewers, mandatory status checks, and merge restrictions. They serve as indicators of development process maturity and security hygiene at the repository level.
 \end{itemize}
 
-These entities connect through a network of relationships. The application-to-repository mapping is the most critical: it links technical findings to business context, enabling risk-aware prioritization. This relationship is many-to-many; shared libraries serve multiple applications, and microservice applications span multiple repositories. Teams own applications, establishing the chain from organizational accountability through business applications to technical assets and their findings.
+\autoref{fig:domain-model} illustrates the entity relationships. Primary entities (bold borders) form the core analytical model; supporting entities provide development process and supply chain context.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    primary/.style={rectangle, draw={rgb,255:red,40;green,80;blue,120},
+        fill={rgb,255:red,40;green,80;blue,120}, fill opacity=0.08,
+        text opacity=1, minimum width=2.6cm, minimum height=0.7cm,
+        rounded corners=2pt, font=\footnotesize\sffamily\bfseries},
+    secondary/.style={rectangle, draw=black!30, fill=black!3,
+        minimum width=2.4cm, minimum height=0.65cm, rounded corners=2pt,
+        font=\footnotesize\sffamily},
+    arr/.style={-{Stealth[length=2mm]}, thin, black!50},
+    biarr/.style={{Stealth[length=2mm]}-{Stealth[length=2mm]}, thin, black!50},
+    lbl/.style={font=\scriptsize, text=black!50},
+]
+
+% Business layer
+\node[primary] (team) at (-2, 4.5) {Teams};
+\node[primary] (app) at (2, 4.5) {Applications};
+
+% Asset layer
+\node[primary] (repo) at (0, 3) {Repositories};
+\node[secondary] (policy) at (4.2, 3) {Branch Protection};
+
+% Development layer
+\node[secondary] (commit) at (-3, 1.5) {Commits};
+\node[secondary] (pr) at (0, 1.5) {Pull Requests};
+\node[secondary] (dep) at (3, 1.5) {Dependencies};
+
+% Process layer
+\node[secondary] (pipeline) at (0, 0) {Pipeline Runs};
+
+% Security layer
+\node[primary] (finding) at (0, -1.5) {Findings};
+\node[primary] (vuln) at (-2.5, -3) {Vulnerabilities};
+\node[secondary] (issue) at (2.5, -3) {Issues};
+
+% Business relationships
+\draw[arr] (team) -- node[lbl, above] {owns} (app);
+\draw[biarr] (app) -- node[lbl, right] {M:N} (repo);
+
+% Repository relationships
+\draw[arr] (repo) -- (policy);
+\draw[arr] (repo) -- (commit);
+\draw[arr] (repo) -- (pr);
+\draw[arr] (repo) -- (dep);
+
+% Process chain
+\draw[arr] (pr) -- node[lbl, right] {triggers} (pipeline);
+\draw[arr] (pipeline) -- node[lbl, right] {produces} (finding);
+\draw[arr, densely dashed] (dep) to[bend right=15] (finding);
+
+% Security outcomes
+\draw[arr] (finding) -- node[lbl, left] {references} (vuln);
+\draw[arr] (finding) -- node[lbl, right] {tracked by} (issue);
+
+\end{tikzpicture}
+\caption{Conceptual Domain Model}
+\label{fig:domain-model}
+\end{figure}
+
+The application-to-repository mapping is the most critical relationship: it links technical findings to business context, enabling risk-aware prioritization. This relationship is many-to-many; shared libraries serve multiple applications, and microservice applications span multiple repositories. Teams own applications, establishing the chain from organizational accountability through business applications to technical assets and their findings.
 
 Development process entities add temporal and workflow context to this core chain. Repositories contain commits and pull requests, which trigger pipeline runs and produce findings. Findings that reference \gls{cve} identifiers link to vulnerability records, enabling enrichment with external intelligence. Dependencies bridge repositories and vulnerabilities: an \gls{sca} finding links a specific library version in a repository to a known \gls{cve}. Issues track the remediation of one or more findings, closing the loop from detection to resolution.
 
