@@ -35,7 +35,9 @@
   - [Penetration Testing](#penetration-testing)
   - [Web Application Firewalls](#web-application-firewalls)
   - [Runtime Application Self-Protection](#runtime-application-self-protection)
+  - [Runtime API Security](#runtime-api-security)
   - [Vulnerability Management and Cloud Posture](#vulnerability-management-and-cloud-posture)
+  - [Source Integration Summary](#source-integration-summary)
 - [Data Engineering](#data-engineering)
   - [Data Platform Architecture](#data-platform-architecture)
   - [Data Integration Patterns](#data-integration-patterns)
@@ -187,7 +189,6 @@ data-reference="ch:framework">[ch:framework]</a> and
 <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a>.
 
-The chapter is organized as follows.
 <a href="#sec:app-inventory" data-reference-type="autoref"
 data-reference="sec:app-inventory">[sec:app-inventory]</a> establishes
 the business and infrastructure asset context underlying all security
@@ -655,54 +656,53 @@ vulnerabilities in software throughout its lifecycle . advocated for
 security touchpoints spanning the entire development process. The
 DevSecOps paradigm  realizes this vision by embedding security testing
 into <span acronym-label="cicd"
-acronym-form="singular+short">cicd</span> pipelines:
+acronym-form="singular+short">cicd</span> pipelines.
 <span acronym-label="sast" acronym-form="singular+short">sast</span>
 examines source code, <span acronym-label="sca"
 acronym-form="singular+short">sca</span> checks third-party
 dependencies, secret scanners flag leaked credentials, and
 <span acronym-label="dast" acronym-form="singular+short">dast</span>
 probes running applications. The practical consequence is a high volume
-of security data from dozens of tools, each with different
-<span acronym-label="api" acronym-form="plural+short">apis</span>,
-output formats, and severity models. The <span acronym-label="owasp"
-acronym-form="singular+short">owasp</span> Top 10  provides a widely
-referenced risk classification, but it is not a data interchange
-standard.
+of security data from tools with different <span acronym-label="api"
+acronym-form="plural+short">apis</span>, output formats, and severity
+models. The <span acronym-label="owasp"
+acronym-form="singular+short">owasp</span> Top 10 classifies common web
+application risks , but it does not define a data interchange standard.
 
 Several cross-cutting data standards bring partial consistency. The
 <span acronym-label="cve" acronym-form="singular+short">cve</span>
-system  assigns unique identifiers to known vulnerabilities. The
-<span acronym-label="cwe" acronym-form="singular+short">cwe</span> 
-classifies underlying weakness types. The <span acronym-label="cvss"
-acronym-form="singular+short">cvss</span>  scores attack vector,
-complexity, and impact on a 0–10 scale. The <span acronym-label="epss"
-acronym-form="singular+short">epss</span>  complements
+system assigns unique identifiers to known vulnerabilities .
+<span acronym-label="cwe" acronym-form="singular+short">cwe</span>
+classifies underlying weakness types . <span acronym-label="cvss"
+acronym-form="singular+short">cvss</span> scores attack vector,
+complexity, and impact on a 0–10 scale . <span acronym-label="epss"
+acronym-form="singular+short">epss</span> complements
 <span acronym-label="cvss" acronym-form="singular+short">cvss</span>
-with a predictive signal: the probability that a vulnerability will be
+with a predictive signal : the probability that a vulnerability will be
 exploited within 30 days, computed by <span acronym-label="ml"
 acronym-form="singular+short">ml</span> models.
 <span acronym-label="cisa" acronym-form="singular+short">cisa</span>
 maintains the <span acronym-label="kev"
-acronym-form="singular+short">kev</span> catalog , which adds a third
-signal: confirmed active exploitation curated from real-world incident
-data. Together, <span acronym-label="cvss"
+acronym-form="singular+short">kev</span> catalog . It adds a third
+signal: confirmed active exploitation from real-world incident data.
+Together, <span acronym-label="cvss"
 acronym-form="singular+short">cvss</span>, <span acronym-label="epss"
 acronym-form="singular+short">epss</span>, and <span acronym-label="kev"
 acronym-form="singular+short">kev</span> form a three-signal enrichment
 model used throughout the framework.
 
 For data interchange, <span acronym-label="sarif"
-acronym-form="singular+short">sarif</span>  defines a
+acronym-form="singular+short">sarif</span> defines a
 <span acronym-label="json"
 acronym-form="singular+short">json</span>-based format for static
-analysis results. CycloneDX  and <span acronym-label="spdx"
-acronym-form="singular+short">spdx</span>  provide
+analysis results . CycloneDX and <span acronym-label="spdx"
+acronym-form="singular+short">spdx</span> provide
 <span acronym-label="sbom" acronym-form="singular+short">sbom</span>
-schemas. The <span acronym-label="ocsf"
-acronym-form="singular+short">ocsf</span>  targets
-<span acronym-label="siem" acronym-form="singular+short">siem</span>
-events and <span acronym-label="soar"
-acronym-form="singular+short">soar</span> workflows. No single format
+schemas . <span acronym-label="ocsf"
+acronym-form="singular+short">ocsf</span> standardizes security event
+exchange . It targets <span acronym-label="siem"
+acronym-form="singular+short">siem</span> and <span acronym-label="soar"
+acronym-form="singular+short">soar</span> use cases. No single format
 covers all tool categories. <span acronym-label="sarif"
 acronym-form="singular+short">sarif</span> addresses static analysis but
 not <span acronym-label="sca" acronym-form="singular+short">sca</span>
@@ -724,7 +724,9 @@ data-reference="sec:dynamic-appsec">[sec:dynamic-appsec]</a> covers
 tools that operate on running applications and deployed infrastructure,
 where findings reference <span acronym-label="url"
 acronym-form="plural+short">urls</span>, hosts, and cloud resources,
-requiring additional mapping to connect them back to source code.
+requiring additional mapping to connect them back to source code. Mobile
+application security testing is excluded from this analysis, as the
+framework targets web applications and backend services.
 
 #### Static Application Security Testing
 
@@ -838,6 +840,20 @@ same <span acronym-label="cve" acronym-form="singular+short">cve</span>
 reported by multiple tools against the same repository likely represents
 a single issue.
 
+<span acronym-label="sca" acronym-form="singular+short">sca</span> tools
+also detect license violations (e.g., GPL-licensed code in proprietary
+applications), producing compliance findings alongside vulnerability
+data. The <span acronym-label="slsa"
+acronym-form="singular+short">slsa</span> framework  complements
+<span acronym-label="sca" acronym-form="singular+short">sca</span> from
+a different angle: while <span acronym-label="sca"
+acronym-form="singular+short">sca</span> checks whether dependencies
+contain known vulnerabilities, <span acronym-label="slsa"
+acronym-form="singular+short">slsa</span> verifies the integrity and
+provenance of build artifacts, ensuring they have not been tampered with
+during the build process. Both concerns feed into the broader supply
+chain security picture.
+
 #### Secret Detection
 
 Secret detection tools scan version control history for credentials,
@@ -940,6 +956,15 @@ acronym-form="singular+short">sarif</span> output. Findings are
 file-and-line-based, structurally similar to <span acronym-label="sast"
 acronym-form="singular+short">sast</span> output, but target
 infrastructure configuration rather than application logic.
+
+Kubernetes admission controllers such as OPA/Gatekeeper and Kyverno
+enforce policies at deploy time, rejecting workloads that violate
+security constraints. They occupy a middle ground between pre-deployment
+<span acronym-label="iac" acronym-form="singular+short">iac</span>
+scanning and post-deployment <span acronym-label="cspm"
+acronym-form="singular+short">cspm</span>: the policies are defined as
+code, but enforcement happens at the cluster boundary. Their violation
+logs provide an additional signal about infrastructure security posture.
 
 These tools complement the runtime monitoring tools discussed in
 <a href="#sec:dynamic-appsec" data-reference-type="autoref"
@@ -1066,11 +1091,22 @@ acronym-form="singular+short">aws</span> WAF, Cloudflare, Akamai) expose
 <span acronym-label="api" acronym-form="plural+short">apis</span> for
 log retrieval and configuration management.
 
-<span acronym-label="waf" acronym-form="plural+short">wafs</span>
-generate high-volume event data rather than discrete findings. The
-framework ingests aggregated attack patterns and anomaly indicators
-rather than individual request logs, focusing on the subset relevant to
-application security posture assessment.
+These platforms typically bundle <span acronym-label="ddos"
+acronym-form="singular+short">ddos</span> protection alongside
+<span acronym-label="waf" acronym-form="singular+short">waf</span>
+capabilities. <span acronym-label="ddos"
+acronym-form="singular+short">ddos</span> mitigation services filter
+volumetric and application-layer attacks, logging traffic patterns,
+attack signatures, and mitigation actions. This telemetry provides
+availability impact data that complements the vulnerability-focused
+findings from other tool categories.
+
+<span acronym-label="waf" acronym-form="plural+short">wafs</span> and
+<span acronym-label="ddos" acronym-form="singular+short">ddos</span>
+protection generate high-volume event data rather than discrete
+findings. The framework ingests aggregated attack patterns and anomaly
+indicators rather than individual request logs, focusing on the subset
+relevant to application security posture assessment.
 
 #### Runtime Application Self-Protection
 
@@ -1093,6 +1129,46 @@ Like <span acronym-label="waf" acronym-form="plural+short">wafs</span>,
 tools produce event streams rather than discrete findings. The
 integration approach is similar: the framework consumes aggregated
 indicators rather than raw event logs.
+
+#### Runtime API Security
+
+Traditional <span acronym-label="dast"
+acronym-form="singular+short">dast</span> tools actively probe
+applications with crafted requests. Runtime <span acronym-label="api"
+acronym-form="singular+short">api</span> security platforms take a
+different approach: they passively monitor live
+<span acronym-label="api" acronym-form="singular+short">api</span>
+traffic, build behavioral baselines, and detect anomalies that indicate
+abuse . This continuous monitoring catches threats that active scanning
+misses, including business logic abuse, account takeover patterns, and
+data exfiltration through legitimate <span acronym-label="api"
+acronym-form="singular+short">api</span> endpoints.
+
+Salt Security pioneered this category, applying <span acronym-label="ai"
+acronym-form="singular+short">ai</span>-based behavioral analysis to
+<span acronym-label="api" acronym-form="singular+short">api</span>
+traffic to discover shadow <span acronym-label="api"
+acronym-form="plural+short">apis</span>, detect anomalies, and identify
+attack patterns . Noname Security, acquired by Akamai in 2024 , offers
+similar capabilities: <span acronym-label="api"
+acronym-form="singular+short">api</span> discovery, vulnerability
+detection, and runtime protection integrated into Akamai’s edge
+platform. Both expose <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="plural+short">apis</span> for configuration and findings
+retrieval.
+
+Runtime <span acronym-label="api"
+acronym-form="singular+short">api</span> security produces
+event-oriented data similar to <span acronym-label="waf"
+acronym-form="plural+short">wafs</span> and <span acronym-label="rasp"
+acronym-form="singular+short">rasp</span>, but with richer
+<span acronym-label="api"
+acronym-form="singular+short">api</span>-specific context: the affected
+endpoint, request/response patterns, the deviation from baseline
+behavior, and the attack classification. The framework treats these as a
+continuous finding source, ingesting aggregated indicators rather than
+raw traffic data.
 
 #### Vulnerability Management and Cloud Posture
 
@@ -1131,6 +1207,8 @@ acronym-form="singular+short">cspm</span> scans the live environment.
 Correlating pre-deployment and post-deployment findings is a key
 integration challenge.
 
+#### Source Integration Summary
+
 <a href="#tab:data-source-comparison" data-reference-type="autoref"
 data-reference="tab:data-source-comparison">[tab:data-source-comparison]</a>
 summarizes the integration characteristics across all source categories
@@ -1152,8 +1230,9 @@ analyzed in this chapter.
 | IaC Scanning          |       CLI       | JSON/SARIF |   On-demand   |       Medium        |
 | DAST                  |    REST/CLI     |  JSON/XML  |   On-demand   |       Medium        |
 | Penetration Testing   |      None       |    PDF     |   Periodic    |        None         |
-| WAF                   |      REST       |    JSON    |  Continuous   |         Low         |
+| WAF/DDoS              |      REST       |    JSON    |  Continuous   |         Low         |
 | RASP                  | Vendor-specific |    JSON    |  Continuous   |         Low         |
+| API Security          |      REST       |    JSON    |  Continuous   |         Low         |
 | VMDR/CSPM             |  REST/GraphQL   |  JSON/XML  |  Continuous   |       Medium        |
 
 Data Source Integration Characteristics
