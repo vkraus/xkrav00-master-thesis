@@ -1,29 +1,71 @@
 \chapter{Requirement Analysis}
 \label{ch:requirement-analysis}
 
-The goal of this chapter is to conduct a requirement analysis and produce a structured requirements specification which we will later use to design the data framework.
+The goal of this chapter is to produce a structured requirements specification for the application security data framework. The specification captures what the framework must do, at what quality level, and under what constraints, so that each requirement can later be traced to a concrete design decision and verified through automated tests.
 
 %%%%%%%%%%%
 %%% 2.1 %%%
 %%%%%%%%%%%
 
 \section{Requirements Methodology}
+\label{sec:methodology}
 
-Requirements are gathered through application security domain analysis, drawing from my personal experience, consultations with my professional network, and by having researched literature and industry reports in \autoref{ch:literature-review}.
+\subsection{Requirements Sources}
 
-This thesis adopts a test-bound approach to requirements traceability. Rather than maintaining disconnected requirement documents that are prone to becoming stale, implementation status is derived directly from test execution results.
+Requirements were gathered from four complementary sources. First, a domain analysis of the application security landscape identified the data entities, tool categories, and integration patterns that any framework in this space must accommodate. Second, the author's professional experience designing and operating security data pipelines in large enterprises provided practical insight into real-world constraints and failure modes. Third, consultations with a professional network of security engineers, platform architects, and engineering managers validated the relevance and priority of candidate requirements. Fourth, the literature review conducted in \autoref{ch:literature-review} grounded the requirements in established data engineering and data governance principles.
 
-\subsection{Specification Format}
+\subsection{Data Contracts as Specification Format}
+\label{sec:data-contracts}
 
-Each requirement is assigned a unique identifier following the pattern \texttt{REQ-AREA-NNN}, where:
-\begin{itemize}
-    \item \texttt{AREA} indicates the functional domain (ING for ingestion, PROC for processing, SRV for serving)
-    \item \texttt{NNN} is a sequential number within that domain
-\end{itemize}
+This thesis specifies requirements using \emph{data contracts}, a concept drawn from modern data engineering practice. A data contract is a formal, structured agreement that defines the schema, semantics, quality rules, and service level expectations for a data asset \cite{Jones2023}. The DAMA Data Management Body of Knowledge similarly advocates for explicit specification of data quality dimensions and governance metadata as part of any data management initiative \cite{DAMA2017}.
 
-\subsection{Requirement Prioritization}
+Data contracts are well suited for specifying data pipeline requirements because they capture precisely the information that must be agreed upon between producers and consumers of data: what inputs are expected, what outputs are produced, which quality rules must be in place, and what service level agreements apply. Unlike free-form requirement documents, data contracts are structured and machine-readable, which enables automated validation and traceability.
 
-Requirements are documented with priority using the MoSCoW method (Must Have, Should Have, Could Have, Won't Have).
+Each requirement in this thesis is expressed as a data contract containing the fields described in \autoref{tab:contract-fields}. \autoref{code:contract-example} shows an example contract for a representative requirement.
+
+\begin{table}[ht]
+\centering
+\caption{Data contract template fields.}
+\label{tab:contract-fields}
+\begin{tabular}{l p{9cm}}
+\hline
+\textbf{Field} & \textbf{Description} \\
+\hline
+\texttt{id} & Unique identifier following the \texttt{REQ-AREA-NNN} pattern. \\
+\texttt{name} & Short, descriptive name of the requirement. \\
+\texttt{domain} & Functional domain the requirement belongs to (see \autoref{tab:req-domains}). \\
+\texttt{priority} & MoSCoW priority level (see \autoref{sec:moscow}). \\
+\texttt{persona} & Primary stakeholder persona the requirement serves. \\
+\texttt{description} & Prose statement of what the requirement demands. \\
+\texttt{inputs} & Data sources or artifacts consumed. \\
+\texttt{outputs} & Data assets or artifacts produced. \\
+\texttt{quality\_rules} & Verifiable conditions that must hold for the requirement to be satisfied. \\
+\texttt{sla} & Service-level targets such as latency, freshness, or availability. \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{code}{}{Example data contract for a security finding ingestion requirement.}{code:contract-example}
+id: REQ-ING-001
+name: Ingest Security Findings
+domain: ING
+priority: Must Have
+persona: Security Expert
+description: >
+  The framework shall ingest security findings from
+  source tool APIs and persist them for downstream
+  processing.
+inputs:
+  - source_tool_api_responses
+outputs:
+  - raw_security_findings
+quality_rules:
+  - all records must contain a non-null finding identifier
+  - severity must be one of critical, high, medium, low
+sla:
+  freshness: 1 hour
+  availability: 99.5%
+\end{code}
 
 \subsection{Test-to-Requirement Linking}
 
@@ -103,13 +145,17 @@ Development and security leadership, including \glspl{ciso}, engineering manager
 
 \section{Data Sources}
 
+The framework must support ingestion of data from a diverse set of source systems to serve all personas identified in \autoref{sec:personas}. As discussed in the introduction, security data in a typical enterprise is fragmented across dozens of tools, each with its own \gls{api}, data format, and update frequency. This fragmentation prevents stakeholders from obtaining a unified view of application security posture.
+
+This section analyzes each source category in four perspectives: what data the source provides and why it matters, how that data can be accessed programmatically (\gls{api} analysis), what formats and protocols are involved, and what integration challenges the framework must address. The analysis proceeds from business context (application inventory), through development infrastructure (\gls{scm}, issue trackers, \gls{cicd}), to runtime environments and, in later subsections, to the security testing tools themselves.
+
 \subsection{Application Inventory}
 
-Start with looking at things from a business application perspective
+The application inventory is the foundational data source that establishes the business context for all security findings. Without a reliable catalog of business applications and their mapping to technical assets, a vulnerability discovered in a code repository or a running service has no business meaning: it cannot be attributed to an application owner, assessed for business impact, or prioritized against organizational risk criteria.
 
-Business application inventory + business impact assessment
+Enterprise organizations typically maintain their application inventories in configuration management databases (\glspl{cmdb}) such as ServiceNow, in custom-built internal catalogs, or in a combination of both. These registries capture metadata about each business application, including its name, owning team, lifecycle status, and business unit. Critically, they also hold business impact assessment data: criticality ratings (commonly structured as tiers, such as Tier~1 for mission-critical applications, Tier~2 for important supporting systems, and Tier~3 for non-critical internal tools), data classification levels indicating the sensitivity of information processed, and regulatory scope flags that identify which compliance frameworks apply to a given application.
 
-source systems: 
+TODO API vs ServiceNow application
 
 \subsection{Tools for Software Development and Delivery}
 
