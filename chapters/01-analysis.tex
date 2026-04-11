@@ -3,7 +3,7 @@
 
 This chapter surveys the literature and analyzes the functional domains relevant to building an application security data platform. Each section covers one domain, combining theoretical foundations with practical tool and \gls{api} analysis. The focus is on reviewing existing knowledge, observing source system interfaces, data models, and integration patterns, not on prescribing a solution. Technology choices for the target platform are deferred to \autoref{ch:framework} and \autoref{ch:implementation}.
 
-The chapter is organized as follows. \autoref{sec:app-inventory} establishes the business and infrastructure asset context underlying all security findings. \autoref{sec:sw-dev-analysis} examines software development platforms as data sources. Application security tooling is split into two sections: \autoref{sec:static-appsec} covers tools that analyze source code and build artifacts before deployment, while \autoref{sec:dynamic-appsec} covers tools that test running applications and monitor deployed infrastructure. This separation reflects a fundamental difference in how findings are produced and correlated: static tools identify targets by repository and file path, while dynamic tools identify targets by \gls{url}, host, or cloud resource, requiring different integration strategies. \autoref{sec:data-eng-analysis} covers the data engineering patterns that underpin the framework's design. Finally, \autoref{sec:related-work} surveys existing solutions and identifies the gap this thesis addresses.
+\autoref{sec:app-inventory} establishes the business and infrastructure asset context underlying all security findings. \autoref{sec:sw-dev-analysis} examines software development platforms as data sources. Application security tooling is split into two sections: \autoref{sec:static-appsec} covers tools that analyze source code and build artifacts before deployment, while \autoref{sec:dynamic-appsec} covers tools that test running applications and monitor deployed infrastructure. This separation reflects a fundamental difference in how findings are produced and correlated: static tools identify targets by repository and file path, while dynamic tools identify targets by \gls{url}, host, or cloud resource, requiring different integration strategies. \autoref{sec:data-eng-analysis} covers the data engineering patterns that underpin the framework's design. Finally, \autoref{sec:related-work} surveys existing solutions and identifies the gap this thesis addresses.
 
 %%%%%%%%%%%
 %%% 1.1 %%%
@@ -136,13 +136,13 @@ The integration with issue trackers is bidirectional. The framework reads remedi
 \section{Static Application Security}
 \label{sec:static-appsec}
 
-Application security encompasses the practices and tools for identifying vulnerabilities in software throughout its lifecycle~\cite{Anderson2020, Stallings2024}. \textcite{McGraw2006} advocated for security touchpoints spanning the entire development process. The DevSecOps paradigm~\cite{Mack2023, Kim2021} realizes this vision by embedding security testing into \gls{cicd} pipelines: \gls{sast} examines source code, \gls{sca} checks third-party dependencies, secret scanners flag leaked credentials, and \gls{dast} probes running applications. The practical consequence is a high volume of security data from dozens of tools, each with different \glspl{api}, output formats, and severity models. The \gls{owasp} Top~10~\cite{OWASP2021} provides a widely referenced risk classification, but it is not a data interchange standard.
+Application security encompasses the practices and tools for identifying vulnerabilities in software throughout its lifecycle~\cite{Anderson2020, Stallings2024}. \textcite{McGraw2006} advocated for security touchpoints spanning the entire development process. The DevSecOps paradigm~\cite{Mack2023, Kim2021} realizes this vision by embedding security testing into \gls{cicd} pipelines. \Gls{sast} examines source code, \gls{sca} checks third-party dependencies, secret scanners flag leaked credentials, and \gls{dast} probes running applications. The practical consequence is a high volume of security data from tools with different \glspl{api}, output formats, and severity models. The \gls{owasp} Top~10 classifies common web application risks~\cite{OWASP2021}, but it does not define a data interchange standard.
 
-Several cross-cutting data standards bring partial consistency. The \gls{cve} system~\cite{MITRE2024} assigns unique identifiers to known vulnerabilities. The \gls{cwe}~\cite{CWE2024} classifies underlying weakness types. The \gls{cvss}~\cite{FIRST2019} scores attack vector, complexity, and impact on a 0--10 scale. The \gls{epss}~\cite{Jacobs2021} complements \gls{cvss} with a predictive signal: the probability that a vulnerability will be exploited within 30~days, computed by \gls{ml} models. \gls{cisa} maintains the \gls{kev} catalog~\cite{CISAKEV2024}, which adds a third signal: confirmed active exploitation curated from real-world incident data. Together, \gls{cvss}, \gls{epss}, and \gls{kev} form a three-signal enrichment model used throughout the framework.
+Several cross-cutting data standards bring partial consistency. The \gls{cve} system assigns unique identifiers to known vulnerabilities~\cite{MITRE2024}. \Gls{cwe} classifies underlying weakness types~\cite{CWE2024}. \Gls{cvss} scores attack vector, complexity, and impact on a 0--10 scale~\cite{FIRST2019}. \Gls{epss} complements \gls{cvss} with a predictive signal~\cite{Jacobs2021}: the probability that a vulnerability will be exploited within 30~days, computed by \gls{ml} models. \Gls{cisa} maintains the \gls{kev} catalog~\cite{CISAKEV2024}. It adds a third signal: confirmed active exploitation from real-world incident data. Together, \gls{cvss}, \gls{epss}, and \gls{kev} form a three-signal enrichment model used throughout the framework.
 
-For data interchange, \gls{sarif}~\cite{OASIS2024} defines a \gls{json}-based format for static analysis results. CycloneDX~\cite{CycloneDX2024} and \gls{spdx}~\cite{SPDX2024} provide \gls{sbom} schemas. The \gls{ocsf}~\cite{OCSF2024} targets \gls{siem} events and \gls{soar} workflows. No single format covers all tool categories. \Gls{sarif} addresses static analysis but not \gls{sca} or runtime findings. CycloneDX and \gls{spdx} cover software composition, not code-level vulnerabilities. \Gls{ocsf} serves security operations, not application security posture. This gap motivates the normalization model in \autoref{ch:framework}.
+For data interchange, \gls{sarif} defines a \gls{json}-based format for static analysis results~\cite{OASIS2024}. CycloneDX and \gls{spdx} provide \gls{sbom} schemas~\cite{CycloneDX2024, SPDX2024}. \Gls{ocsf} standardizes security event exchange~\cite{OCSF2024}. It targets \gls{siem} and \gls{soar} use cases. No single format covers all tool categories. \Gls{sarif} addresses static analysis but not \gls{sca} or runtime findings. CycloneDX and \gls{spdx} cover software composition, not code-level vulnerabilities. \Gls{ocsf} serves security operations, not application security posture. This gap motivates the normalization model in \autoref{ch:framework}.
 
-The analysis of security tooling is organized into two sections by operational model. This section covers static analysis tools that examine source code and build artifacts without executing the application. Their findings reference repositories, file paths, and line numbers, making them directly attributable to development teams. \autoref{sec:dynamic-appsec} covers tools that operate on running applications and deployed infrastructure, where findings reference \glspl{url}, hosts, and cloud resources, requiring additional mapping to connect them back to source code.
+The analysis of security tooling is organized into two sections by operational model. This section covers static analysis tools that examine source code and build artifacts without executing the application. Their findings reference repositories, file paths, and line numbers, making them directly attributable to development teams. \autoref{sec:dynamic-appsec} covers tools that operate on running applications and deployed infrastructure, where findings reference \glspl{url}, hosts, and cloud resources, requiring additional mapping to connect them back to source code. Mobile application security testing is excluded from this analysis, as the framework targets web applications and backend services.
 
 %%% 1.3.1 %%%
 
@@ -167,6 +167,8 @@ Each finding typically includes a rule identifier, the affected file path and li
 Snyk provides \gls{rest} \glspl{api} (legacy v1 and current v3) returning \gls{json} responses with filtering by severity and project~\cite{Snyk2024}. Dependabot, integrated into GitHub, exposes alerts through the GitHub GraphQL \gls{api}~\cite{GitHubAPI2024}. \gls{owasp} Dependency-Track is an open-source platform that ingests \glspl{sbom} in CycloneDX or \gls{spdx} format and identifies vulnerabilities against multiple databases~\cite{DependencyTrack2024}. It provides a \gls{rest} \gls{api} for project management and findings retrieval. Many \gls{sca} tools also generate \glspl{sbom}~\cite{CycloneDX2024, SPDX2024}, increasingly required by regulatory frameworks~\cite{NTIA2021}. The reference implementation integrates Dependabot, Dependency-Track, and GitLab dependency scanning, as described in \autoref{ch:implementation}.
 
 \gls{sca} output is comparatively well standardized because the underlying data originates from shared public databases. Each finding typically includes the vulnerable dependency name and version, a \gls{cve} identifier, a \gls{cvss} score, the fixed version when available, and exploitability metadata. Despite this, transitive dependency resolution remains a challenge: different tools may resolve the same dependency tree differently, causing one tool to flag a \gls{cve} while another does not. The framework must handle this during deduplication, recognizing that the same \gls{cve} reported by multiple tools against the same repository likely represents a single issue.
+
+\gls{sca} tools also detect license violations (e.g., GPL-licensed code in proprietary applications), producing compliance findings alongside vulnerability data. The \gls{slsa} framework~\cite{SLSA2024} complements \gls{sca} from a different angle: while \gls{sca} checks whether dependencies contain known vulnerabilities, \gls{slsa} verifies the integrity and provenance of build artifacts, ensuring they have not been tampered with during the build process. Both concerns feed into the broader supply chain security picture.
 
 %%% 1.3.3 %%%
 
@@ -200,6 +202,8 @@ The integration challenge is linking image vulnerabilities to source code reposi
 \Gls{iac} security tools perform static analysis on infrastructure definitions: Terraform configurations, CloudFormation templates, Kubernetes manifests, and Dockerfiles. They detect misconfigurations before deployment, such as overly permissive access policies, unencrypted storage, exposed ports, and missing logging.
 
 Checkov is a prominent open-source scanner supporting over 1\,000 built-in policies across multiple \gls{iac} frameworks~\cite{Checkov2024}. tfsec focuses on Terraform, and KICS covers a broad range of formats. All operate as \gls{cli} tools producing \gls{json} or \gls{sarif} output. Findings are file-and-line-based, structurally similar to \gls{sast} output, but target infrastructure configuration rather than application logic.
+
+Kubernetes admission controllers such as OPA/Gatekeeper and Kyverno enforce policies at deploy time, rejecting workloads that violate security constraints. They occupy a middle ground between pre-deployment \gls{iac} scanning and post-deployment \gls{cspm}: the policies are defined as code, but enforcement happens at the cluster boundary. Their violation logs provide an additional signal about infrastructure security posture.
 
 These tools complement the runtime monitoring tools discussed in \autoref{sec:dynamic-appsec}. \gls{cspm} scanners and \gls{vmdr} platforms detect the same misconfiguration classes after deployment in the live environment. Correlating pre-deployment \gls{iac} findings with post-deployment runtime detections is a challenge the framework addresses through its unified data model.
 
@@ -241,7 +245,9 @@ Despite low frequency, penetration testing findings are often among the most cri
 
 \Glspl{waf} operate at the network perimeter, inspecting inbound \gls{http} traffic against rule sets such as the \gls{owasp} Core Rule Set. They log blocked and flagged requests, recording the matched rule, request details, and action taken. Most commercial \glspl{waf} (\gls{aws} WAF, Cloudflare, Akamai) expose \gls{rest} \glspl{api} for log retrieval and configuration management.
 
-\Glspl{waf} generate high-volume event data rather than discrete findings. The framework ingests aggregated attack patterns and anomaly indicators rather than individual request logs, focusing on the subset relevant to application security posture assessment.
+These platforms typically bundle \gls{ddos} protection alongside \gls{waf} capabilities. \gls{ddos} mitigation services filter volumetric and application-layer attacks, logging traffic patterns, attack signatures, and mitigation actions. This telemetry provides availability impact data that complements the vulnerability-focused findings from other tool categories.
+
+\Glspl{waf} and \gls{ddos} protection generate high-volume event data rather than discrete findings. The framework ingests aggregated attack patterns and anomaly indicators rather than individual request logs, focusing on the subset relevant to application security posture assessment.
 
 %%% 1.4.4 %%%
 
@@ -254,12 +260,28 @@ Like \glspl{waf}, \gls{rasp} tools produce event streams rather than discrete fi
 
 %%% 1.4.5 %%%
 
+\subsection{Runtime API Security}
+\label{sec:api-security}
+
+Traditional \gls{dast} tools actively probe applications with crafted requests. Runtime \gls{api} security platforms take a different approach: they passively monitor live \gls{api} traffic, build behavioral baselines, and detect anomalies that indicate abuse~\cite{OWASPAPI2023}. This continuous monitoring catches threats that active scanning misses, including business logic abuse, account takeover patterns, and data exfiltration through legitimate \gls{api} endpoints.
+
+Salt Security pioneered this category, applying \gls{ai}-based behavioral analysis to \gls{api} traffic to discover shadow \glspl{api}, detect anomalies, and identify attack patterns~\cite{SaltSecurity2024}. Noname Security, acquired by Akamai in 2024~\cite{AkamaiAPISecurityZD2024}, offers similar capabilities: \gls{api} discovery, vulnerability detection, and runtime protection integrated into Akamai's edge platform. Both expose \gls{rest} \glspl{api} for configuration and findings retrieval.
+
+Runtime \gls{api} security produces event-oriented data similar to \glspl{waf} and \gls{rasp}, but with richer \gls{api}-specific context: the affected endpoint, request/response patterns, the deviation from baseline behavior, and the attack classification. The framework treats these as a continuous finding source, ingesting aggregated indicators rather than raw traffic data.
+
+%%% 1.4.6 %%%
+
 \subsection{Vulnerability Management and Cloud Posture}
 \label{sec:vmdr-cspm}
 
 \Gls{vmdr} tools scan infrastructure for \gls{os} vulnerabilities, missing patches, and exposed services. Qualys exposes data through a \gls{rest} \gls{api} with \gls{xml} responses. Wiz uses a GraphQL \gls{api} for selective queries across cloud environments. These tools produce findings tied to infrastructure identifiers (hostnames, IP addresses, cloud resource \glspl{arn}), not to source code locations.
 
 \Gls{cspm} tools complement \gls{vmdr} by evaluating cloud configurations against compliance benchmarks such as \gls{cis} Benchmarks and organizational policies. Findings indicate misconfigurations (public S3 buckets, overly permissive \gls{iam} roles, unencrypted storage) rather than software vulnerabilities. \Gls{cspm} overlaps with \gls{iac} security (\autoref{sec:iac-security}): both detect the same misconfiguration classes, but \gls{iac} tools scan before deployment while \gls{cspm} scans the live environment. Correlating pre-deployment and post-deployment findings is a key integration challenge.
+
+%%% 1.4.7 %%%
+
+\subsection{Source Integration Summary}
+\label{sec:source-integration-summary}
 
 \autoref{tab:data-source-comparison} summarizes the integration characteristics across all source categories analyzed in this chapter.
 
@@ -283,8 +305,9 @@ Container Scanning & CLI & JSON/SARIF & On-demand & Medium \\
 IaC Scanning & CLI & JSON/SARIF & On-demand & Medium \\
 DAST & REST/CLI & JSON/XML & On-demand & Medium \\
 Penetration Testing & None & PDF & Periodic & None \\
-WAF & REST & JSON & Continuous & Low \\
+WAF/DDoS & REST & JSON & Continuous & Low \\
 RASP & Vendor-specific & JSON & Continuous & Low \\
+API Security & REST & JSON & Continuous & Low \\
 VMDR/CSPM & REST/GraphQL & JSON/XML & Continuous & Medium \\
 \bottomrule
 \end{tabularx}
