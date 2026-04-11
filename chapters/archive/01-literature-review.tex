@@ -1,7 +1,13 @@
 \chapter{Literature Review}
 \label{ch:literature-review}
 
-This chapter presents the literature across three domains fundamental to this thesis. \autoref{sec:sw-dev-literature} reviews software development practices. \autoref{sec:appsec-literature} examines security testing approaches, tools, and data standards. \autoref{sec:data-literature} covers data architecture and engineering patterns. Finally, \autoref{sec:related-work} analyzes related work and identifies the gap this thesis addresses.
+This chapter presents the literature and other existing resources across three knowledge domains fundamental to this thesis:
+\begin{itemize}
+    \item \autoref{sec:sw-dev-literature} reviews software development practices.
+    \item \autoref{sec:appsec-literature} examines security testing approaches, tools, and data standards.
+    \item \autoref{sec:data-literature} covers data architecture and engineering patterns.
+    \item \autoref{sec:related-work} analyzes related work and identifies the gap this thesis addresses.
+\end{itemize}
 
 %%%%%%%%%%%
 %%% 1.1 %%%
@@ -10,21 +16,31 @@ This chapter presents the literature across three domains fundamental to this th
 \section{Software Development}
 \label{sec:sw-dev-literature}
 
-Before discussing how to secure software, it is necessary to define what modern software development entails. This section surveys the literature on software engineering practices and the \gls{sdlc}.
+Before discussing how to secure software, it is necessary to define what modern software development entails. This section surveys the literature on software development practices and the \gls{sdlc}.
+
+%%% 1.1.1 %%%
 
 \subsection{Software Engineering}
 
-\textcite{Sommerville2015} and \textcite{Pressman2019} provide comprehensive treatments of the field, covering requirements engineering, design, testing, and project management. At a more theoretical level, \textcite{Hoffman2001} collect Parnas's foundational papers on modularity and information hiding, while \textcite{Scott2015} offers a rigorous treatment of programming language design underpinning modern development tools.
+\textcite{Sommerville2015} and \textcite{Pressman2019} provide comprehensive treatments of software engineering, covering requirements engineering, design, testing, and project management. At a more theoretical level, \textcite{Hoffman2001} collect Parnas's foundational papers on modularity and information hiding, while \textcite{Scott2015} offers a rigorous treatment of programming language design underpinning modern development tools.
+
+%%% 1.1.2 %%%
+
+\subsection{Software Quality}
 
 On the practical side, \textcite{McConnell2004} provides guidelines for software construction covering code quality and collaborative practices, \textcite{Martin2008} proposed principles of clean, maintainable code widely adopted in industry, and \textcite{Hunt2019} provided a broader pragmatic philosophy for professional development. \textcite{Oram2007} present practitioner essays on elegant solutions to real-world problems, illustrating the craft nature of software development. These works agree that software is built collaboratively from source code, organized in repositories, and deployed through increasingly automated pipelines.
+
+%%% 1.1.3 %%%
 
 \subsection{Source Code Management}
 
 \textcite{Chacon2014} provides a thorough treatment of Git, covering branching strategies, merging, and distributed workflows, while \textcite{Skoulikari2024} offers a more recent, visually oriented introduction. \textcite{Winters2020} extend this perspective to organizational scale, describing how Google manages a monolithic repository with tens of thousands of contributors. For this thesis, repositories are significant as the primary unit around which security findings are grouped and tracked, a relationship central to the data model in \autoref{ch:design}.
 
+%%% 1.1.4 %%%
+
 \subsection{Software Development Lifecycle}
 
-\gls{sdlc} focused literature documents a shift from sequential "waterfall" models to iterative methodologies and DevOps practices. \textcite{Forsgren2018} present empirical evidence that high-performing teams deploy more frequently with shorter lead times, achieved largely via \gls{cicd} automation. \textcite{Kim2021} complement this with practical guidance for implementing DevOps at scale, covering deployment pipelines and feedback loops. The resulting \gls{cicd} pipe\-line---an automated sequence of commit, build, test, and deploy stages---is directly relevant to this thesis: each stage is an integration point where security tools produce findings that the proposed framework consolidates.
+\gls{sdlc} focused literature documents a shift from sequential "waterfall" models to iterative methodologies and DevOps practices. \textcite{Forsgren2018} present empirical evidence that high-performing teams deploy more frequently with shorter lead times, achieved largely via \gls{cicd} automation. \textcite{Kim2021} complement this with practical guidance for implementing DevOps at scale, covering deployment pipelines and feedback loops. The resulting \gls{cicd} pipe\-line (an automated sequence of commit, build, test, and deploy stages) is directly relevant to this thesis: each stage is an integration point where security tools produce findings that the proposed framework consolidates.
 
 %%%%%%%%%%%
 %%% 1.2 %%%
@@ -37,12 +53,16 @@ This section reviews the literature across the application security domains rele
 
 \textcite{Anderson2020} provides broad coverage of security engineering, including threat models and software security. \textcite{Stallings2024} offer a comprehensive textbook on computer security principles. \textcite{McGraw2006} introduces software security activities like code review, architectural risk analysis, or penetration testing that should be embedded throughout the \gls{sdlc}, while \textcite{Howard2006} complement this with practical guidelines for defensive coding. \textcite{Shostack2014} addresses threat modeling as a structured approach to identifying security issues early in design. The OWASP Top~10~\parencite{OWASP2021} is a widely referenced classification of critical web application security risks that influences how many tools categorize their findings.
 
+%%% 1.2.1 %%%
+
 \subsection{Code Security}
 \label{sec:code-security}
 
 \Gls{sast} examines source code, bytecode, or binary code for vulnerabilities without executing the program. \textcite{Chess2007} provide the foundational treatment of static analysis for security, covering taint analysis, control flow analysis, and pattern matching to detect injection flaws, buffer overflows, and insecure data handling.
 
 In practice, \gls{sast} is implemented by tools such as SonarQube, Checkmarx, Semgrep, and Fortify, which differ in detection approaches: rule-based pattern matching, data-flow analysis, or user-defined custom rules. As noted by \textcite{Chess2007}, a key challenge is the tradeoff between false positive rates and detection coverage. From a data integration perspective, each tool produces findings through different \glspl{api} and in different formats, a fragmentation that motivates the normalization layer proposed in this thesis.
+
+%%% 1.2.2 %%%
 
 \subsection{Software Supply Chain Security}
 \label{sec:supply-chain-security}
@@ -51,12 +71,16 @@ In practice, \gls{sast} is implemented by tools such as SonarQube, Checkmarx, Se
 
 \gls{sca} tools such as Snyk, Dependabot, and Mend analyze dependency manifests and cross-reference resolved versions against the \gls{nvd}. Several also generate a \gls{sbom}, a structured inventory of all software components, increasingly required by regulatory frameworks~\parencite{NTIA2021}. The \gls{sbom} concept is formalized through CycloneDX and \gls{spdx}, discussed further in \autoref{sec:data-standards}.
 
+%%% 1.2.3 %%%
+
 \subsection{Software Lifecycle Security}
 \label{sec:lifecycle-security}
 
 The software lifecycle itself introduces security risks. Secret exposure (credentials, \gls{api} keys, and tokens committed to version control) is detected by tools such as GitLeaks, TruffleHog, and GitHub Secret Scanning, which scan commit history against known credential patterns and entropy-based heuristics.
 
 \gls{cicd} pipeline security is another concern: build systems execute arbitrary code, deployment pipelines hold production credentials, and artifact registries distribute compiled software. The SLSA framework~\parencite{SLSA2024} provides progressively stricter requirements for supply chain security, including build provenance and artifact integrity. These lifecycle tools produce findings that differ structurally from code-level vulnerabilities, adding complexity to data consolidation.
+
+%%% 1.2.4 %%%
 
 \subsection{Application Penetration Testing}
 \label{sec:penetration-testing}
@@ -65,12 +89,16 @@ The software lifecycle itself introduces security risks. Secret exposure (creden
 
 Automated \gls{dast} tools such as OWASP ZAP and Burp Suite complement \gls{sast} by detecting vulnerabilities that manifest only at runtime. Manual penetration testing produces findings in unstructured formats, typically PDF reports, presenting a distinct integration challenge: while automated tools expose findings through \glspl{api}, manual results must be parsed or entered manually.
 
+%%% 1.2.5 %%%
+
 \subsection{DevSecOps}
 \label{sec:devsecops}
 
 The DevSecOps paradigm~\parencite{Mack2023} extends DevOps by embedding security into every phase of the \gls{sdlc}, commonly called "shifting security left", integrating \gls{sast}, \gls{sca}, secret scanning, and \gls{dast} directly into \gls{cicd} pipelines \parencite{Kim2021}.
 
 The practical consequence is a significant increase in both volume and diversity of security data. An organization may operate dozens of tools across pipeline stages, each producing findings in different formats and severity models. \textcite{McGraw2006} anticipated this by advocating for security touchpoints spanning the entire lifecycle, but the tooling landscape has grown far beyond what a single touchpoint model can accommodate. This proliferation of fragmented security data is the core problem motivating the framework proposed in this thesis.
+
+%%% 1.2.6 %%%
 
 \subsection{Application Security Data Standards}
 \label{sec:data-standards}
@@ -92,6 +120,8 @@ No single format covers the full spectrum of application security data. \gls{sar
 
 This section examines data engineering patterns and technologies suitable for consolidating the security data described in \autoref{sec:appsec-literature}.
 
+%%% 1.3.1 %%%
+
 \subsection{Data Architecture}
 \label{sec:data-architecture}
 
@@ -102,6 +132,8 @@ The literature documents an evolution from data warehouses through data lakes to
 The data lake~\parencite{Miloslavskaya2016} stores raw data in its native format, deferring schema definition to consumption (schema-on-read). While this addresses format diversity, it introduces governance challenges; without proper management, data lakes risk becoming ``data swamps'' \parencite{DAMA2017}.
 
 The lakehouse architecture~\parencite{Armbrust2021} combines data lake flexibility with warehouse governance. \textcite{Lee2024} provide a definitive treatment of Delta Lake, the storage layer adding ACID transactions, schema enforcement, and time travel on top of lake storage. \textcite{Thalpati2024} offer practical guidance for lakehouse design at enterprise scale. The lakehouse paradigm suits the application security problem: it accommodates diverse, semi-structured tool output while providing governance and query performance for both dashboards and operational lookups.
+
+%%% 1.3.2 %%%
 
 \subsection{Data Modeling and Pipelines}
 \label{sec:data-modeling-pipelines}
