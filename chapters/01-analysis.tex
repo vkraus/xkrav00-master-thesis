@@ -3,7 +3,7 @@
 
 This chapter surveys the literature and analyzes the functional domains relevant to building an application security data platform. Each section covers one domain, combining theoretical foundations with practical tool and \gls{api} analysis. The focus is on reviewing existing knowledge, observing source system interfaces, data models, and integration patterns, not on prescribing a solution. Technology choices for the target platform are deferred to \autoref{ch:framework} and \autoref{ch:reference-implementation}.
 
-\autoref{sec:app-inventory} establishes the business context underlying all security findings. \autoref{sec:sw-dev-literature} and \autoref{sec:appsec-literature} examine the software development and security tooling landscapes as data sources. \autoref{sec:data-literature} covers the data engineering patterns that underpin the framework's design. Finally, \autoref{sec:related-work} surveys existing solutions and identifies the gap this thesis addresses.
+\autoref{sec:app-inventory} establishes the business context underlying all security findings. \autoref{sec:sw-dev-analysis} and \autoref{sec:appsec-analysis} examine the software development and security tooling landscapes as data sources. \autoref{sec:data-eng-analysis} covers the data engineering patterns that underpin the framework's design. Finally, \autoref{sec:related-work} surveys existing solutions and identifies the gap this thesis addresses.
 
 %%%%%%%%%%%
 %%% 1.1 %%%
@@ -12,7 +12,7 @@ This chapter surveys the literature and analyzes the functional domains relevant
 \section{Application Inventory}
 \label{sec:app-inventory}
 
-The application inventory is the foundational data source for any application security data platform. It establishes the business context for all security findings. Without a reliable catalog of business applications and their mapping to technical assets, a vulnerability discovered in a repository or a running service cannot be attributed to an owner, assessed for business impact, or prioritized against organizational risk criteria.
+The application inventory is the foundational data source for any application security data platform. It establishes the business context for all security findings. Organizations typically manage this inventory in a \gls{cmdb} or a custom-built catalog. Without a reliable catalog of business applications and their mapping to technical assets, a vulnerability discovered in a repository or a running service cannot be attributed to an owner, assessed for business impact, or prioritized against organizational risk criteria.
 
 %%% 1.1.1 %%%
 
@@ -20,17 +20,17 @@ The application inventory is the foundational data source for any application se
 
 Enterprise organizations maintain catalogs of their business applications with metadata such as application name, description, ownership information, lifecycle status, and relationships to other assets~\cite{AXELOS2019}.
 
-These registries also capture security-relevant attributes. Information security is commonly assessed along three dimensions known as the CIA triad: confidentiality (preventing unauthorized disclosure), integrity (preventing unauthorized modification), and availability (ensuring authorized access)~\cite{Stallings2024}. Business impact assessments evaluate all three CIA dimensions to produce criticality ratings, commonly structured as tiers: Tier~1 for mission-critical applications, Tier~2 for important supporting systems, and Tier~3 for non-critical internal tools. Separately, regulatory scope flags identify which compliance frameworks (e.g., PCI~DSS, GDPR, SOX) apply to a given application.
+These registries also capture security-relevant attributes. Information security is commonly assessed along three dimensions known as the \gls{cia} triad: confidentiality (preventing unauthorized disclosure), integrity (preventing unauthorized modification), and availability (ensuring authorized access)~\cite{Stallings2024}. Business impact assessments evaluate all three \gls{cia} dimensions to produce criticality ratings, commonly structured as tiers: Tier~1 for mission-critical applications, Tier~2 for important supporting systems, and Tier~3 for non-critical internal tools. Separately, regulatory scope flags identify which compliance frameworks (e.g., PCI~DSS, GDPR, SOX) apply to a given application.
 
-The most important attribute from a data integration perspective is the mapping between business applications and their technical assets. A single business application may span multiple source code repositories, microservices, infrastructure components, and deployment environments. This mapping serves as the glue connecting technical security findings to business context. When the framework ingests a vulnerability from a \gls{sast} tool associated with a specific repository, the application inventory mapping determines which business application is affected, who owns it, and how critical it is. This enables the risk-aware prioritization that stakeholders require.
+The most important attribute from a data integration perspective is the mapping between business applications and their technical assets. A single business application may span multiple source code repositories, microservices, infrastructure components, and deployment environments. This mapping serves as the glue connecting technical security findings to business context. When the framework ingests a vulnerability from a \gls{sast} scanner linked to a specific repository, the application inventory mapping determines which business application is affected, who owns it, and how critical it is. This enables the risk-aware prioritization that stakeholders require.
 
 %%% 1.1.2 %%%
 
 \subsection{Configuration Management Databases}
 
-Organizations typically maintain their application inventories in \glspl{cmdb} such as ServiceNow, in custom-built internal catalogs, or in a combination of both. A \gls{cmdb} organizes all managed assets as \glspl{ci}, each with attributes describing its type, status, and ownership~\cite{AXELOS2019}.
+The most common \gls{cmdb} platform in enterprise environments is ServiceNow, holding over 44\% of the global \gls{itsm} market share~\cite{Gartner2024ITSM}. It serves as the reference platform for this thesis. A \gls{cmdb} organizes all managed assets as \glspl{ci}, each with attributes describing its type, status, and ownership~\cite{AXELOS2019}.
 
-ServiceNow is the leading \gls{cmdb} platform in enterprise environments, holding over 44\% of the global \gls{itsm} market share~\cite{Gartner2024ITSM}, and serves as the reference platform for this thesis. Its \gls{cmdb} arranges \glspl{ci} in a class hierarchy rooted at the \texttt{cmdb\_ci} base table. Each subclass inherits base attributes (name, \texttt{sys\_id}, operational status, environment) and adds domain-specific fields. For application inventory purposes, the most relevant class is \texttt{cmdb\_ci\_appl} (Application), which extends the base \gls{ci} with attributes such as version, business unit, used-for classification, and references to the owning support group~\cite{ServiceNowCMDB2024}.
+ServiceNow arranges \glspl{ci} in a class hierarchy rooted at the \texttt{cmdb\_ci} base table. Each subclass inherits base attributes (name, \texttt{sys\_id}, operational status, environment) and adds domain-specific fields. For application inventory purposes, the most relevant class is \texttt{cmdb\_ci\_appl} (Application), which extends the base \gls{ci} with attributes such as version, business unit, used-for classification, and references to the owning support group~\cite{ServiceNowCMDB2024}.
 
 Beyond the application record itself, the \gls{cmdb} captures relationships between \glspl{ci} through a dedicated relationship table (\texttt{cmdb\_rel\_ci}). These relationships model dependencies such as ``runs on'' (application to server), ``depends on'' (application to database), and ``hosted on'' (application to cloud service). For the framework, the most valuable relationships are those linking business applications to technical assets that correspond to entities in the security data: repository names, deployment targets, and infrastructure components. ServiceNow also allows organizations to define custom attributes and relationship types, so the specific fields available for ingestion may vary between deployments.
 
@@ -42,7 +42,7 @@ Integrating \gls{cmdb} data into an external data platform requires choosing bet
 
 \subsubsection{ServiceNow APIs}
 
-ServiceNow exposes two complementary \gls{rest} \glspl{api} for \gls{cmdb} data extraction. The Table \gls{api} provides generic CRUD operations against any ServiceNow table through the endpoint \texttt{/api/now/table/\{tableName\}}~\cite{ServiceNowTableAPI2024}. Responses are \gls{json}-formatted, with support for server-side filtering (\texttt{sysparm\_query}), field selection (\texttt{sysparm\_fields}), and pagination (\texttt{sysparm\_limit} combined with \texttt{sysparm\_offset}, with a default maximum of 10\,000~records per request). The \texttt{sysparm\_display\_value} parameter resolves reference fields to human-readable names instead of internal \texttt{sys\_id} values.
+ServiceNow exposes two complementary \gls{rest} \glspl{api} for \gls{cmdb} data extraction. The Table \gls{api} provides generic CRUD operations against any ServiceNow table through the endpoint \texttt{/api/now/table/\{tableName\}}~\cite{ServiceNowTableAPI2024}. Responses are \gls{json}-formatted, with support for server-side filtering (\texttt{sysparm\_query}), field selection (\texttt{sysparm\_fields}), and pagination via \texttt{sysparm\_limit} and \texttt{sysparm\_offset} (default maximum of 10\,000~records per request). The \texttt{sysparm\_display\_value} parameter resolves reference fields to human-readable names instead of internal \texttt{sys\_id} values.
 
 The \gls{cmdb} Instance \gls{api} (\texttt{/now/cmdb/instance/\{className\}}) provides a \gls{cmdb}-aware alternative that understands the \gls{ci} class hierarchy~\cite{ServiceNowCMDB2024}. It can retrieve a \gls{ci} with its relationships in a single call, reducing the number of \gls{api} calls needed to reconstruct the application-to-asset mapping. However, it is more constrained in its query capabilities than the Table \gls{api}.
 
@@ -58,9 +58,9 @@ The advantage is full access to ServiceNow's internal scripting capabilities, re
 
 \subsubsection{Integration Challenges}
 
-The application inventory presents the most significant integration challenge among all data sources because it is the least standardized. Security testing tools converge around common \gls{api} patterns and output formats, but each organization structures its application inventory differently: the hierarchy of applications, the granularity of asset mapping, and the attributes captured vary substantially. This makes the application inventory connector the hardest to generalize and the one most likely to require organization-specific customization.
+In implementation phase, the application inventory presents the most significant integration challenge among all data sources because it is the least standardized. Security testing tools converge around common \gls{api} patterns and output formats, but each organization structures its application inventory differently: the hierarchy of applications, the granularity of asset mapping, and the attributes captured vary substantially~\cite{AXELOS2019}. This makes the application inventory connector the hardest to generalize and the one most likely to require implementation-specific customization.
 
-Data quality in \glspl{cmdb} is a persistent concern. Application records may be incomplete (missing ownership or criticality assignments), outdated (reflecting decommissioned applications still listed as active), or inconsistently maintained across business units. Any integration must account for these quality issues through validation rules and default values that surface problems without blocking the data pipeline.
+Data quality in \glspl{cmdb} is a persistent concern~\cite{Gartner2021CMDB}. Application records may be incomplete (missing ownership or criticality assignments), outdated (reflecting decommissioned applications still listed as active), or inconsistently maintained across business units. Any integration must account for these quality issues through validation rules and default values that surface problems without blocking the data pipeline.
 
 Despite these difficulties, the application inventory is indispensable. Without the business context it provides, security findings lack the organizational meaning needed for effective prioritization and governance.
 
@@ -69,26 +69,54 @@ Despite these difficulties, the application inventory is indispensable. Without 
 %%%%%%%%%%%
 
 \section{Software Development}
-\label{sec:sw-dev-literature}
+\label{sec:sw-dev-analysis}
+
+Modern software is built collaboratively from source code, organized in repositories, and deployed through automated pipelines~\cite{Sommerville2015, Pressman2019}. While \autoref{sec:app-inventory} established the business context for security findings, the platforms that support software development provide the technical entities around which those findings are organized. Repositories, build pipelines, and issue trackers form the second major data source category for the framework.
+
+These platforms share common integration patterns that simplify connector design. All expose \gls{rest} \glspl{api} with \gls{json} responses as the primary integration surface. Authentication relies on token-based mechanisms: OAuth tokens, \glspl{pat}, or service account credentials. Pagination follows either offset-based or cursor-based patterns, and all platforms impose rate limits that consumers must handle through backoff strategies. This consistency enables shared connector logic for authentication, pagination, rate limiting, and error recovery across tools.
 
 %%% 1.2.1 %%%
 
 \subsection{Source Code Management}
 
+\textcite{Chacon2014} provide a thorough treatment of Git, covering branching strategies, merging, and distributed workflows, while \textcite{Skoulikari2024} offers a more recent visual introduction. \textcite{Winters2020} extend this perspective to organizational scale, describing how large engineering teams manage repositories with thousands of contributors. For this thesis, the repository is the primary entity around which security findings are grouped, as detailed in the data model in \autoref{ch:framework}.
+
+Development teams host their Git repositories on cloud-based \gls{scm} platforms. GitHub is the dominant platform, with over 150 million developers and adoption by 92\% of Fortune~100 companies~\cite{GitHub2025Octoverse}. The 2025 Stack Overflow Developer Survey reports GitHub at 81\% adoption for code collaboration, followed by GitLab at 36\%~\cite{StackOverflow2025}. Bitbucket and Azure DevOps serve smaller but significant enterprise segments. Most large organizations use more than one platform, whether through acquisitions, team preferences, or regulatory separation, making multi-platform ingestion a practical requirement.
+
+Beyond source code, \gls{scm} platforms expose metadata relevant to security governance. Repository attributes include the primary programming language, creation and last activity dates, visibility settings (public or private), and archive status. Branch protection rules indicate the maturity of the development process. Team and contributor assignments establish ownership relationships that feed into the application-to-team mapping described in \autoref{sec:app-inventory}.
+
+These platforms share common \gls{api} patterns. GitHub exposes two complementary \glspl{api}~\cite{GitHubAPI2024}: a \gls{rest} \gls{api} (v3) with resource-oriented endpoints and page-based pagination, and a GraphQL \gls{api} (v4) that enables selective field retrieval with cursor-based pagination. Both use the same authentication mechanisms (OAuth tokens or \glspl{pat}) and share a rate limit of 5\,000 requests per hour. GitLab offers a similar dual \gls{rest}/GraphQL surface~\cite{GitLabAPI2024}. Azure DevOps provides a \gls{rest} \gls{api} authenticated through Azure Active Directory, with comparable response formats and pagination. Across all platforms, authentication is token-based and responses are \gls{json}-formatted, enabling shared connector logic for authentication, pagination, and rate limit handling.
+
 %%% 1.2.2 %%%
 
 \subsection{Continuous Integration and Delivery}
 
+\Gls{sdlc} practices have shifted from sequential models to iterative methodologies and DevOps. \textcite{Forsgren2018} present empirical evidence that high-performing teams deploy more frequently with shorter lead times, achieved through \gls{cicd} automation. \textcite{Kim2021} complement this with practical guidance for implementing DevOps pipelines at scale. The \gls{cicd} pipeline, an automated sequence of build, test, and deploy stages, is relevant to this thesis because each stage can integrate security tools whose findings the framework consolidates.
+
+GitHub Actions is the most widely adopted \gls{cicd} platform, used by 62\% of developers for personal projects and 41\% in organizational settings~\cite{JetBrains2025CICD}. Jenkins remains prevalent in enterprises at 28\% organizational adoption, followed by GitLab CI at 19\%. Notably, 32\% of organizations use two or more \gls{cicd} tools, and 9\% use at least three, reinforcing the multi-platform integration challenge observed for \gls{scm} platforms.
+
+\Gls{cicd} platforms provide contextual data about when and how security scans run. Pipeline definitions reveal which security tools are integrated into the build process. Build results indicate whether security gates passed or failed. Execution metadata records which commit was scanned, when the scan ran, and how long it took. This information serves as operational context rather than a primary finding source: knowing that a repository's last security scan ran three months ago, or that a scan consistently fails, signals coverage gaps and tool health that complement the findings from security tools.
+
+Integration patterns vary more across \gls{cicd} platforms than across \gls{scm} tools. GitHub Actions exposes build data through its \gls{rest} \gls{api} with \gls{json} responses, consistent with the broader GitHub \gls{api} suite. Jenkins uses an \gls{xml}-based \gls{api} with a different authentication model. Azure Pipelines follows the Azure DevOps \gls{rest} conventions. Despite these differences, the retrieved data is structurally similar: pipeline identifiers, run statuses, timestamps, and associated commit references.
+
 %%% 1.2.3 %%%
 
 \subsection{Issue Tracking}
+
+Issue tracking systems are relevant to the framework because they track remediation status. When a security finding is assigned for remediation, an issue is typically created in the team's tracker, either manually or through automation. The framework must read issue status to determine whether a finding is under active remediation, who is responsible, and whether it has been resolved within the required \gls{sla} window.
+
+Jira is the dominant issue tracking platform in enterprise environments. The 2025 Stack Overflow Developer Survey reports Jira at 46\% adoption, behind only GitHub (81\%) and ahead of GitLab (36\%) for code documentation and collaboration tools~\cite{StackOverflow2025}. Azure DevOps Work Items serves organizations within the Microsoft ecosystem. GitHub Issues and GitLab Issues provide lightweight built-in tracking tightly coupled with their respective \gls{scm} platforms. As with \gls{scm} and \gls{cicd} tools, many organizations use multiple trackers across different teams.
+
+These platforms expose \gls{rest} \glspl{api} with \gls{json} responses and paginated results. Jira provides \gls{jql}, a query language for precise filtering by project, status, labels, or custom fields, enabling retrieval of only security-relevant issues without downloading entire project backlogs. GitHub and GitLab expose issues through the same \gls{api} surfaces used for repository data. Most trackers also support webhooks for real-time event notifications when issue status changes, reducing reliance on periodic polling.
+
+The integration with issue trackers is bidirectional. The framework reads remediation status and may also create new issues when findings require attention. This bidirectional flow introduces complexity around idempotency (avoiding duplicate issue creation) and state synchronization (keeping the framework's view consistent with the tracker's current state).
 
 %%%%%%%%%%%
 %%% 1.3 %%%
 %%%%%%%%%%%
 
 \section{Application Security}
-\label{sec:appsec-literature}
+\label{sec:appsec-analysis}
 
 %%% 1.3.1 %%%
 
@@ -130,7 +158,7 @@ Despite these difficulties, the application inventory is indispensable. Without 
 %%%%%%%%%%%
 
 \section{Data Engineering}
-\label{sec:data-literature}
+\label{sec:data-eng-analysis}
 
 %%% 1.4.1 %%%
 
