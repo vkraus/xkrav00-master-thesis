@@ -220,7 +220,12 @@
 \do\X\do\Y\do\Z\do\1\do\2\do\3\do\4\do\5\do\6\do\7\do\8\do\9\do\0}
 \urlstyle{tt}
 
-\AtBeginDocument{\renewcommand{\chapterautorefname}{Chapter}}
+\AtBeginDocument{%
+  \renewcommand{\chapterautorefname}{Chapter}%
+  \renewcommand{\sectionautorefname}{Section}%
+  \renewcommand{\subsectionautorefname}{Section}%
+  \renewcommand{\subsubsectionautorefname}{Section}%
+}
 
 %%% Prostředí pro sazbu kódu, případně vstupu/výstupu počítačových
 %%% programů. (Vyžaduje balíček listings -- fancy verbatim.)

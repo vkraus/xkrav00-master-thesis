@@ -1,18 +1,18 @@
-\chapter{Analysis and Requirements}
+\chapter{Analysis}
 \label{ch:analysis}
 
-This chapter surveys the literature and analyzes the functional domains relevant to building an application security data platform. Each section covers one domain, combining theoretical foundations with practical tool and \gls{api} analysis. The focus is on reviewing existing knowledge, observing source system interfaces, data models, and integration patterns, not on prescribing a solution. Technology choices for the target platform are deferred to \autoref{ch:framework} and \autoref{ch:reference-implementation}.
+This chapter surveys the literature and analyzes the functional domains relevant to building an application security data platform. Each section covers one domain, combining theoretical foundations with practical tool and \gls{api} analysis. The focus is on reviewing existing knowledge, observing source system interfaces, data models, and integration patterns, not on prescribing a solution. Technology choices for the target platform are deferred to \autoref{ch:framework} and \autoref{ch:implementation}.
 
-\autoref{sec:app-inventory} establishes the business context underlying all security findings. \autoref{sec:sw-dev-analysis} and \autoref{sec:appsec-analysis} examine the software development and security tooling landscapes as data sources. \autoref{sec:data-eng-analysis} covers the data engineering patterns that underpin the framework's design. Finally, \autoref{sec:related-work} surveys existing solutions and identifies the gap this thesis addresses.
+The chapter is organized as follows. \autoref{sec:app-inventory} establishes the business and infrastructure asset context underlying all security findings. \autoref{sec:sw-dev-analysis} examines software development platforms as data sources. Application security tooling is split into two sections: \autoref{sec:static-appsec} covers tools that analyze source code and build artifacts before deployment, while \autoref{sec:dynamic-appsec} covers tools that test running applications and monitor deployed infrastructure. This separation reflects a fundamental difference in how findings are produced and correlated: static tools identify targets by repository and file path, while dynamic tools identify targets by \gls{url}, host, or cloud resource, requiring different integration strategies. \autoref{sec:data-eng-analysis} covers the data engineering patterns that underpin the framework's design. Finally, \autoref{sec:related-work} surveys existing solutions and identifies the gap this thesis addresses.
 
 %%%%%%%%%%%
 %%% 1.1 %%%
 %%%%%%%%%%%
 
-\section{Application Inventory}
+\section{Asset Discovery and Inventory}
 \label{sec:app-inventory}
 
-The application inventory is the foundational data source for any application security data platform. It establishes the business context for all security findings. Organizations typically manage this inventory in a \gls{cmdb} or a custom-built catalog. Without a reliable catalog of business applications and their mapping to technical assets, a vulnerability discovered in a repository or a running service cannot be attributed to an owner, assessed for business impact, or prioritized against organizational risk criteria.
+Asset discovery and inventory is the foundational data source for any application security data platform. It establishes the business context for all security findings. On the business side, organizations maintain application inventories in a \gls{cmdb} or a custom-built catalog. On the infrastructure side, cloud providers and container orchestrators expose asset inventories through \glspl{api}. Without a reliable catalog of business applications and their mapping to technical and infrastructure assets, a vulnerability discovered in a repository or a running service cannot be attributed to an owner, assessed for business impact, or prioritized against organizational risk criteria.
 
 %%% 1.1.1 %%%
 
@@ -20,7 +20,7 @@ The application inventory is the foundational data source for any application se
 
 Enterprise organizations maintain catalogs of their business applications with metadata such as application name, description, ownership information, lifecycle status, and relationships to other assets~\cite{AXELOS2019}.
 
-These registries also capture security-relevant attributes. Information security is commonly assessed along three dimensions known as the \gls{cia} triad: confidentiality (preventing unauthorized disclosure), integrity (preventing unauthorized modification), and availability (ensuring authorized access)~\cite{Stallings2024}. Business impact assessments evaluate all three \gls{cia} dimensions to produce criticality ratings, commonly structured as tiers: Tier~1 for mission-critical applications, Tier~2 for important supporting systems, and Tier~3 for non-critical internal tools. Separately, regulatory scope flags identify which compliance frameworks (e.g., PCI~DSS, GDPR, SOX) apply to a given application.
+These registries also capture security-relevant attributes. Information security is commonly assessed along three dimensions known as the \gls{cia} triad: confidentiality (preventing unauthorized disclosure), integrity (preventing unauthorized modification), and availability (ensuring authorized access)~\cite{Stallings2024}. Business impact assessments evaluate all three \gls{cia} dimensions to produce criticality ratings, commonly structured as tiers: Tier~1 for mission-critical applications, Tier~2 for important supporting systems, and Tier~3 for non-critical internal tools. Separately, regulatory scope flags identify which compliance frameworks apply to a given application, further contributing to the security requirement set.
 
 The most important attribute from a data integration perspective is the mapping between business applications and their technical assets. A single business application may span multiple source code repositories, microservices, infrastructure components, and deployment environments. This mapping serves as the glue connecting technical security findings to business context. When the framework ingests a vulnerability from a \gls{sast} scanner linked to a specific repository, the application inventory mapping determines which business application is affected, who owns it, and how critical it is. This enables the risk-aware prioritization that stakeholders require.
 
@@ -64,6 +64,24 @@ Data quality in \glspl{cmdb} is a persistent concern~\cite{Gartner2021CMDB}. App
 
 Despite these difficulties, the application inventory is indispensable. Without the business context it provides, security findings lack the organizational meaning needed for effective prioritization and governance.
 
+%%% 1.1.4 %%%
+
+\subsection{Cloud Asset Discovery}
+\label{sec:cloud-asset-discovery}
+
+Major cloud providers offer asset inventory \glspl{api}. \gls{aws} Config maintains a continuously updated resource inventory through a \gls{rest} \gls{api}. Azure Resource Graph supports a query language for cross-subscription metadata retrieval. Google Cloud provides the Cloud Asset Inventory \gls{api}. All three offer mature \glspl{sdk} that abstract authentication, pagination, and retry logic. Kubernetes exposes workload metadata (deployments, pods, container specifications) through its \gls{api}, enabling the framework to trace from runtime workloads to container images and, through \gls{cicd} metadata, to source repositories.
+
+Cloud asset data serves as the infrastructure counterpart to the business application inventory in the preceding subsections. While the application inventory maps business applications to repositories and teams, cloud asset discovery maps applications to their runtime infrastructure: compute instances, containers, load balancers, and network configurations. Joining these two inventories enables the framework to link security findings from any layer to both code owners and infrastructure owners.
+
+%%% 1.1.5 %%%
+
+\subsection{Cross-Layer Correlation}
+\label{sec:runtime-correlation}
+
+The central challenge in asset inventory is correlating identifiers across layers. Security tools that analyze source code identify targets by repository, file path, and code location. Tools that operate on running infrastructure identify targets by host, container, cloud resource, or \gls{url}. Bridging these two coordinate systems requires the application-to-asset mapping described in the preceding subsections, which serves as the joining entity linking runtime infrastructure to business applications and their source repositories.
+
+This correlation enables cross-layer analyses: tracing a runtime vulnerability to the code that introduced it, linking a \gls{waf} alert to the responsible application and team, or determining which \gls{iac} finding corresponds to a live \gls{cspm} detection. Without it, findings from dynamic security tools (\autoref{sec:dynamic-appsec}) remain isolated from the development context, limiting their actionability. The data model in \autoref{ch:framework} addresses this by defining explicit relationships between application entities, infrastructure assets, and security findings across all layers.
+
 %%%%%%%%%%%
 %%% 1.2 %%%
 %%%%%%%%%%%
@@ -97,7 +115,7 @@ GitHub Actions is the most widely adopted \gls{cicd} platform, used by 62\% of d
 
 \Gls{cicd} platforms provide contextual data about when and how security scans run. Pipeline definitions reveal which security tools are integrated into the build process. Build results indicate whether security gates passed or failed. Execution metadata records which commit was scanned, when the scan ran, and how long it took. This information serves as operational context rather than a primary finding source: knowing that a repository's last security scan ran three months ago, or that a scan consistently fails, signals coverage gaps and tool health that complement the findings from security tools.
 
-Integration patterns vary more across \gls{cicd} platforms than across \gls{scm} tools. GitHub Actions exposes build data through its \gls{rest} \gls{api} with \gls{json} responses, consistent with the broader GitHub \gls{api} suite. Jenkins uses an \gls{xml}-based \gls{api} with a different authentication model. Azure Pipelines follows the Azure DevOps \gls{rest} conventions. Despite these differences, the retrieved data is structurally similar: pipeline identifiers, run statuses, timestamps, and associated commit references.
+Integration patterns vary more across \gls{cicd} platforms than across \gls{scm} tools. GitHub Actions exposes build data through its \gls{rest} \gls{api} with \gls{json} responses, consistent with the broader GitHub \gls{api} surface. Jenkins uses an \gls{xml}-based \gls{api} with a different authentication model. Azure Pipelines follows the Azure DevOps \gls{rest} conventions. Despite these differences, the retrieved data is structurally similar: pipeline identifiers, run statuses, timestamps, and associated commit references.
 
 %%% 1.2.3 %%%
 
@@ -115,84 +133,205 @@ The integration with issue trackers is bidirectional. The framework reads remedi
 %%% 1.3 %%%
 %%%%%%%%%%%
 
-\section{Application Security}
-\label{sec:appsec-analysis}
+\section{Static Application Security}
+\label{sec:static-appsec}
+
+Application security encompasses the practices and tools for identifying vulnerabilities in software throughout its lifecycle~\cite{Anderson2020, Stallings2024}. \textcite{McGraw2006} advocated for security touchpoints spanning the entire development process. The DevSecOps paradigm~\cite{Mack2023, Kim2021} realizes this vision by embedding security testing into \gls{cicd} pipelines: \gls{sast} examines source code, \gls{sca} checks third-party dependencies, secret scanners flag leaked credentials, and \gls{dast} probes running applications. The practical consequence is a high volume of security data from dozens of tools, each with different \glspl{api}, output formats, and severity models. The \gls{owasp} Top~10~\cite{OWASP2021} provides a widely referenced risk classification, but it is not a data interchange standard.
+
+Several cross-cutting data standards bring partial consistency. The \gls{cve} system~\cite{MITRE2024} assigns unique identifiers to known vulnerabilities. The \gls{cwe}~\cite{CWE2024} classifies underlying weakness types. The \gls{cvss}~\cite{FIRST2019} scores attack vector, complexity, and impact on a 0--10 scale. The \gls{epss}~\cite{Jacobs2021} complements \gls{cvss} with a predictive signal: the probability that a vulnerability will be exploited within 30~days, computed by \gls{ml} models. \gls{cisa} maintains the \gls{kev} catalog~\cite{CISAKEV2024}, which adds a third signal: confirmed active exploitation curated from real-world incident data. Together, \gls{cvss}, \gls{epss}, and \gls{kev} form a three-signal enrichment model used throughout the framework.
+
+For data interchange, \gls{sarif}~\cite{OASIS2024} defines a \gls{json}-based format for static analysis results. CycloneDX~\cite{CycloneDX2024} and \gls{spdx}~\cite{SPDX2024} provide \gls{sbom} schemas. The \gls{ocsf}~\cite{OCSF2024} targets \gls{siem} events and \gls{soar} workflows. No single format covers all tool categories. \Gls{sarif} addresses static analysis but not \gls{sca} or runtime findings. CycloneDX and \gls{spdx} cover software composition, not code-level vulnerabilities. \Gls{ocsf} serves security operations, not application security posture. This gap motivates the normalization model in \autoref{ch:framework}.
+
+The analysis of security tooling is organized into two sections by operational model. This section covers static analysis tools that examine source code and build artifacts without executing the application. Their findings reference repositories, file paths, and line numbers, making them directly attributable to development teams. \autoref{sec:dynamic-appsec} covers tools that operate on running applications and deployed infrastructure, where findings reference \glspl{url}, hosts, and cloud resources, requiring additional mapping to connect them back to source code.
 
 %%% 1.3.1 %%%
 
 \subsection{Static Application Security Testing}
 \label{sec:code-security}
 
+\Gls{sast} examines source code, bytecode, or binary code for vulnerabilities without executing the program. \textcite{Chess2007} provide the foundations, covering taint analysis, control flow analysis, and pattern matching to detect injection flaws, buffer overflows, and insecure data handling. A key tradeoff is between detection coverage and false positive rates: tools with broader rule sets catch more issues but generate more noise~\cite{Chess2007}.
+
+SonarQube provides the most mature integration surface among \gls{sast} tools. Its \gls{rest} \gls{api} offers paginated endpoints with server-side filtering by project, severity, status, and rule, returning \gls{json} responses~\cite{SonarQube2024}. Beyond individual findings, the \gls{api} exposes project-level quality metrics useful for coverage analysis. Semgrep operates as a \gls{cli} tool running user-defined rules against source code, producing \gls{json} or \gls{sarif} output~\cite{Semgrep2024}. The Semgrep Cloud Platform adds a centralized \gls{api} for managing rules and results across projects. Checkmarx exposes a \gls{rest} \gls{api} for scan management and result retrieval, with \gls{sarif} export support.
+
+\gls{scm} platforms also provide built-in \gls{sast} capabilities. GitHub Code Scanning runs CodeQL analysis and exposes results through the code scanning alerts \gls{api}~\cite{GitHubAPI2024}. GitLab integrates \gls{sast} as a \gls{cicd} pipeline job with findings accessible through its security \gls{api}~\cite{GitLabAPI2024}. When both platform-native and standalone tools scan the same repository, the resulting overlap requires deduplication in the normalization layer.
+
+Each finding typically includes a rule identifier, the affected file path and line number, a severity rating, the offending code snippet, and remediation guidance. However, severity models differ across tools. SonarQube uses a five-level scale (blocker, critical, major, minor, info). Semgrep and Checkmarx use high, medium, and low, sometimes with a numerical score. This divergence makes severity normalization one of the most important tasks in the framework's transformation layer. The reference implementation integrates SonarQube, Semgrep, and additional \gls{sast} sources as described in \autoref{ch:implementation}.
+
 %%% 1.3.2 %%%
 
 \subsection{Software Composition Analysis}
 \label{sec:supply-chain-security}
+
+\Gls{sca} identifies known vulnerabilities in third-party dependencies. Modern applications commonly include hundreds of transitive dependencies, creating a large attack surface~\cite{Anderson2020}. \textcite{Ohm2020} provide a systematic review of supply chain attacks, including typosquatting, dependency confusion, and malicious package injection. \gls{sca} tools analyze dependency manifests, resolve the full dependency tree, and cross-reference versions against vulnerability databases such as the \gls{nvd}.
+
+Snyk provides \gls{rest} \glspl{api} (legacy v1 and current v3) returning \gls{json} responses with filtering by severity and project~\cite{Snyk2024}. Dependabot, integrated into GitHub, exposes alerts through the GitHub GraphQL \gls{api}~\cite{GitHubAPI2024}. \gls{owasp} Dependency-Track is an open-source platform that ingests \glspl{sbom} in CycloneDX or \gls{spdx} format and identifies vulnerabilities against multiple databases~\cite{DependencyTrack2024}. It provides a \gls{rest} \gls{api} for project management and findings retrieval. Many \gls{sca} tools also generate \glspl{sbom}~\cite{CycloneDX2024, SPDX2024}, increasingly required by regulatory frameworks~\cite{NTIA2021}. The reference implementation integrates Dependabot, Dependency-Track, and GitLab dependency scanning, as described in \autoref{ch:implementation}.
+
+\gls{sca} output is comparatively well standardized because the underlying data originates from shared public databases. Each finding typically includes the vulnerable dependency name and version, a \gls{cve} identifier, a \gls{cvss} score, the fixed version when available, and exploitability metadata. Despite this, transitive dependency resolution remains a challenge: different tools may resolve the same dependency tree differently, causing one tool to flag a \gls{cve} while another does not. The framework must handle this during deduplication, recognizing that the same \gls{cve} reported by multiple tools against the same repository likely represents a single issue.
 
 %%% 1.3.3 %%%
 
 \subsection{Secret Detection}
 \label{sec:lifecycle-security}
 
+Secret detection tools scan version control history for credentials, \gls{api} keys, tokens, and other sensitive material. Once a secret is committed, it persists in Git history even after deletion from the working tree. Tools use two complementary detection approaches. Pattern-based detection matches strings against known credential formats using regular expressions. Entropy-based detection flags strings with unusually high randomness, catching novel credential formats at the cost of higher false positive rates.
+
+GitLeaks scans repositories against over 150 predefined patterns and produces \gls{json} output~\cite{Gitleaks2024}. It runs as a \gls{cli} tool, typically in \gls{cicd} pipelines or pre-commit hooks. TruffleHog supports over 800 secret types, combines pattern and entropy analysis, and adds live credential verification to confirm whether a detected secret remains valid~\cite{TruffleHog2024}. Both tools operate as \gls{cli} tools without server-side \glspl{api}; integration requires executing the tool and parsing its output.
+
+Platform-integrated scanners take a different approach. GitHub Secret Scanning exposes alerts through the GitHub \gls{rest} \gls{api} with webhook notifications for new detections~\cite{GitHubAPI2024}. GitLab Secret Detection runs as a \gls{cicd} pipeline job and reports results through GitLab's security dashboard and \gls{api}~\cite{GitLabAPI2024}. These tools are simpler to integrate because they use existing platform \gls{api} surfaces, but they only cover repositories hosted on their respective platforms.
+
+The primary integration challenge is the absence of a standard output format. Each tool defines its own \gls{json} schema, and none supports \gls{sarif}. Findings include the secret type, file path, commit reference, and sometimes a validity status, but field names and structures vary across tools.
+
 %%% 1.3.4 %%%
-
-\subsection{Dynamic Testing and Penetration Testing}
-\label{sec:penetration-testing}
-
-%%% 1.3.5 %%%
 
 \subsection{Container Image Scanning}
 \label{sec:container-security}
 
-%%% 1.3.6 %%%
+Container image scanning examines built container images for vulnerabilities in \gls{os} packages, application libraries, and configuration. While \gls{sca} analyzes source-level dependency manifests, container scanners operate on assembled images, detecting \gls{os}-level vulnerabilities and misconfigurations that source-level analysis does not cover.
+
+Trivy is a widely adopted open-source scanner supporting container images, filesystems, and Git repositories~\cite{Trivy2024}. It produces \gls{json} or \gls{sarif} output and integrates into \gls{cicd} pipelines as a \gls{cli} tool. Commercial alternatives such as Aqua and Prisma Cloud add registry scanning, policy enforcement, and centralized management through \gls{rest} \glspl{api}. Findings typically include the vulnerable package name and version, a \gls{cve} identifier, the fixed version, and the image layer where the package was introduced.
+
+The integration challenge is linking image vulnerabilities to source code repositories. Container images are identified by registry, name, and tag, not by the source code that produced them. Establishing this mapping requires tracing through \gls{cicd} metadata: which pipeline built the image, from which repository, at which commit.
+
+%%% 1.3.5 %%%
 
 \subsection{Infrastructure as Code Security}
 \label{sec:iac-security}
 
-%%% 1.3.7 %%%
+\Gls{iac} security tools perform static analysis on infrastructure definitions: Terraform configurations, CloudFormation templates, Kubernetes manifests, and Dockerfiles. They detect misconfigurations before deployment, such as overly permissive access policies, unencrypted storage, exposed ports, and missing logging.
 
-\subsection{Runtime Security Monitoring}
-\label{sec:runtime-security}
+Checkov is a prominent open-source scanner supporting over 1\,000 built-in policies across multiple \gls{iac} frameworks~\cite{Checkov2024}. tfsec focuses on Terraform, and KICS covers a broad range of formats. All operate as \gls{cli} tools producing \gls{json} or \gls{sarif} output. Findings are file-and-line-based, structurally similar to \gls{sast} output, but target infrastructure configuration rather than application logic.
+
+These tools complement the runtime monitoring tools discussed in \autoref{sec:dynamic-appsec}. \gls{cspm} scanners and \gls{vmdr} platforms detect the same misconfiguration classes after deployment in the live environment. Correlating pre-deployment \gls{iac} findings with post-deployment runtime detections is a challenge the framework addresses through its unified data model.
 
 %%%%%%%%%%%
 %%% 1.4 %%%
 %%%%%%%%%%%
 
-\section{Data Engineering}
-\label{sec:data-eng-analysis}
+\section{Dynamic Application Security}
+\label{sec:dynamic-appsec}
+
+While the static analysis tools in \autoref{sec:static-appsec} examine source code and build artifacts, the tools in this section operate on running applications and deployed infrastructure. The cross-cutting data standards introduced in \autoref{sec:static-appsec}, particularly \gls{cve}, \gls{cvss}, \gls{epss}, and \gls{kev}, apply equally to dynamic findings. The cross-layer correlation challenge that connects these findings to business applications is addressed in \autoref{sec:runtime-correlation}.
 
 %%% 1.4.1 %%%
 
-\subsection{Data Platform Architecture}
-\label{sec:data-architecture}
+\subsection{Dynamic Application Security Testing}
+\label{sec:dast}
+
+\Gls{dast} tests running applications by sending crafted \gls{http} requests and analyzing responses for vulnerability indicators~\cite{Stuttard2011}. Unlike \gls{sast}, which works on source code, \gls{dast} requires a deployed application and detects vulnerabilities that manifest only at runtime, such as authentication bypass, server misconfiguration, and certain injection flaws.
+
+\gls{owasp} \gls{zap} is the most widely used open-source \gls{dast} tool, providing a \gls{rest} \gls{api} for scan management and result retrieval with \gls{json} and \gls{xml} output~\cite{OWASPZAP2024}. Burp Suite exposes a \gls{rest} \gls{api} in its Enterprise edition; the Professional edition is a desktop tool without programmatic access. Findings from both tools include the target \gls{url}, the affected \gls{http} parameter, the vulnerability type mapped to \gls{cwe} identifiers~\cite{CWE2024}, exploitation evidence, and a confidence rating.
+
+The core integration challenge is that \gls{dast} findings are \gls{url}-based, not code-based. A \gls{sast} finding points to a file and line in a repository; a \gls{dast} finding points to a \gls{url} endpoint. Mapping \gls{url}-based findings to source repositories requires deployment metadata or application inventory data from \autoref{sec:app-inventory}. Without this mapping, \gls{dast} findings can be attributed to applications but not to development teams or code locations.
 
 %%% 1.4.2 %%%
 
-\subsection{Data Integration Patterns}
-\label{sec:data-integration-patterns}
+\subsection{Penetration Testing}
+\label{sec:penetration-testing}
+
+Manual penetration testing traditionally produces no machine-readable output. External firms deliver results as narrative \gls{pdf} or Word reports, requiring a structured upload mechanism (e.g., a \gls{json} or \gls{csv} template) for security teams to transcribe key fields. \gls{ml}-based document parsing could automate extraction, though the inconsistent formatting of penetration test reports makes this non-trivial.
+
+Emerging platforms such as XBOW use autonomous \gls{ai} agents to perform penetration testing at scale, delivering validated findings with reproducible exploit evidence~\cite{XBOW2024}. These platforms offer \gls{api} access for test orchestration and integrate with security data ecosystems, moving penetration testing toward the structured, automatable data exchange that other tool categories already provide.
+
+Despite low frequency, penetration testing findings are often among the most critical, representing validated exploitable vulnerabilities. The framework must accommodate both manual uploads and automated \gls{api} ingestion to cover the full spectrum of penetration testing practices.
 
 %%% 1.4.3 %%%
 
-\subsection{Domain Data Model}
-\label{sec:data-entities}
+\subsection{Web Application Firewalls}
+\label{sec:waf}
+
+\Glspl{waf} operate at the network perimeter, inspecting inbound \gls{http} traffic against rule sets such as the \gls{owasp} Core Rule Set. They log blocked and flagged requests, recording the matched rule, request details, and action taken. Most commercial \glspl{waf} (\gls{aws} WAF, Cloudflare, Akamai) expose \gls{rest} \glspl{api} for log retrieval and configuration management.
+
+\Glspl{waf} generate high-volume event data rather than discrete findings. The framework ingests aggregated attack patterns and anomaly indicators rather than individual request logs, focusing on the subset relevant to application security posture assessment.
+
+%%% 1.4.4 %%%
+
+\subsection{Runtime Application Self-Protection}
+\label{sec:rasp}
+
+\Gls{rasp} tools instrument the application runtime, detecting attacks such as \gls{sql} injection and path traversal from within the application context. Unlike \glspl{waf}, which operate at the network perimeter, \gls{rasp} can correlate attacks with specific application functions and code paths. This produces richer contextual data per event, but \gls{rasp} adoption remains limited compared to \glspl{waf}, and integration surfaces vary across vendors.
+
+Like \glspl{waf}, \gls{rasp} tools produce event streams rather than discrete findings. The integration approach is similar: the framework consumes aggregated indicators rather than raw event logs.
+
+%%% 1.4.5 %%%
+
+\subsection{Vulnerability Management and Cloud Posture}
+\label{sec:vmdr-cspm}
+
+\Gls{vmdr} tools scan infrastructure for \gls{os} vulnerabilities, missing patches, and exposed services. Qualys exposes data through a \gls{rest} \gls{api} with \gls{xml} responses. Wiz uses a GraphQL \gls{api} for selective queries across cloud environments. These tools produce findings tied to infrastructure identifiers (hostnames, IP addresses, cloud resource \glspl{arn}), not to source code locations.
+
+\Gls{cspm} tools complement \gls{vmdr} by evaluating cloud configurations against compliance benchmarks such as \gls{cis} Benchmarks and organizational policies. Findings indicate misconfigurations (public S3 buckets, overly permissive \gls{iam} roles, unencrypted storage) rather than software vulnerabilities. \Gls{cspm} overlaps with \gls{iac} security (\autoref{sec:iac-security}): both detect the same misconfiguration classes, but \gls{iac} tools scan before deployment while \gls{cspm} scans the live environment. Correlating pre-deployment and post-deployment findings is a key integration challenge.
+
+\autoref{tab:data-source-comparison} summarizes the integration characteristics across all source categories analyzed in this chapter.
+
+\begin{table}[htbp]
+\centering
+\caption{Data Source Integration Characteristics}
+\label{tab:data-source-comparison}
+\begin{tabularx}{\textwidth}{l c c c c}
+\toprule
+\textbf{Source Category} & \textbf{API} & \textbf{Format} & \textbf{Frequency} & \textbf{Standardization} \\
+\midrule
+Application Inventory & REST & JSON & Low & Low \\
+Cloud Assets & REST & JSON & Continuous & Medium \\
+SCM Platforms & REST/GraphQL & JSON & Medium & High \\
+Issue Trackers & REST & JSON & Medium & Medium \\
+CI/CD Platforms & REST/XML & JSON/XML & Medium & Medium \\
+SAST & REST/CLI & JSON/SARIF & On-demand & Medium \\
+SCA & REST/GraphQL & JSON & Continuous & High \\
+Secret Scanning & CLI/REST & JSON & On-demand & Low \\
+Container Scanning & CLI & JSON/SARIF & On-demand & Medium \\
+IaC Scanning & CLI & JSON/SARIF & On-demand & Medium \\
+DAST & REST/CLI & JSON/XML & On-demand & Medium \\
+Penetration Testing & None & PDF & Periodic & None \\
+WAF & REST & JSON & Continuous & Low \\
+RASP & Vendor-specific & JSON & Continuous & Low \\
+VMDR/CSPM & REST/GraphQL & JSON/XML & Continuous & Medium \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Several patterns emerge from this comparison. \gls{rest} \glspl{api} with \gls{json} responses are the dominant integration surface, but \gls{xml} responses, GraphQL queries, \gls{cli} output parsing, and manual uploads are all necessary. Standardization varies: \gls{sca} benefits from the \gls{cve}/\gls{nvd} ecosystem, \gls{sast} is partially standardized through \gls{sarif}, and secret scanning has no standard format. Update frequencies range from continuous dependency monitoring to periodic penetration tests. These characteristics define what the ingestion layer described in \autoref{ch:framework} must accommodate.
 
 %%%%%%%%%%%
 %%% 1.5 %%%
 %%%%%%%%%%%
 
+\section{Data Engineering}
+\label{sec:data-eng-analysis}
+
+%%% 1.5.1 %%%
+
+\subsection{Data Platform Architecture}
+\label{sec:data-architecture}
+
+%%% 1.5.2 %%%
+
+\subsection{Data Integration Patterns}
+\label{sec:data-integration-patterns}
+
+%%% 1.5.3 %%%
+
+\subsection{Domain Data Model}
+\label{sec:data-entities}
+
+%%%%%%%%%%%
+%%% 1.6 %%%
+%%%%%%%%%%%
+
 \section{Related Work and Gap Analysis}
 \label{sec:related-work}
 
-%%% 1.5.1 %%%
+%%% 1.6.1 %%%
 
 \subsection{Existing Approaches}
 \label{sec:existing-approaches}
 
-%%% 1.5.2 %%%
+%%% 1.6.2 %%%
 
 \subsection{Databricks Lakewatch}
 \label{sec:lakewatch}
 
-%%% 1.5.3 %%%
+%%% 1.6.3 %%%
 
 \subsection{Comparative Analysis and Research Gap}
 \label{sec:research-gap}
