@@ -77,23 +77,50 @@
         - [Vulnerability Trends](#vulnerability-trends)
         - [Coverage Analysis](#coverage-analysis)
         - [Extension Guide](#extension-guide)
-- [Connector Framework](#connector-framework)
-  - [Connector Abstraction](#connector-abstraction)
-  - [Ingestion Patterns](#ingestion-patterns)
-  - [Transformation Patterns](#transformation-patterns)
-- [Analytics and Serving Layer](#analytics-and-serving-layer)
-  - [Aggregation Patterns](#aggregation-patterns)
-  - [ML Workflows](#ml-workflows)
-  - [Serving Patterns](#serving-patterns)
-- [Deployment and Engineering Practices](#deployment-and-engineering-practices)
+- [Environment and Deployment](#environment-and-deployment)
   - [Deployment Strategy](#deployment-strategy)
   - [Project Structure](#project-structure)
-  - [Testing Strategy](#testing-strategy)
+  - [Pipeline Orchestration](#pipeline-orchestration)
+  - [Monitoring and Observability](#monitoring-and-observability)
+  - [Testing and Validation](#testing-and-validation)
+- [Connector Framework](#connector-framework)
+  - [Connector Abstraction](#connector-abstraction)
+        - [Connector Categories](#connector-categories)
+        - [Authentication](#authentication)
+        - [Pagination](#pagination)
+        - [Rate Limiting](#rate-limiting)
+        - [Incremental State](#incremental-state)
+        - [Extension Points](#extension-points)
+  - [Ingestion Patterns](#ingestion-patterns)
+        - [Common Landing Pattern](#common-landing-pattern)
+        - [Source Code Management Sources](#source-code-management-sources)
+        - [Security Scanner Sources](#security-scanner-sources)
+        - [Application Inventory Sources](#application-inventory-sources)
+  - [Transformation Patterns](#transformation-patterns)
+        - [Schema Mapping](#schema-mapping)
+        - [Normalization](#normalization)
+        - [Data Quality Validation](#data-quality-validation)
+        - [Deduplication](#deduplication)
+        - [Business Context Attribution](#business-context-attribution)
+  - [Testing and Validation](#testing-and-validation-1)
+- [Analytics and Serving Framework](#analytics-and-serving-framework)
+  - [Analytics Patterns](#analytics-patterns)
+        - [Rule-Based Analytics](#rule-based-analytics)
+        - [ML-Driven Analytics](#ml-driven-analytics)
+        - [Extension Blueprint](#extension-blueprint)
+  - [Serving Patterns](#serving-patterns)
+        - [Analytical Serving](#analytical-serving)
+        - [Operational Serving](#operational-serving)
+        - [Event-Driven Serving](#event-driven-serving)
+  - [Testing and Validation](#testing-and-validation-2)
   - [Implementation](#implementation)
-- [Environment and Deployment](#environment-and-deployment)
+- [Environment and Deployment](#environment-and-deployment-1)
   - [Workspace Setup](#workspace-setup)
   - [Silver Schema](#silver-schema)
   - [Project Structure and CI/CD](#project-structure-and-cicd)
+  - [Pipeline Orchestration](#pipeline-orchestration-1)
+  - [Monitoring and Observability](#monitoring-and-observability-1)
+  - [Testing and Validation](#testing-and-validation-3)
 - [Connectors](#connectors)
   - [ServiceNow](#servicenow)
   - [GitHub](#github)
@@ -103,6 +130,7 @@
   - [Dependency-Track](#dependency-track)
   - [TruffleHog](#trufflehog)
   - [Vulnerability Enrichment](#vulnerability-enrichment)
+  - [Testing and Validation](#testing-and-validation-4)
 - [Analytics and Serving](#analytics-and-serving)
   - [Application-Repository Mapping](#application-repository-mapping)
   - [Application Risk Scoring](#application-risk-scoring)
@@ -110,7 +138,8 @@
   - [Vulnerability Trends](#vulnerability-trends-1)
   - [Risk Prediction Model](#risk-prediction-model)
   - [Serving Layer](#serving-layer)
-- [Testing and Validation](#testing-and-validation)
+  - [Testing and Validation](#testing-and-validation-5)
+- [Testing and Validation](#testing-and-validation-6)
   - [Conclusion](#conclusion)
 - [Thesis Outcomes and Contributions](#thesis-outcomes-and-contributions)
 - [Limitations](#limitations)
@@ -1868,18 +1897,19 @@ acronym-form="plural+short">apis</span> but does not control them.
 
 **The ingestion tier** hosts connectors that extract data from sources
 and land it in the bronze layer. Three connector categories serve
-different integration scenarios. Partner connectors use pre-built
-integrations from the platform ecosystem. <span acronym-label="dltool"
-acronym-form="singular+short">dltool</span> connectors use the
-open-source <span acronym-label="dltool"
-acronym-form="singular+short">dltool</span> library for custom
-<span acronym-label="rest" acronym-form="singular+short">rest</span>
-<span acronym-label="api" acronym-form="singular+short">api</span>
-extraction. Custom connectors handle non-standard sources such as
-<span acronym-label="cli" acronym-form="singular+short">cli</span>-based
-scanners or file uploads. All connectors share common concerns:
-authentication, pagination, rate limiting, and incremental state
-management. The connector framework in
+different integration scenarios. LakeFlow Connect connectors use the
+platform’s managed ingestion service for declarative, zero-code
+extraction. <span acronym-label="sdk"
+acronym-form="singular+short">sdk</span> connectors use source-provided
+client libraries for programmatic extraction with built-in
+authentication and pagination. <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span> connectors use the open-source
+<span acronym-label="dltool" acronym-form="singular+short">dltool</span>
+library for sources that lack a dedicated <span acronym-label="sdk"
+acronym-form="singular+short">sdk</span>. All connectors share common
+concerns: authentication, pagination, rate limiting, and incremental
+state management. The connector framework in
 <a href="#sec:connector-framework" data-reference-type="autoref"
 data-reference="sec:connector-framework">[sec:connector-framework]</a>
 defines these patterns.
@@ -1922,16 +1952,6 @@ acronym-form="singular+short">siem</span>/<span acronym-label="soar"
 acronym-form="singular+short">soar</span> platforms, and custom
 reporting tools. Like data sources, consumers are outside the framework
 boundary.
-
-A direct bypass path allows data sources to reach the ingestion tier
-without an intermediate integration tool, for cases where connectors
-call source <span acronym-label="api"
-acronym-form="plural+short">apis</span> directly. This path is common
-for security scanners whose output is consumed through native
-<span acronym-label="rest" acronym-form="singular+short">rest</span>
-<span acronym-label="api" acronym-form="plural+short">apis</span> or
-<span acronym-label="cli" acronym-form="singular+short">cli</span>
-tooling.
 
 #### Medallion Architecture
 
@@ -2029,8 +2049,8 @@ categories of gold tables serve distinct purposes:
   remediation time estimates. These scores augment the aggregation
   tables with predictive signals. The <span acronym-label="ml"
   acronym-form="singular+short">ml</span> workflow patterns are detailed
-  in <a href="#sec:ml-workflows" data-reference-type="autoref"
-  data-reference="sec:ml-workflows">[sec:ml-workflows]</a>.
+  in <a href="#sec:analytics-patterns" data-reference-type="autoref"
+  data-reference="sec:analytics-patterns">[sec:analytics-patterns]</a>.
 
 Gold tables use incremental refresh where possible: new silver records
 trigger recomputation of only the affected aggregation partitions. Full
@@ -2331,29 +2351,1052 @@ pattern ensures all gold tables share a common query interface, so
 dashboards and reporting tools can consume new tables without structural
 changes.
 
-### Connector Framework
+### Environment and Deployment
 
-#### Connector Abstraction
-
-#### Ingestion Patterns
-
-#### Transformation Patterns
-
-### Analytics and Serving Layer
-
-#### Aggregation Patterns
-
-#### ML Workflows
-
-#### Serving Patterns
-
-### Deployment and Engineering Practices
+The solution architecture
+(<a href="#sec:solution-arch" data-reference-type="autoref"
+data-reference="sec:solution-arch">[sec:solution-arch]</a>) and data
+model (<a href="#sec:data-model" data-reference-type="autoref"
+data-reference="sec:data-model">[sec:data-model]</a>) define the
+framework’s components and data structures. Before these can be
+populated with connectors or analytics, the deployment environment must
+be provisioned and the codebase organized. This section covers the
+foundational setup: deployment strategy, project structure, pipeline
+orchestration, monitoring, and deployment-level verification. These are
+one-time decisions that establish the platform; the repeatable patterns
+for extending the framework with new sources and analytics follow in
+<a href="#sec:connector-framework" data-reference-type="autoref"
+data-reference="sec:connector-framework">[sec:connector-framework]</a>
+and <a href="#sec:analytics-serving" data-reference-type="autoref"
+data-reference="sec:analytics-serving">[sec:analytics-serving]</a>.
 
 #### Deployment Strategy
 
+The framework uses Databricks Asset Bundles as its deployment
+mechanism . A bundle is a declarative configuration that describes
+Databricks resources (jobs, pipelines, cluster policies, permissions)
+alongside the source code that implements them. A single
+`databricks.yml` configuration file at the project root defines all
+resource mappings, inter-resource dependencies, and environment-specific
+parameter overrides. This approach treats the deployment as
+<span acronym-label="iac" acronym-form="singular+short">iac</span>: the
+entire platform configuration is version-controlled, reviewable, and
+reproducible from a single source.
+
+Three environment targets structure the promotion path: development,
+staging, and production. Each target overrides a set of parameters: the
+Unity Catalog catalog name (one catalog per environment, following the
+namespace design from
+<a href="#sec:tech-stack" data-reference-type="autoref"
+data-reference="sec:tech-stack">[sec:tech-stack]</a>), compute cluster
+sizing, permission grants, and pipeline scheduling intervals.
+Development uses smaller clusters and relaxed permissions for rapid
+iteration. Staging mirrors production configuration for pre-release
+validation. Production enforces strict access controls, full-scale
+compute, and scheduled execution.
+
+A <span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+pipeline automates the build-test-deploy cycle . On each code change,
+the pipeline executes three stages: validation checks bundle
+configuration syntax and resource compatibility, testing runs the
+project’s test suite against the development environment, and deployment
+promotes the validated bundle to the target environment. Staging and
+production deployments require an approval gate; only reviewed and
+tested changes reach shared environments. The pipeline runs on standard
+<span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+platforms (GitHub Actions, Azure DevOps, GitLab
+<span acronym-label="cicd" acronym-form="singular+short">cicd</span>)
+that invoke the Databricks <span acronym-label="cli"
+acronym-form="singular+short">cli</span> for bundle operations.
+
 #### Project Structure
 
-#### Testing Strategy
+The project follows a monorepo layout: all connectors, transformations,
+analytics, tests, and deployment configuration reside in a single
+repository. This simplifies dependency management, enables atomic
+cross-layer changes, and supports the bundle deployment model described
+in <a href="#sec:deployment-strategy" data-reference-type="autoref"
+data-reference="sec:deployment-strategy">[sec:deployment-strategy]</a>.
+The repository organizes into four top-level directories: `src/` for
+pipeline source code (connectors, transformations, analytics), `tests/`
+for the test suite, `config/` for lookup tables and environment-specific
+settings, and the bundle configuration files at the root.
+
+Within `src/`, each connector is an independent module containing its
+own ingestion and transformation logic. Shared utilities (authentication
+helpers, pagination handlers, normalization functions) reside in a
+common library that connectors import. Silver-to-gold transformations
+are grouped by analytic rather than by source, since a single gold table
+may consume data from multiple connectors. This boundary ensures that
+adding a new connector requires changes only within its own module and
+the relevant gold-layer pipelines.
+
+Naming conventions enforce consistency across the platform. Unity
+Catalog objects follow the pattern
+`<env>.<layer>_<source>.<table_name>`: for example,
+`prod.bronze_github.code_scanning_alerts` or
+`prod.silver.sast_findings`. Pipeline names mirror their source module:
+`ingest_github`, `transform_github_silver`. Column names use
+`snake_case` throughout. These conventions reduce cognitive load and
+simplify governance policies that rely on name-based access rules.
+
+Configuration management separates secrets from non-sensitive settings.
+Secrets (<span acronym-label="api"
+acronym-form="singular+short">api</span> tokens, service account
+credentials) are stored in the platform’s secret scope and referenced by
+name in pipeline code; they never appear in source files or bundle
+configuration. Non-sensitive settings (severity mapping tables,
+<span acronym-label="sla" acronym-form="singular+short">sla</span>
+thresholds, scheduling intervals) are version-controlled as
+configuration files and loaded at pipeline runtime. Environment-specific
+overrides in the bundle configuration select the appropriate catalog,
+secret scope, and compute target for each deployment.
+
+#### Pipeline Orchestration
+
+Lakeflow Jobs is the orchestration engine that schedules and coordinates
+pipeline execution . A job groups related tasks into a
+<span acronym-label="dag" acronym-form="singular+short">dag</span> with
+explicit dependencies; the engine executes tasks in dependency order and
+handles retries on failure. Jobs are defined in the bundle configuration
+alongside the resources they operate on, making orchestration
+version-controlled and promotable across environments through the same
+deployment path described in
+<a href="#sec:deployment-strategy" data-reference-type="autoref"
+data-reference="sec:deployment-strategy">[sec:deployment-strategy]</a>.
+
+The framework assigns one job per connector. Each connector job contains
+two sequential tasks: an ingestion task that extracts data from the
+source <span acronym-label="api"
+acronym-form="singular+short">api</span> into bronze, and a
+transformation task that normalizes bronze records into silver. This
+isolation gives each connector an independent failure domain: a GitHub
+<span acronym-label="api" acronym-form="singular+short">api</span>
+outage does not block ServiceNow ingestion. Gold-layer analytics run as
+separate jobs that list their upstream connector jobs as dependencies;
+the orchestrator starts a gold job only after all required silver data
+is fresh. <span acronym-label="ml"
+acronym-form="singular+short">ml</span> model retraining runs on
+independent schedules, decoupled from the ingestion cycle.
+
+Source characteristics drive scheduling frequency. High-change sources
+(<span acronym-label="scm" acronym-form="singular+short">scm</span>
+platforms, security scanners producing frequent new findings) run on
+shorter intervals, typically hourly. Stable sources (application
+inventory from the <span acronym-label="cmdb"
+acronym-form="singular+short">cmdb</span>) run daily. External
+enrichment sources follow their respective update cadences:
+<span acronym-label="nvd" acronym-form="singular+short">nvd</span> and
+<span acronym-label="epss" acronym-form="singular+short">epss</span>
+update daily, <span acronym-label="cisa"
+acronym-form="singular+short">cisa</span> <span acronym-label="kev"
+acronym-form="singular+short">kev</span> updates on weekdays. Gold
+analytics trigger after their upstream connector jobs complete through
+explicit job dependencies. Where strict ordering adds unnecessary
+complexity, such as daily reporting workloads, a schedule offset from
+the expected ingestion window is an acceptable alternative.
+
+Each task is configured with a retry count and backoff interval for
+transient failures. If retries exhaust, the task fails and downstream
+tasks within the same job do not execute. Job-level alerts notify
+operators of persistent failures through configured channels (email,
+messaging webhooks). Since connector jobs are independent, a single
+connector degradation does not cascade. Jobs run in parallel on
+ephemeral job clusters that are created at job start and terminated at
+completion, preventing resource contention between connectors and
+ensuring cost efficiency through right-sized compute per workload.
+
+#### Monitoring and Observability
+
+Orchestration ensures pipelines run on schedule; monitoring ensures they
+run correctly over time. The platform provides system tables that record
+job execution history, pipeline events, and compute utilization . The
+framework builds on these tables to track three dimensions: data
+freshness, pipeline health, and data quality trends. All monitoring
+queries run against the same <span acronym-label="sql"
+acronym-form="singular+short">sql</span> warehouse that serves
+analytics, keeping the operational overhead within the platform.
+
+Data freshness tracks the recency of data at each medallion layer. Each
+bronze table records the timestamp of its last successful ingestion;
+each silver table records its last transformation run. A freshness
+monitor queries these timestamps and flags tables where the age exceeds
+a configurable threshold. Thresholds reflect the scheduling frequency
+from <a href="#sec:orchestration" data-reference-type="autoref"
+data-reference="sec:orchestration">[sec:orchestration]</a>: an hourly
+connector that has not produced data in two hours is stale; a daily
+enrichment source that has not refreshed in 36 hours is stale. Freshness
+violations trigger alerts through the same channels configured for job
+failures.
+
+Pipeline health aggregates job execution metrics from system tables. Key
+indicators include: job success rate over a rolling window, mean run
+duration and its trend (detecting performance degradation before it
+causes timeouts), task-level retry frequency (high retry rates signal
+intermittent source issues), and quarantine volume (records routed to
+quarantine tables per ingestion run). A rising quarantine rate often
+precedes data quality issues in the silver layer and warrants
+investigation before downstream aggregations are affected.
+
+Alerting bridges monitoring signals to operational response. The
+framework configures alerts at two levels. Job-level alerts fire on
+individual failures or threshold breaches, such as a quarantine rate
+exceeding a configured percentage of ingested records. System-level
+alerts fire on aggregate degradation: multiple connectors stale
+simultaneously, overall pipeline success rate below a threshold, or gold
+tables not refreshed within their expected window. Alerts are delivered
+through configured channels (email, messaging webhooks, incident
+management integrations). The thresholds and channels are defined as
+configuration, not code, enabling operators to tune sensitivity without
+redeploying pipelines.
+
+#### Testing and Validation
+
+This subsection covers deployment-level verification: the checks that
+confirm the environment is correctly provisioned and the codebase meets
+quality standards. Component-level testing patterns for connectors and
+analytics are defined separately in
+<a href="#sec:connector-testing" data-reference-type="autoref"
+data-reference="sec:connector-testing">[sec:connector-testing]</a> and
+<a href="#sec:analytics-testing" data-reference-type="autoref"
+data-reference="sec:analytics-testing">[sec:analytics-testing]</a>.
+
+The <span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+pipeline enforces quality gates before deployment. Linting validates
+code style and catches common errors (unused imports, undefined
+variables, type mismatches). Formatting ensures consistent code layout
+across contributors. Unit tests verify individual functions (severity
+mapping lookups, timestamp parsers, schema mapping logic) in isolation
+from the platform. All gates must pass before the pipeline proceeds to
+deployment.
+
+After deployment, environment validation confirms that infrastructure
+prerequisites are in place. Automated checks verify that Unity Catalog
+objects (catalogs, schemas, tables) exist with expected permissions,
+compute resources (clusters, <span acronym-label="sql"
+acronym-form="singular+short">sql</span> warehouses) are configured and
+accessible, secret scopes contain the required credentials, and
+<span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> pipelines are registered.
+These checks serve as smoke tests for newly provisioned or updated
+environments. Failures block pipeline execution until the environment is
+corrected.
+
+The framework uses pytest markers to link individual tests to
+requirement identifiers. Each test function carries a marker referencing
+a specific requirement from
+<a href="#ch:analysis" data-reference-type="autoref"
+data-reference="ch:analysis">[ch:analysis]</a>, such as
+`@pytest.mark.requirement("REQ-SCA-001")`. A traceability matrix is
+generated automatically from test results, mapping each requirement to
+its covering tests and their pass/fail status. This pattern applies
+uniformly across environment, connector
+(<a href="#sec:connector-testing" data-reference-type="autoref"
+data-reference="sec:connector-testing">[sec:connector-testing]</a>), and
+analytics
+(<a href="#sec:analytics-testing" data-reference-type="autoref"
+data-reference="sec:analytics-testing">[sec:analytics-testing]</a>)
+testing. The cross-cutting traceability matrix that summarizes coverage
+across all components is produced in the reference implementation
+(<a href="#sec:testing-validation" data-reference-type="autoref"
+data-reference="sec:testing-validation">[sec:testing-validation]</a>).
+
+### Connector Framework
+
+The connector framework defines how data moves from the heterogeneous
+sources analyzed in <a href="#ch:analysis" data-reference-type="autoref"
+data-reference="ch:analysis">[ch:analysis]</a> into the medallion layers
+described in <a href="#sec:medallion-arch" data-reference-type="autoref"
+data-reference="sec:medallion-arch">[sec:medallion-arch]</a>.
+<a href="#sec:component-design" data-reference-type="autoref"
+data-reference="sec:component-design">[sec:component-design]</a>
+introduced three connector categories (LakeFlow Connect,
+<span acronym-label="sdk" acronym-form="singular+short">sdk</span>, and
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span> with
+<span acronym-label="dltool"
+acronym-form="singular+short">dltool</span>); this section specifies the
+common abstraction they share, the patterns for landing data in bronze,
+and the patterns for transforming it to silver. The goal is a repeatable
+recipe: adding a new source requires implementing a well-defined set of
+concerns against a new <span acronym-label="api"
+acronym-form="singular+short">api</span>, not redesigning the pipeline.
+
+#### Connector Abstraction
+
+Every connector must handle the same set of cross-cutting concerns, but
+the three connector categories introduced in
+<a href="#sec:component-design" data-reference-type="autoref"
+data-reference="sec:component-design">[sec:component-design]</a> differ
+in how much of this work the developer performs versus the platform or
+library.
+
+##### Connector Categories
+
+**LakeFlow Connect connectors** use the platform’s managed ingestion
+service. They are declarative: the connector is configured through the
+bundle definition, not coded. Authentication, pagination, incremental
+state, and schema inference are handled by the platform. This category
+suits sources with supported LakeFlow Connect integrations where
+full-table ingestion meets requirements. The trade-off is limited
+flexibility: custom transformation logic, selective field extraction,
+and non-standard pagination cannot be injected.
+
+**<span acronym-label="sdk" acronym-form="singular+short">sdk</span>
+connectors** use a source-provided client library (e.g., the
+<span acronym-label="aws" acronym-form="singular+short">aws</span>
+<span acronym-label="sdk" acronym-form="singular+short">sdk</span> for
+Python, PyGitHub, python-gitlab) for programmatic extraction. These
+<span acronym-label="sdk" acronym-form="plural+short">sdks</span>
+encapsulate authentication, pagination, rate limiting, and object model
+mapping, letting the developer work with high-level methods rather than
+raw <span acronym-label="http" acronym-form="singular+short">http</span>
+requests. This category suits sources that offer an official
+<span acronym-label="sdk" acronym-form="singular+short">sdk</span> with
+good coverage of the required endpoints. The developer controls the
+extraction logic, but the <span acronym-label="sdk"
+acronym-form="singular+short">sdk</span> handles the transport-level
+concerns.
+
+**<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span>
+connectors with <span acronym-label="dltool"
+acronym-form="singular+short">dltool</span>** use the open-source
+<span acronym-label="dltool" acronym-form="singular+short">dltool</span>
+library to build ingestion pipelines against sources that lack a
+dedicated <span acronym-label="sdk"
+acronym-form="singular+short">sdk</span>. The library provides pre-built
+authentication, pagination, and incremental loading components that the
+developer composes declaratively against the source’s
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span>. This
+category handles the mechanical concerns (request construction, response
+parsing, state management) while the developer specifies endpoints,
+schema mapping, and extraction parameters.
+
+The decision follows a preference order: use LakeFlow Connect if a
+supported integration exists and meets requirements; use the source’s
+<span acronym-label="sdk" acronym-form="singular+short">sdk</span> when
+one is available with sufficient endpoint coverage; fall back to
+<span acronym-label="dltool" acronym-form="singular+short">dltool</span>
+for sources with only a <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span>. The five responsibilities
+defined below represent the full contract. <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span> connectors implement them
+through <span acronym-label="dltool"
+acronym-form="singular+short">dltool</span> library components.
+<span acronym-label="sdk" acronym-form="singular+short">sdk</span>
+connectors delegate them to the client library. LakeFlow Connect
+connectors satisfy them through platform configuration. The reference
+implementation in
+<a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a> demonstrates
+all three categories.
+
+##### Authentication
+
+Security tool <span acronym-label="api"
+acronym-form="plural+short">apis</span> use several authentication
+mechanisms: <span acronym-label="pat"
+acronym-form="plural+short">pats</span>, OAuth 2.0 client credentials,
+and service account keys. The connector abstraction externalizes
+credentials through a platform secret scope. Each connector declares
+which credential type it requires; the framework resolves it at runtime.
+This separation keeps secrets out of pipeline code and enables
+credential rotation without redeploying connectors.
+
+##### Pagination
+
+The source integration summary in
+<a href="#sec:source-integration-summary" data-reference-type="autoref"
+data-reference="sec:source-integration-summary">[sec:source-integration-summary]</a>
+shows that <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="plural+short">apis</span> are the dominant integration
+surface. These <span acronym-label="api"
+acronym-form="plural+short">apis</span> return results in pages. Two
+pagination strategies cover the majority of sources: offset-based (page
+number and size parameters) and cursor-based (an opaque token returned
+with each response). The connector abstraction encapsulates the
+pagination strategy so that downstream pipeline logic receives a
+continuous stream of records regardless of the underlying mechanism.
+GraphQL-based sources such as the GitHub <span acronym-label="api"
+acronym-form="singular+short">api</span> use cursor-based pagination
+exclusively.
+
+##### Rate Limiting
+
+Source <span acronym-label="api" acronym-form="plural+short">apis</span>
+enforce rate limits, typically expressed as requests per time window.
+The connector abstraction implements adaptive backoff: when a rate limit
+response is received (<span acronym-label="http"
+acronym-form="singular+short">http</span> 429), the connector pauses for
+the duration specified in the response headers before retrying. For
+sources without explicit rate limit headers, configurable per-source
+rate limits prevent exceeding undocumented thresholds. Transient errors
+(<span acronym-label="http" acronym-form="singular+short">http</span>
+5xx) trigger exponential backoff with a configurable maximum retry
+count.
+
+##### Incremental State
+
+Full re-ingestion does not scale for enterprise environments with large
+data volumes, as discussed in
+<a href="#sec:data-integration-patterns" data-reference-type="autoref"
+data-reference="sec:data-integration-patterns">[sec:data-integration-patterns]</a>.
+Each connector maintains a high-water mark: the timestamp or cursor of
+the last successfully ingested record. On subsequent runs, the connector
+resumes from this position, fetching only new or changed records. The
+high-water mark is persisted in a state table within the bronze schema,
+co-located with the data it tracks. For sources that support
+<span acronym-label="cdc" acronym-form="singular+short">cdc</span>
+(e.g., ServiceNow’s update set mechanism), the connector consumes change
+events directly.
+
+##### Extension Points
+
+Adding a new source connector follows the category preference order. For
+a LakeFlow Connect connector: register credentials, add the connector
+configuration to the bundle definition, and map the landing tables to
+the bronze schema. For an <span acronym-label="sdk"
+acronym-form="singular+short">sdk</span> connector: register
+credentials, implement the extraction logic using the source’s client
+library, define the high-water mark column, and configure the bronze
+table. For a <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span> connector with
+<span acronym-label="dltool"
+acronym-form="singular+short">dltool</span>: register credentials,
+define the <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span> source configuration (base
+<span acronym-label="url" acronym-form="singular+short">url</span>,
+endpoints, pagination type), and configure the
+<span acronym-label="dltool" acronym-form="singular+short">dltool</span>
+pipeline to land in the bronze schema. In all three cases, no changes to
+the silver or gold layers are needed at this stage; transformation
+patterns
+(<a href="#sec:transformation-patterns" data-reference-type="autoref"
+data-reference="sec:transformation-patterns">[sec:transformation-patterns]</a>)
+handle the mapping separately.
+
+#### Ingestion Patterns
+
+Ingestion moves data from source <span acronym-label="api"
+acronym-form="plural+short">apis</span> into the bronze layer. All
+connectors follow the same landing pattern, with source-type-specific
+variations described below.
+
+##### Common Landing Pattern
+
+Every ingestion run produces append-only writes to the target bronze
+table. The full <span acronym-label="api"
+acronym-form="singular+short">api</span> response is preserved in the
+`_raw_payload` column alongside the metadata columns defined by the
+bronze schema pattern
+(<a href="#sec:schema-patterns" data-reference-type="autoref"
+data-reference="sec:schema-patterns">[sec:schema-patterns]</a>):
+ingestion timestamp, source system identifier, and batch identifier. No
+field filtering or transformation occurs at this stage; the bronze layer
+is a faithful copy of source data.
+
+The batch identifier enables idempotent replays. If a pipeline run fails
+partway through, re-executing the same batch overwrites only the records
+from that batch, preventing duplicates. For sources where merge
+semantics are appropriate (e.g., entity snapshots from a
+<span acronym-label="cmdb" acronym-form="singular+short">cmdb</span>),
+the connector uses upsert writes keyed on the source record’s natural
+identifier.
+
+Records that fail structural validation at landing, such as malformed
+<span acronym-label="json" acronym-form="singular+short">json</span> or
+responses with unexpected schema changes, are routed to per-source
+quarantine tables. Each quarantine record includes the raw payload, the
+error description, and the batch identifier. This quarantine pattern
+ensures zero silent data loss: every record retrieved from a source is
+either successfully landed or isolated with a documented failure
+reason .
+
+##### Source Code Management Sources
+
+<span acronym-label="scm" acronym-form="singular+short">scm</span>
+connectors pull repository metadata, commits, pull requests, and branch
+protection configurations through <span acronym-label="rest"
+acronym-form="singular+short">rest</span> or GraphQL
+<span acronym-label="api" acronym-form="plural+short">apis</span>. These
+sources produce moderate data volumes with frequent updates. The
+high-water mark is typically the `updated_at` timestamp on the most
+recently modified record. Webhook-triggered runs complement scheduled
+pulls for near-real-time ingestion of events such as new pull requests
+or merged commits.
+
+##### Security Scanner Sources
+
+Security scanner connectors handle the widest format diversity.
+Server-based tools (SonarQube, Snyk, Dependency-Track) expose
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="plural+short">apis</span> with
+paginated <span acronym-label="json"
+acronym-form="singular+short">json</span> responses, similar to
+<span acronym-label="scm" acronym-form="singular+short">scm</span>
+sources. <span acronym-label="cli"
+acronym-form="singular+short">cli</span>-based tools (Semgrep,
+TruffleHog, Trivy) produce output files in <span acronym-label="json"
+acronym-form="singular+short">json</span> or <span acronym-label="sarif"
+acronym-form="singular+short">sarif</span> format  that must be
+collected from <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> pipeline artifacts or uploaded
+to a staging location. Platform-integrated scanners (GitHub Code
+Scanning, GitLab Security) expose findings through their host platform’s
+<span acronym-label="api" acronym-form="singular+short">api</span>,
+sharing the same authentication and pagination infrastructure as the
+<span acronym-label="scm" acronym-form="singular+short">scm</span>
+connector for that platform.
+
+For <span acronym-label="sarif"
+acronym-form="singular+short">sarif</span>-producing tools, the
+connector preserves the full <span acronym-label="sarif"
+acronym-form="singular+short">sarif</span> document in the raw payload.
+<span acronym-label="sarif" acronym-form="singular+short">sarif</span>
+encodes results, rules, and tool metadata in a single structure, and
+parsing it into individual findings is deferred to the transformation
+layer.
+
+##### Application Inventory Sources
+
+<span acronym-label="cmdb" acronym-form="singular+short">cmdb</span>
+connectors differ from other sources in two ways. First, they must
+traverse relationships: an application record references its owning
+team, associated repositories, and dependent services through foreign
+key attributes or relationship tables in the <span acronym-label="cmdb"
+acronym-form="singular+short">cmdb</span>. The connector must resolve
+these references during ingestion, either by following relationship
+<span acronym-label="api" acronym-form="plural+short">apis</span> or by
+ingesting related tables separately and joining them in the
+transformation layer. Second, <span acronym-label="cmdb"
+acronym-form="singular+short">cmdb</span> data includes
+organization-specific custom attributes (e.g., compliance scope, data
+classification) that vary across deployments. The schema-on-read
+approach at the bronze layer absorbs these custom fields without
+requiring connector changes.
+
+#### Transformation Patterns
+
+Transformations move data from the bronze layer to the silver entity and
+finding tables defined in
+<a href="#sec:entity-model" data-reference-type="autoref"
+data-reference="sec:entity-model">[sec:entity-model]</a>. Each
+transformation is a <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> pipeline that reads from
+one or more bronze tables and writes to a silver table. Five patterns
+compose the bronze-to-silver path.
+
+##### Schema Mapping
+
+Each source connector has a corresponding schema mapping that extracts
+typed columns from the bronze raw payload. The mapping defines which
+<span acronym-label="json" acronym-form="singular+short">json</span>
+fields correspond to which silver columns, applies type casts (e.g.,
+string timestamps to <span acronym-label="utc"
+acronym-form="singular+short">utc</span> datetime), and assigns the
+surrogate key. Mappings are defined declaratively as column expressions
+in the <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> pipeline, making them easy
+to review and update when source schemas change.
+
+##### Normalization
+
+Three normalization rules bring heterogeneous source data to a common
+form:
+
+- **Severity harmonization.** Tools use different severity scales, as
+  described in
+  <a href="#sec:static-appsec" data-reference-type="autoref"
+  data-reference="sec:static-appsec">[sec:static-appsec]</a>. The
+  framework maps each tool’s native scale to the canonical four-level
+  model (critical, high, medium, low) through per-tool lookup tables.
+  These tables are maintained as configuration, not code, enabling
+  updates without pipeline changes.
+
+- **Status normalization.** Finding lifecycle states vary across tools
+  (e.g., SonarQube’s “confirmed” vs. GitHub’s “open”). A per-tool status
+  mapping translates each tool’s states to the canonical five-state
+  model (open, confirmed, resolved, false_positive, wontfix).
+
+- **Timestamp standardization.** All timestamps are converted to
+  <span acronym-label="utc" acronym-form="singular+short">utc</span>.
+  Source-specific formats (ISO 8601, Unix epoch, tool-specific strings)
+  are parsed during schema mapping and stored as
+  <span acronym-label="utc" acronym-form="singular+short">utc</span>
+  datetime columns.
+
+##### Data Quality Validation
+
+<span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> expectations enforce
+constraints on every record entering the silver layer. Expectations are
+declared alongside the transformation logic and checked at runtime.
+Examples include: severity must be one of the four canonical values,
+status must be one of the five canonical states, repository foreign keys
+must reference an existing silver entity, and timestamps must fall
+within a plausible range. Records that violate expectations are
+quarantined rather than propagated, consistent with the quarantine
+pattern applied at ingestion.
+
+##### Deduplication
+
+When multiple tools scan the same repository, overlapping findings must
+be identified and linked. Three deduplication strategies handle
+different overlap scenarios:
+
+- **Exact <span acronym-label="cve"
+  acronym-form="singular+short">cve</span> match.** Two
+  <span acronym-label="sca" acronym-form="singular+short">sca</span>
+  findings referencing the same <span acronym-label="cve"
+  acronym-form="singular+short">cve</span> and package in the same
+  repository are duplicates. This is the simplest case.
+
+- **Location-based matching.** Two <span acronym-label="sast"
+  acronym-form="singular+short">sast</span> findings targeting the same
+  file, line range, and weakness category (mapped via
+  <span acronym-label="cwe" acronym-form="singular+short">cwe</span>) in
+  the same repository are likely duplicates. A confidence threshold
+  accounts for minor line number differences caused by tool-specific
+  parsing.
+
+- **Cross-category correlation.** A secret detected by both a
+  <span acronym-label="cli"
+  acronym-form="singular+short">cli</span>-based scanner and a
+  platform-integrated scanner at the same file path and commit is a
+  duplicate. Matching uses the secret type and file location.
+
+Deduplicated findings are not deleted. Instead, a deduplication link
+record is created in the `dedup_links` relationship table
+(<a href="#sec:entity-model" data-reference-type="autoref"
+data-reference="sec:entity-model">[sec:entity-model]</a>), preserving
+traceability to each source report while establishing a canonical
+finding for aggregation. Deduplication pairs are enumerated per tool
+combination in the reference implementation
+(<a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a>).
+
+##### Business Context Attribution
+
+The final transformation step links findings to business applications.
+The `app_repo_mapping` relationship table maps repositories to
+applications. Since this mapping is many-to-many (one application may
+span multiple repositories; one repository may serve multiple
+applications), findings inherit application context through a join
+rather than a direct foreign key. This join enables the gold-layer
+aggregations in
+<a href="#sec:aggregation-model" data-reference-type="autoref"
+data-reference="sec:aggregation-model">[sec:aggregation-model]</a> to
+compute per-application metrics. The mapping itself is sourced from the
+<span acronym-label="cmdb" acronym-form="singular+short">cmdb</span>
+connector and can be supplemented by automated repository-to-application
+inference in the <span acronym-label="ml"
+acronym-form="singular+short">ml</span> workflows described in
+<a href="#sec:analytics-patterns" data-reference-type="autoref"
+data-reference="sec:analytics-patterns">[sec:analytics-patterns]</a>.
+
+#### Testing and Validation
+
+Connector tests use the pytest infrastructure and requirement markers
+established in <a href="#sec:env-testing" data-reference-type="autoref"
+data-reference="sec:env-testing">[sec:env-testing]</a>. Three additional
+libraries complete the connector testing stack. An
+<span acronym-label="http" acronym-form="singular+short">http</span>
+request mocking library (such as `responses` or `requests-mock`)
+intercepts <span acronym-label="api"
+acronym-form="singular+short">api</span> calls to simulate source system
+behavior without network access. A PySpark DataFrame assertion library
+(such as `chispa`) compares transformation outputs against expected
+results with clear diff reporting. <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> expectations, defined
+alongside transformation logic, provide runtime data quality validation
+within pipeline execution. Together, these tools enable isolated,
+reproducible tests that run in the <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> pipeline without depending on
+live source systems.
+
+Ingestion tests verify the connector abstraction concerns from
+<a href="#sec:connector-abstraction" data-reference-type="autoref"
+data-reference="sec:connector-abstraction">[sec:connector-abstraction]</a>.
+Authentication tests confirm that credentials are resolved from the
+secret scope and that invalid or expired tokens produce clear error
+messages rather than silent failures. Pagination tests supply multi-page
+mock responses and verify that the connector retrieves all pages without
+data loss or duplication. Rate limit tests simulate
+<span acronym-label="http" acronym-form="singular+short">http</span> 429
+responses and verify that the connector pauses and retries according to
+the backoff policy. Incremental state tests run the connector twice with
+an intermediate data change and confirm the second run fetches only new
+records, resuming correctly from the persisted high-water mark. Shared
+test fixtures provide reusable mock response generators for common
+<span acronym-label="api" acronym-form="singular+short">api</span>
+patterns.
+
+Transformation tests verify the bronze-to-silver path from
+<a href="#sec:transformation-patterns" data-reference-type="autoref"
+data-reference="sec:transformation-patterns">[sec:transformation-patterns]</a>.
+Schema mapping tests supply known bronze payloads and assert that silver
+columns have correct types, values, and null handling. Severity
+normalization tests verify that every value in the tool’s native
+severity scale maps to the correct canonical level; the test dataset
+must cover all source-specific values, including edge cases such as
+“informational” or “unknown” that the tool may produce. Status
+normalization tests cover all tool-specific lifecycle states similarly.
+Timestamp tests cover format edge cases: ISO 8601 with and without
+timezone offsets, Unix epoch in seconds and milliseconds, and
+tool-specific string formats. Tests are data-driven: each case is a pair
+of (input bronze record, expected silver record), maintained as
+<span acronym-label="json" acronym-form="singular+short">json</span>
+fixtures alongside the connector module.
+
+Data quality tests verify <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> expectation behavior. For
+each expectation defined on a silver table, a test supplies a record
+that violates the constraint and confirms it is routed to the quarantine
+table. A complementary test supplies a valid record and confirms it
+passes through. Deduplication tests supply known duplicate pairs (same
+<span acronym-label="cve" acronym-form="singular+short">cve</span> and
+package for <span acronym-label="sca"
+acronym-form="singular+short">sca</span>, same file, line range, and
+<span acronym-label="cwe" acronym-form="singular+short">cwe</span> for
+<span acronym-label="sast" acronym-form="singular+short">sast</span>,
+same file path and commit for secrets) and verify that correct
+`dedup_links` records are created. Negative cases supply similar but
+distinct findings and verify they are not incorrectly linked.
+
+Every connector must pass tests covering: authentication and credential
+resolution, pagination across multiple response pages, rate limit
+backoff, incremental state resume, schema mapping for all ingested
+endpoints, severity and status normalization for all source-specific
+values, at least one data quality expectation per silver table, and
+deduplication for all applicable tool overlap pairs. New connectors are
+not merged until this suite passes in the <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> pipeline.
+
+### Analytics and Serving Framework
+
+The data model (<a href="#sec:data-model" data-reference-type="autoref"
+data-reference="sec:data-model">[sec:data-model]</a>) and connector
+framework
+(<a href="#sec:connector-framework" data-reference-type="autoref"
+data-reference="sec:connector-framework">[sec:connector-framework]</a>)
+defined how data is structured and ingested. This section addresses the
+final stage: computing consumption-ready insights from silver data and
+delivering them to stakeholders.
+<a href="#sec:aggregation-model" data-reference-type="autoref"
+data-reference="sec:aggregation-model">[sec:aggregation-model]</a>
+defined *which* gold tables the framework provides; this section defines
+*how* those computations are structured and how the results reach
+consumers through analytical, operational, and event-driven channels.
+
+#### Analytics Patterns
+
+Gold-layer computations fall into two categories: rule-based analytics
+that apply deterministic formulas to silver data, and
+<span acronym-label="ml" acronym-form="singular+short">ml</span>-driven
+analytics that learn patterns from historical data. Both produce outputs
+that follow the gold aggregation pattern defined in
+<a href="#sec:schema-patterns" data-reference-type="autoref"
+data-reference="sec:schema-patterns">[sec:schema-patterns]</a>.
+
+##### Rule-Based Analytics
+
+Rule-based analytics implement deterministic business logic as
+<span acronym-label="sql" acronym-form="singular+short">sql</span>
+transformations or <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> pipelines. Three
+computation patterns cover the framework’s needs.
+
+**Composite scoring** combines multiple signals into a single metric.
+The application risk score, for example, weights open finding counts by
+severity, multiplies by <span acronym-label="epss"
+acronym-form="singular+short">epss</span> exploitation probability, and
+factors in the application’s criticality tier. The formula is
+configurable: organizations assign weights to each signal based on their
+risk appetite. <span acronym-label="sla"
+acronym-form="singular+short">sla</span> compliance calculations follow
+the same pattern, comparing finding ages against severity-specific
+thresholds to produce a compliance percentage.
+
+**Time-series aggregation** rolls up finding data at daily, weekly, and
+monthly grains. Each roll-up computes period metrics (new findings,
+resolved findings, net open count) and derived indicators
+(period-over-period change, moving averages, severity distribution
+shifts). These aggregations power the trend dashboards that track
+organizational progress over time.
+
+**Threshold classification** assigns categorical labels based on metric
+values. Risk tiers (critical, high, medium, low) are assigned to
+applications based on their composite score. Coverage gaps are flagged
+when a repository lacks scan records for a tool category.
+<span acronym-label="sla" acronym-form="singular+short">sla</span>
+breaches are marked when open finding age exceeds the severity-specific
+threshold. These classifications enable filtering and alerting in
+downstream serving.
+
+Two refresh strategies apply to rule-based analytics. **Incremental
+refresh** recomputes only the partitions affected by new silver records;
+this suits most aggregations where each record maps to a single grain
+partition (e.g., one application, one time period). **Full refresh**
+recomputes the entire table; this is necessary for metrics that depend
+on global state, such as cross-application percentile rankings or
+organization-wide severity distributions.
+
+##### ML-Driven Analytics
+
+<span acronym-label="ml" acronym-form="singular+short">ml</span>-driven
+analytics learn patterns from historical silver and gold data to produce
+predictive signals that rule-based formulas cannot capture. The
+framework supports four use cases.
+
+**Composite risk scoring** predicts which applications carry the highest
+real risk by combining finding data with development activity signals
+(commit frequency, dependency age, remediation velocity). Unlike the
+rule-based risk score that weights predefined signals, the
+<span acronym-label="ml" acronym-form="singular+short">ml</span> model
+learns which combinations of factors historically preceded security
+incidents.
+
+**False positive prediction** estimates the probability that a new
+finding is a false positive, based on patterns in historical triage
+decisions. Features include the source tool, rule identifier, file type,
+finding age at triage, and the repository’s historical false positive
+rate for the same rule. High-confidence predictions reduce noise for
+developers by deprioritizing likely false positives in dashboards and
+notifications.
+
+**Remediation time estimation** predicts <span acronym-label="mttr"
+acronym-form="singular+short">mttr</span> for new findings based on
+historical resolution data. Features include severity, tool category,
+repository activity level, team workload, and dependency complexity.
+These predictions inform <span acronym-label="sla"
+acronym-form="singular+short">sla</span> compliance forecasting and
+resource allocation.
+
+**Anomaly detection** identifies unusual patterns: unexpected spikes in
+finding volumes, sudden changes in severity distributions, or new
+finding categories appearing in previously clean repositories. These
+signals flag potential tool misconfigurations, new attack surfaces, or
+integration issues that warrant investigation.
+
+The <span acronym-label="ml" acronym-form="singular+short">ml</span>
+workflow uses three platform components. MLflow provides experiment
+tracking, model versioning, and a model registry that manages the
+lifecycle from development through staging to production . The Feature
+Store provides reusable feature tables computed from silver and gold
+data, ensuring consistent feature definitions across training and
+inference . Model Serving exposes registered models as real-time
+inference endpoints for latency-sensitive predictions.
+
+Model outputs integrate into the gold layer through two paths. Batch
+predictions (risk scores, false positive probabilities) are written to
+dedicated columns on gold tables during scheduled pipeline runs,
+augmenting the rule-based metrics with predictive signals. Real-time
+predictions (on-demand risk assessments for newly ingested findings) are
+served through inference endpoints and cached in Lakebase for
+low-latency access.
+
+##### Extension Blueprint
+
+Adding a new analytics workflow follows a consistent process regardless
+of type. First, define the business question the analytic answers and
+identify the stakeholder it serves. Second, determine whether a
+rule-based formula or an <span acronym-label="ml"
+acronym-form="singular+short">ml</span> model is appropriate: rule-based
+suits well-understood relationships with clear formulas;
+<span acronym-label="ml" acronym-form="singular+short">ml</span> suits
+pattern recognition over complex, high-dimensional data. Third,
+implement the computation as a <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> pipeline (rule-based) or
+an MLflow-tracked experiment (<span acronym-label="ml"
+acronym-form="singular+short">ml</span>). Fourth, wire the output to a
+gold table following the aggregation pattern, configure the refresh
+strategy, and register the new table in Unity Catalog for governance and
+lineage tracking.
+
+#### Serving Patterns
+
+The serving layer delivers gold-layer outputs to the data consumers
+identified in
+<a href="#sec:component-design" data-reference-type="autoref"
+data-reference="sec:component-design">[sec:component-design]</a>. Three
+delivery modes address different access patterns and latency
+requirements.
+
+##### Analytical Serving
+
+Analytical serving targets dashboards, reporting tools, and ad-hoc
+analysis through the <span acronym-label="olap"
+acronym-form="singular+short">olap</span> path. A
+<span acronym-label="sql" acronym-form="singular+short">sql</span>
+warehouse executes queries against gold-layer Delta tables, providing
+sub-five-second response times for pre-computed aggregations.
+Materialized views cache frequently accessed query patterns, reducing
+compute cost for recurring dashboard refreshes.
+
+Stakeholder-specific views organize gold data for each audience:
+executive risk overviews surface application risk scores and
+organizational trends, team dashboards present remediation metrics and
+<span acronym-label="sla" acronym-form="singular+short">sla</span>
+compliance, and security engineering views expose tool coverage gaps and
+deduplication statistics. These views are implemented as
+<span acronym-label="sql" acronym-form="singular+short">sql</span> views
+on top of the gold tables, not separate data copies, ensuring
+consistency across all consumers.
+
+##### Operational Serving
+
+Operational serving targets low-latency workloads through the
+<span acronym-label="oltp" acronym-form="singular+short">oltp</span>
+path. Lakebase exposes gold-layer tables as PostgreSQL-queryable
+relations with sub-50-millisecond response times . Because Lakebase
+shares the underlying storage layer with the lakehouse, gold tables are
+accessible without data duplication or synchronization pipelines.
+
+Three operational workloads use this path. Remediation state lookups
+retrieve the current status, severity, and ownership of individual
+findings for integration with developer workflows. Operational
+<span acronym-label="api" acronym-form="plural+short">apis</span> expose
+risk scores, coverage data, and finding details through the PostgREST
+Data <span acronym-label="api" acronym-form="singular+short">api</span>,
+providing <span acronym-label="http"
+acronym-form="singular+short">http</span> access to any gold table
+without custom <span acronym-label="api"
+acronym-form="singular+short">api</span> code. <span acronym-label="ml"
+acronym-form="singular+short">ml</span> inference results cached in
+Lakebase serve real-time risk assessments for newly ingested findings.
+Lakebase’s scale-to-zero capability reduces cost during off-peak periods
+when operational queries are infrequent.
+
+##### Event-Driven Serving
+
+Event-driven serving pushes data to external systems rather than waiting
+for them to query. This mode closes the loop between data analysis and
+operational action.
+
+**Automated issue creation** triggers when new critical findings or
+<span acronym-label="sla" acronym-form="singular+short">sla</span>
+breaches are detected. The framework creates work items in issue
+trackers (Jira, ServiceNow) through their <span acronym-label="api"
+acronym-form="plural+short">apis</span>, linking back to the finding
+record in the platform. Idempotency guards prevent duplicate ticket
+creation on pipeline re-runs.
+
+**Threshold-based notifications** alert stakeholders when metrics cross
+configured boundaries: a risk score exceeds a threshold, a new
+<span acronym-label="kev"
+acronym-form="singular+short">kev</span>-listed vulnerability is
+detected, or <span acronym-label="sla"
+acronym-form="singular+short">sla</span> compliance drops below a target
+percentage. Notifications are delivered through configured channels
+(email, messaging platforms, webhooks).
+
+**<span acronym-label="siem"
+acronym-form="singular+short">siem</span>/<span acronym-label="soar"
+acronym-form="singular+short">soar</span> event feeds** push structured
+security events to platforms such as Lakewatch
+(<a href="#sec:lakewatch" data-reference-type="autoref"
+data-reference="sec:lakewatch">[sec:lakewatch]</a>).
+<span acronym-label="cdc" acronym-form="singular+short">cdc</span> on
+gold tables generates a stream of change events, such as new critical
+findings, risk score changes, or coverage regressions, that
+<span acronym-label="soar" acronym-form="singular+short">soar</span>
+playbooks consume for automated response. The shared infrastructure with
+Lakewatch, described in
+<a href="#sec:tech-stack" data-reference-type="autoref"
+data-reference="sec:tech-stack">[sec:tech-stack]</a>, enables this
+integration without external data movement.
+
+**Bidirectional synchronization** keeps the framework’s view consistent
+with external systems. Issue tracker status updates (e.g., a Jira ticket
+moved to “Done”) flow back into the framework through scheduled polling
+or webhooks, updating the corresponding finding’s lifecycle state in the
+silver layer. This feedback loop ensures that remediation metrics in the
+gold layer reflect actual resolution progress.
+
+#### Testing and Validation
+
+Analytics and serving tests extend the pytest infrastructure from
+<a href="#sec:env-testing" data-reference-type="autoref"
+data-reference="sec:env-testing">[sec:env-testing]</a> with additional
+components. Gold-layer computation tests use PySpark DataFrame
+assertions (the same library as connector tests) to validate aggregation
+outputs against known silver inputs. <span acronym-label="ml"
+acronym-form="singular+short">ml</span> model tests use MLflow’s
+`evaluate()` <span acronym-label="api"
+acronym-form="singular+short">api</span> to compute standard metrics and
+`validate_evaluation_results()` to enforce minimum performance
+thresholds before model promotion . Serving layer tests use
+<span acronym-label="http" acronym-form="singular+short">http</span>
+client libraries to verify endpoint response correctness and measure
+latency against target thresholds.
+
+Rule-based analytics tests verify the computations from
+<a href="#sec:analytics-patterns" data-reference-type="autoref"
+data-reference="sec:analytics-patterns">[sec:analytics-patterns]</a>.
+Each test supplies a fixed set of silver records with known values and
+asserts that the gold table output matches expected metrics exactly.
+Composite scoring tests cover boundary conditions: zero findings (score
+should be minimal), all-critical findings (maximum score), mixed
+severity distributions, and cases where enrichment data
+(<span acronym-label="epss" acronym-form="singular+short">epss</span>
+scores, <span acronym-label="kev"
+acronym-form="singular+short">kev</span> status) is missing for some
+findings. Time-series aggregation tests verify correct period bucketing,
+period-over-period change calculations, and handling of periods with no
+activity. Threshold classification tests verify correct tier assignment
+at each boundary value. Refresh idempotency tests run the same pipeline
+twice on identical silver input and confirm no duplicate or changed gold
+records.
+
+<span acronym-label="ml" acronym-form="singular+short">ml</span> model
+tests cover the full lifecycle from
+<a href="#sec:analytics-patterns" data-reference-type="autoref"
+data-reference="sec:analytics-patterns">[sec:analytics-patterns]</a>.
+Training tests verify that models converge on the training dataset and
+produce metrics (accuracy, precision, recall, F1 score) above configured
+thresholds. Validation tests use a held-out dataset to check for
+overfitting; the gap between training and validation metrics must remain
+within a configured tolerance. Feature freshness tests verify that
+Feature Store tables used for inference contain data no older than a
+configured staleness threshold. Prediction drift tests compare recent
+prediction distributions against a baseline and flag significant
+statistical shifts. Model promotion tests use MLflow’s validation
+<span acronym-label="api" acronym-form="singular+short">api</span> to
+confirm that a candidate model meets or exceeds the currently registered
+production model’s performance before promotion in the model registry.
+
+Serving layer tests verify the three delivery modes from
+<a href="#sec:serving-patterns" data-reference-type="autoref"
+data-reference="sec:serving-patterns">[sec:serving-patterns]</a>.
+Analytical serving tests execute representative dashboard queries
+against the <span acronym-label="sql"
+acronym-form="singular+short">sql</span> warehouse and verify response
+times fall below the five-second target for pre-computed aggregations.
+Operational serving tests query Lakebase endpoints and verify
+sub-50-millisecond response times for single-record lookups and correct
+<span acronym-label="json" acronym-form="singular+short">json</span>
+response structure from the PostgREST <span acronym-label="api"
+acronym-form="singular+short">api</span>. Event-driven serving tests
+verify issue creation idempotency (triggering the same finding event
+twice must not create duplicate tickets), notification delivery for
+threshold breaches, and bidirectional synchronization consistency (an
+external status update must propagate to the silver layer within the
+configured polling interval).
+
+Every gold table must include tests for metric correctness against known
+inputs, boundary conditions, and refresh idempotency. Every
+<span acronym-label="ml" acronym-form="singular+short">ml</span> model
+must include training convergence, validation accuracy, drift
+monitoring, and promotion gating tests. Every serving endpoint must
+include response correctness and latency verification. New analytics or
+serving configurations are not merged until this suite passes.
 
 ## Implementation
 
@@ -2364,6 +3407,12 @@ changes.
 #### Silver Schema
 
 #### Project Structure and CI/CD
+
+#### Pipeline Orchestration
+
+#### Monitoring and Observability
+
+#### Testing and Validation
 
 ### Connectors
 
@@ -2383,6 +3432,8 @@ changes.
 
 #### Vulnerability Enrichment
 
+#### Testing and Validation
+
 ### Analytics and Serving
 
 #### Application-Repository Mapping
@@ -2396,6 +3447,8 @@ changes.
 #### Risk Prediction Model
 
 #### Serving Layer
+
+#### Testing and Validation
 
 ### Testing and Validation
 
