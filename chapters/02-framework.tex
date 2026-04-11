@@ -1,6 +1,8 @@
 \chapter{Framework}
 \label{ch:framework}
 
+\autoref{ch:analysis} analyzed the sources, patterns, and gaps in enterprise application security data integration. This chapter presents the proposed framework: a reusable blueprint that defines the architecture, data model patterns, connector abstractions, and extension points an organization follows to build its own implementation. The framework is prescriptive but platform-aware; it targets the Databricks lakehouse but separates general patterns from platform-specific choices. \autoref{ch:implementation} demonstrates a concrete instance of this blueprint.
+
 %%%%%%%%%%%
 %%% 2.1 %%%
 %%%%%%%%%%%
@@ -8,20 +10,155 @@
 \section{Solution Architecture}
 \label{sec:solution-arch}
 
+This section presents the framework's architecture at three levels: technology stack, component structure, and data layer organization. The architecture addresses the requirements identified across the domain analysis: heterogeneous source ingestion, vendor-agnostic normalization, dual \gls{olap}/\gls{oltp} serving, and extensibility for new data sources and analytics.
+
 %%% 2.1.1 %%%
+
+\subsection{Technology Stack}
+\label{sec:tech-stack}
+
+The framework targets the Databricks platform on \gls{aws}. A key architectural property of the platform is the separation of storage and compute: data resides in cloud object storage while processing engines scale independently, enabling cost-efficient handling of the bursty, heterogeneous workloads typical of security data integration~\cite{Databricks2026Lakewatch}. This subsection maps platform components to framework roles.
+
+\subsubsection{Delta Lake}
+
+Delta Lake is an open table format that adds \gls{acid} transactions, schema enforcement, and time travel to cloud object storage~\cite{Lee2024}. It provides the storage layer for all three medallion tiers. Schema evolution support allows bronze tables to absorb new source fields without pipeline changes. Time travel enables auditing and rollback, critical for a security data platform where data integrity and reproducibility are non-negotiable. \textcite{Armbrust2021} demonstrated that the lakehouse architecture built on Delta Lake achieves both warehouse-grade governance and data lake flexibility, the combination required by the heterogeneous source landscape analyzed in \autoref{sec:source-integration-summary}.
+
+\subsubsection{Unity Catalog}
+
+Unity Catalog provides unified data governance across the lakehouse~\cite{DatabricksUC2025}. It manages a three-level namespace (\texttt{catalog.schema.table}) that maps directly to the medallion layer organization: one catalog per environment, schemas for each source (bronze) and each domain (silver, gold). Fine-grained access control enforces least-privilege access to security data, which often contains sensitive vulnerability details. Automated lineage tracking records data flow from source through transformations to consumption, supporting auditability requirements. Column-level tags enable classification of sensitive fields such as \gls{cve} descriptions and remediation guidance.
+
+\subsubsection{Lakeflow Declarative Pipelines}
+
+\Gls{dltables} is the pipeline orchestration framework for defining batch and streaming transformations~\cite{DatabricksLDP2025}. Pipelines are declared as Python or \gls{sql} functions with explicit dependencies; the framework resolves execution order automatically. Data quality expectations are embedded directly in pipeline definitions as declarative constraints (e.g., ``severity must be one of critical, high, medium, low''). Records that violate expectations are quarantined without stopping the pipeline, implementing the quarantine pattern described in \autoref{sec:data-integration-patterns}. \Gls{dltables} handles incremental processing natively through change data feed, reducing reprocessing cost for large datasets.
+
+\subsubsection{Lakebase}
+
+Lakebase is a serverless PostgreSQL database that provides the \gls{oltp} serving layer~\cite{DatabricksLakebase2026}. It shares the underlying storage layer with the lakehouse, enabling gold-layer tables to be exposed as \gls{oltp}-queryable tables without data duplication. This architecture satisfies the dual serving requirement identified in \autoref{sec:data-architecture}: \gls{olap} queries run against \gls{sql} warehouses for dashboards and trend analysis, while \gls{oltp} queries run against Lakebase for low-latency operational workloads such as issue tracker integration, remediation state lookups, and serving layer \glspl{api}. Lakebase supports scale-to-zero, reducing cost for bursty workloads. Instant database branching creates isolated copies for development and testing without duplicating data.
+
+\subsubsection{Platform Synergies}
+
+Running all components on a single platform provides governance, lineage, and compute benefits that would require significant integration effort across disparate tools. Unity Catalog governs access uniformly from bronze ingestion through gold serving. Lineage tracks data from source \gls{api} through transformations to dashboard queries. The shared compute and storage model eliminates data movement between analytical and operational stores.
+
+The platform also enables integration with Lakewatch, the Databricks \gls{siem} analyzed in \autoref{sec:lakewatch}. Both systems share Delta Lake storage and Unity Catalog governance. The framework's gold-layer outputs (application risk scores, remediation status) can serve as enrichment signals for Lakewatch threat detection, while Lakewatch's runtime security events could feed back into the framework as an additional finding source. This bidirectional potential reinforces the complementarity identified in the related work analysis.
+
+%%% 2.1.2 %%%
 
 \subsection{Component Design}
 \label{sec:component-design}
 
-%%% 2.1.2 %%%
+With the platform components established, the framework organizes into five tiers, illustrated in \autoref{fig:component-design}. Data flows top-to-bottom from sources through the platform to consumers.
+
+\input{figures/component-design}
+
+\textbf{Data sources} are the external systems analyzed in \autoref{ch:analysis}: application inventories, \gls{scm} platforms, \gls{cicd} tools, security scanners, and vulnerability databases. They are outside the framework's boundary; the framework consumes their \glspl{api} but does not control them.
+
+\textbf{The ingestion tier} hosts connectors that extract data from sources and land it in the bronze layer. Three connector categories serve different integration scenarios. Partner connectors use pre-built integrations from the platform ecosystem. \Gls{dltool} connectors use the open-source \gls{dltool} library for custom \gls{rest} \gls{api} extraction. Custom connectors handle non-standard sources such as \gls{cli}-based scanners or file uploads. All connectors share common concerns: authentication, pagination, rate limiting, and incremental state management. The connector framework in \autoref{sec:connector-framework} defines these patterns.
+
+\textbf{The processing tier} implements the medallion architecture (\autoref{sec:medallion-arch}). Delta Lake provides the storage layer; \gls{dltables} orchestrates the transformations. Bronze stores raw ingested data in source-native schemas. Silver normalizes it into the vendor-agnostic entity and finding model defined in \autoref{sec:data-entities}. Gold computes aggregated metrics, \gls{ml}-enriched scores, and consumption-ready datasets. Unity Catalog governs access and tracks lineage across all three layers.
+
+\textbf{The serving tier} exposes processed data to downstream consumers. \gls{sql} warehouses serve \gls{olap} queries for dashboards and analytics. Lakebase serves \gls{oltp} workloads: low-latency lookups, issue tracker integration, and operational \glspl{api}. A \gls{rest} \gls{api} layer provides \gls{http} access to the \gls{oltp} store.
+
+\textbf{Data consumers} are external systems that read from the serving tier: issue trackers (Jira, ServiceNow), \gls{aspm} dashboards, \gls{siem}/\gls{soar} platforms, and custom reporting tools. Like data sources, consumers are outside the framework boundary.
+
+A direct bypass path allows data sources to reach the ingestion tier without an intermediate integration tool, for cases where connectors call source \glspl{api} directly. This path is common for security scanners whose output is consumed through native \gls{rest} \glspl{api} or \gls{cli} tooling.
+
+%%% 2.1.3 %%%
 
 \subsection{Medallion Architecture}
 \label{sec:medallion-arch}
 
-%%% 2.1.3 %%%
+The processing tier applies the medallion architecture pattern introduced in \autoref{sec:data-architecture}. Each layer is implemented as a Delta Lake schema within a single Unity Catalog, providing unified governance and cross-layer lineage tracking. \autoref{fig:medallion-design} illustrates the layer structure and the transformations between them.
 
-\subsection{Technology Stack}
-\label{sec:tech-stack}
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=1cm,
+    layer/.style={rectangle, draw=black!50, minimum width=11cm, minimum height=2.2cm, rounded corners=3pt},
+    schemabox/.style={rectangle, draw=black!40, fill=white, minimum width=2.8cm, minimum height=0.6cm, font=\footnotesize},
+    arrow/.style={-{Stealth[length=2.5mm]}, thick, black!60},
+    transformation/.style={font=\scriptsize, text=black!70, align=center},
+    layerlabel/.style={font=\small\bfseries, text=black!80},
+    bronze/.style={fill={rgb,255:red,159;green,122;blue,52}, fill opacity=0.25},
+    silver/.style={fill={rgb,255:red,192;green,192;blue,192}, fill opacity=0.3},
+    gold/.style={fill={rgb,255:red,212;green,175;blue,55}, fill opacity=0.25},
+]
+
+% Bronze Layer
+\node[layer, bronze] (bronze-bg) {};
+\node[layerlabel] at ($(bronze-bg.north) + (0,-0.3)$) {Bronze Layer};
+\node[schemabox] at ($(bronze-bg.center) + (-3.2cm,0)$) {github.*};
+\node[schemabox] at ($(bronze-bg.center) + (0,0)$) {servicenow.*};
+\node[schemabox] at ($(bronze-bg.center) + (3.2cm,0)$) {sonarqube.*};
+\node[font=\scriptsize, text=black!60] at ($(bronze-bg.south) + (0,0.35)$) {Raw data, source schemas preserved};
+
+% Bronze to Silver transformation
+\node[transformation, below=0.8cm of bronze-bg] (b2s) {
+    \textbf{Normalization}\\
+    Schema mapping, type casting\\
+    Deduplication, entity resolution
+};
+
+% Silver Layer
+\node[layer, silver, below=0.8cm of b2s] (silver-bg) {};
+\node[layerlabel] at ($(silver-bg.north) + (0,-0.3)$) {Silver Layer};
+\node[schemabox] at ($(silver-bg.center) + (-3.2cm,0)$) {Entities};
+\node[schemabox] at ($(silver-bg.center) + (0,0)$) {Findings};
+\node[schemabox] at ($(silver-bg.center) + (3.2cm,0)$) {Relationships};
+\node[font=\scriptsize, text=black!60] at ($(silver-bg.south) + (0,0.35)$) {Unified schema, vendor-agnostic};
+
+% Silver to Gold transformation
+\node[transformation, below=0.8cm of silver-bg] (s2g) {
+    \textbf{Enrichment \& Aggregation}\\
+    ML risk scoring, triage classification\\
+    Metric computation, materialization
+};
+
+% Gold Layer
+\node[layer, gold, below=0.8cm of s2g] (gold-bg) {};
+\node[layerlabel] at ($(gold-bg.north) + (0,-0.3)$) {Gold Layer};
+\node[schemabox] at ($(gold-bg.center) + (-2.5cm,0)$) {ML Enriched};
+\node[schemabox] at ($(gold-bg.center) + (2.5cm,0)$) {Aggregations};
+\node[font=\scriptsize, text=black!60] at ($(gold-bg.south) + (0,0.35)$) {Consumption-ready, query-optimized};
+
+% Arrows
+\draw[arrow] (bronze-bg.south) -- (b2s.north);
+\draw[arrow] (b2s.south) -- (silver-bg.north);
+\draw[arrow] (silver-bg.south) -- (s2g.north);
+\draw[arrow] (s2g.south) -- (gold-bg.north);
+
+\end{tikzpicture}
+\caption{Medallion Layer Design}
+\label{fig:medallion-design}
+\end{figure}
+
+\subsubsection{Bronze Layer}
+
+The bronze layer stores raw data from each source system with minimal transformation. Each connector writes to its own schema (e.g., \texttt{github}, \texttt{servicenow}, \texttt{sonarqube}), preserving the source's native data structure. Records are appended with standard metadata columns: ingestion timestamp, source system identifier, and batch identifier. No business logic is applied at this layer; the goal is a faithful, auditable copy of source data.
+
+Bronze tables use a schema-on-read approach. New fields from source \gls{api} changes are absorbed through additive schema evolution without breaking existing pipelines. Partitioning by ingestion date enables efficient time-range queries and supports retention policies. Records that fail structural validation at ingestion (malformed \gls{json}, missing required fields) are routed to per-source quarantine tables with diagnostic metadata.
+
+\subsubsection{Silver Layer}
+
+The silver layer is the system of record. Bronze-to-silver transformations normalize heterogeneous source data into the vendor-agnostic domain model defined in \autoref{sec:data-entities}. Three table categories occupy this layer:
+
+\begin{itemize}
+    \item \textbf{Entity tables} store normalized dimension data: applications, repositories, teams, commits, pull requests, pipeline runs, dependencies, and branch protection policies. Each entity table uses a surrogate key, a natural key from the source system, and \texttt{valid\_from}/\texttt{valid\_to} timestamps for change tracking.
+    \item \textbf{Finding tables} store normalized security findings as fact records. Each finding carries a severity mapped to the canonical scale, a lifecycle status, the source tool identifier, and references to the affected entity (repository, application). Finding tables are organized by category: \gls{sast}, \gls{sca}, secrets, \gls{dast}, containers, and \gls{iac}.
+    \item \textbf{Relationship tables} store many-to-many mappings: application-to-repository, finding-to-\gls{cve}, and cross-tool deduplication links.
+\end{itemize}
+
+The silver layer applies the data quality patterns from \autoref{sec:data-integration-patterns}: severity harmonization, entity normalization, timestamp standardization, and deduplication. \Gls{dltables} expectations enforce constraints declaratively; records that violate expectations are quarantined rather than propagated.
+
+\subsubsection{Gold Layer}
+
+The gold layer computes consumption-ready datasets from silver data. Two categories of gold tables serve distinct purposes:
+
+\begin{itemize}
+    \item \textbf{Aggregation tables} compute metrics at defined grains: application risk scores, team remediation rates, \gls{mttr} by severity, \gls{sla} compliance percentages, and time-series trend roll-ups. These tables power the dashboards and executive reports consumed through the \gls{olap} serving path.
+    \item \textbf{\gls{ml}-enriched tables} store model outputs: composite risk scores, false positive predictions, and remediation time estimates. These scores augment the aggregation tables with predictive signals. The \gls{ml} workflow patterns are detailed in \autoref{sec:ml-workflows}.
+\end{itemize}
+
+Gold tables use incremental refresh where possible: new silver records trigger recomputation of only the affected aggregation partitions. Full refresh is reserved for metrics that require global recomputation, such as cross-application percentile rankings.
 
 %%%%%%%%%%%
 %%% 2.2 %%%
