@@ -40,6 +40,9 @@
 \usepackage[a-2u]{pdfx}     % výsledné PDF bude ve standardu PDF/A-2u
                             % resulting PDF will be in the PDF / A-2u standard
 
+\usepackage{microtype}      % font expansion and character protrusion — reduces overfull hboxes
+\emergencystretch=1em       % extra stretch allowance to prevent overfull hboxes with \texttt
+
 %%% Další užitečné balíčky (jsou součástí běžných distribucí LaTeXu)
 \usepackage{amsmath}        % rozšíření pro sazbu matematiky / extension for math typesetting
 \usepackage{amsfonts}       % matematické fonty / mathematical fonts
@@ -218,7 +221,6 @@
 \urlstyle{tt}
 
 \AtBeginDocument{\renewcommand{\chapterautorefname}{Chapter}}
-\AtBeginDocument{\renewcommand{\sectionautorefname}{Section}}
 
 %%% Prostředí pro sazbu kódu, případně vstupu/výstupu počítačových
 %%% programů. (Vyžaduje balíček listings -- fancy verbatim.)
