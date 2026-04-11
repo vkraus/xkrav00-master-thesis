@@ -6,6 +6,10 @@
 \usepackage{ifpdf}
 \usepackage{ifxetex}
 \usepackage{ifluatex}
+\usepackage{ifthen}
+
+% Load inputenc early for pdflatex so it is available before biblatex
+\ifthenelse{\boolean{xetex}\OR\boolean{luatex}}{}{\usepackage[utf8]{inputenc}}
 
 %%% Nastavení pro použití samostatné bibliografické databáze.
 %%% Settings for using a separate bibliographic database.
@@ -121,8 +125,9 @@
 
 % nastaveni pro nadpisy - tucne a bezpatkove
 % settings for headings - bold and sans serif
-\usepackage{sectsty}    
+\usepackage{sectsty}
 \allsectionsfont{\sffamily}
+\usepackage[normalem]{ulem}  % restore \underbar after sectsty redefines it
 
 % nastavení hlavy a paty stránek
 % page head and foot settings
