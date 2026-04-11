@@ -61,8 +61,22 @@
         - [Gold Layer](#gold-layer)
 - [Data Model](#data-model)
   - [Schema Patterns](#schema-patterns)
+        - [Bronze Pattern](#bronze-pattern)
+        - [Silver Entity Pattern](#silver-entity-pattern)
+        - [Silver Finding Pattern](#silver-finding-pattern)
+        - [Relationship Pattern](#relationship-pattern)
+        - [Gold Aggregation Pattern](#gold-aggregation-pattern)
   - [Entity Model](#entity-model)
+        - [Entity Tables](#entity-tables)
+        - [Finding Tables](#finding-tables)
+        - [Reference Tables](#reference-tables)
+        - [Relationship Tables](#relationship-tables)
   - [Aggregation Model](#aggregation-model)
+        - [Application Risk Scores](#application-risk-scores)
+        - [Team Metrics](#team-metrics)
+        - [Vulnerability Trends](#vulnerability-trends)
+        - [Coverage Analysis](#coverage-analysis)
+        - [Extension Guide](#extension-guide)
 - [Connector Framework](#connector-framework)
   - [Connector Abstraction](#connector-abstraction)
   - [Ingestion Patterns](#ingestion-patterns)
@@ -93,7 +107,7 @@
   - [Application-Repository Mapping](#application-repository-mapping)
   - [Application Risk Scoring](#application-risk-scoring)
   - [Remediation and Compliance Metrics](#remediation-and-compliance-metrics)
-  - [Vulnerability Trends](#vulnerability-trends)
+  - [Vulnerability Trends](#vulnerability-trends-1)
   - [Risk Prediction Model](#risk-prediction-model)
   - [Serving Layer](#serving-layer)
 - [Testing and Validation](#testing-and-validation)
@@ -2025,11 +2039,297 @@ as cross-application percentile rankings.
 
 ### Data Model
 
+This section maps the conceptual domain model from
+<a href="#sec:data-entities" data-reference-type="autoref"
+data-reference="sec:data-entities">[sec:data-entities]</a> to physical
+table designs across the three medallion layers. It defines reusable
+schema patterns first, then applies them to produce the concrete entity,
+finding, and aggregation tables the framework provides.
+
 #### Schema Patterns
+
+Schema patterns are reusable templates that standardize how tables are
+created at each medallion layer. They ensure consistency across the data
+model and lower the barrier for extending it with new entities or
+sources. Four patterns cover the framework’s needs.
+
+##### Bronze Pattern
+
+Every bronze table follows the same structural convention. The source’s
+native payload is stored alongside a fixed set of metadata columns:
+
+- `_ingestion_timestamp` — when the record was ingested
+  (<span acronym-label="utc" acronym-form="singular+short">utc</span>).
+
+- `_source_system` — identifier of the originating tool or platform.
+
+- `_batch_id` — unique identifier for the ingestion run, supporting
+  idempotent replays.
+
+- `_raw_payload` — the original <span acronym-label="json"
+  acronym-form="singular+short">json</span> response or record,
+  preserved for auditability.
+
+Additional columns from the source’s native schema are included
+alongside the raw payload through schema-on-read. New fields are
+absorbed via additive schema evolution. Tables are partitioned by
+ingestion date to support retention policies and efficient time-range
+queries.
+
+##### Silver Entity Pattern
+
+Entity tables store normalized dimension data. Each follows a standard
+structure:
+
+- `id` — surrogate key (auto-generated).
+
+- `natural_key` — the identifier from the source system (e.g.,
+  repository full name, application `sys_id`).
+
+- `source_system` — which tool or platform provided the record.
+
+- `valid_from` / `valid_to` — timestamps for change tracking (Type 2
+  slowly changing dimension). A `NULL` value in `valid_to` indicates the
+  current version.
+
+- Domain-specific columns — attributes defined by the entity type (e.g.,
+  `criticality_tier` for applications, `primary_language` for
+  repositories).
+
+The natural key plus source system combination uniquely identifies a
+record’s origin. The surrogate key provides a stable reference for
+foreign keys even when source identifiers change.
+
+##### Silver Finding Pattern
+
+Finding tables store normalized fact data. Each follows a standard
+structure:
+
+- `finding_id` — surrogate key.
+
+- `source_finding_id` — the identifier from the source tool.
+
+- `source_tool` — which scanner produced the finding.
+
+- `repository_id` — foreign key to the repository entity table.
+
+- `severity` — normalized to the canonical four-level scale (critical,
+  high, medium, low).
+
+- `status` — normalized lifecycle state (open, confirmed, resolved,
+  false_positive, wontfix).
+
+- `detected_at` / `resolved_at` — <span acronym-label="utc"
+  acronym-form="singular+short">utc</span> timestamps enabling
+  <span acronym-label="mttr" acronym-form="singular+short">mttr</span>
+  calculation.
+
+- `rule_id` — the tool-specific rule or check that triggered the
+  finding.
+
+- Category-specific columns — attributes unique to the finding type
+  (e.g., `file_path` and `line_range` for <span acronym-label="sast"
+  acronym-form="singular+short">sast</span>, `package_name` and
+  `installed_version` for <span acronym-label="sca"
+  acronym-form="singular+short">sca</span>).
+
+##### Relationship Pattern
+
+Relationship tables store many-to-many mappings between entities. Each
+contains foreign keys to both sides, a source system indicator, and
+`valid_from`/`valid_to` timestamps to track when the relationship was
+active. No payload columns are included; the table’s sole purpose is to
+link entities. Examples include application-to-repository,
+finding-to-<span acronym-label="cve"
+acronym-form="singular+short">cve</span>, and cross-tool deduplication
+links.
+
+##### Gold Aggregation Pattern
+
+Aggregation tables follow a grain-metric-period structure:
+
+- **Grain columns** define the level of detail: the entity key
+  (application, team, repository) and time period (day, week, month).
+
+- **Metric columns** store computed values: finding counts by severity,
+  <span acronym-label="mttr" acronym-form="singular+short">mttr</span>,
+  <span acronym-label="sla" acronym-form="singular+short">sla</span>
+  compliance percentage, risk score.
+
+- **Period columns** store the time window: `period_start` and
+  `period_end` (<span acronym-label="utc"
+  acronym-form="singular+short">utc</span>).
+
+- **Refresh metadata**: `computed_at` timestamp and refresh strategy
+  indicator (incremental or full).
+
+This structure enables consistent querying across all gold tables:
+filter by grain, aggregate over periods, compare across entities.
 
 #### Entity Model
 
+The silver layer instantiates the schema patterns into concrete tables.
+This subsection specifies the key tables organized by category: entities
+(dimensions), findings (facts), reference data, and relationships.
+
+##### Entity Tables
+
+<a href="#tab:entity-tables" data-reference-type="autoref"
+data-reference="tab:entity-tables">[tab:entity-tables]</a> lists the
+entity tables and their key domain-specific columns. All tables include
+the standard silver entity pattern columns (`id`, `natural_key`,
+`source_system`, `valid_from`/`valid_to`).
+
+<div id="tab:entity-tables">
+
+| **Table**       | **Source**                                                                                                                              | **Key Domain Columns**                                                              |
+|:----------------|:----------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------|
+| applications    | <span acronym-label="cmdb" acronym-form="singular+short">cmdb</span>                                                                    | name, criticality_tier, lifecycle_status, business_unit, compliance_scope           |
+| repositories    | <span acronym-label="scm" acronym-form="singular+short">scm</span>                                                                      | full_name, primary_language, visibility, default_branch, archived, last_activity_at |
+| teams           | <span acronym-label="cmdb" acronym-form="singular+short">cmdb</span>/<span acronym-label="scm" acronym-form="singular+short">scm</span> | name, parent_team_id, contact_email                                                 |
+| commits         | <span acronym-label="scm" acronym-form="singular+short">scm</span>                                                                      | sha, author, authored_at, message, repository_id                                    |
+| pull_requests   | <span acronym-label="scm" acronym-form="singular+short">scm</span>                                                                      | number, title, state, author, created_at, merged_at, repository_id                  |
+| pipeline_runs   | <span acronym-label="cicd" acronym-form="singular+short">cicd</span>                                                                    | pipeline_id, commit_sha, status, started_at, finished_at, repository_id             |
+| dependencies    | <span acronym-label="sca" acronym-form="singular+short">sca</span>                                                                      | package_name, installed_version, license, ecosystem, repository_id                  |
+| branch_policies | <span acronym-label="scm" acronym-form="singular+short">scm</span>                                                                      | required_reviewers, require_status_checks, enforce_admins, repository_id            |
+
+Silver Entity Tables
+
+</div>
+
+##### Finding Tables
+
+Finding tables share the silver finding pattern columns and add
+category-specific attributes.
+<a href="#tab:finding-tables" data-reference-type="autoref"
+data-reference="tab:finding-tables">[tab:finding-tables]</a> summarizes
+each.
+
+<div id="tab:finding-tables">
+
+| **Table**          | **Category-Specific Columns**                                     |
+|:-------------------|:------------------------------------------------------------------|
+| sast_findings      | file_path, line_start, line_end, cwe_id, language                 |
+| sca_findings       | package_name, installed_version, fixed_version, cve_id, ecosystem |
+| secret_findings    | secret_type, file_path, commit_sha, validity_status               |
+| dast_findings      | url, http_method, parameter, attack_type                          |
+| container_findings | image_name, image_tag, layer, cve_id                              |
+| iac_findings       | resource_type, resource_name, file_path, policy_id, benchmark     |
+
+Silver Finding Tables
+
+</div>
+
+Each finding table references its repository through `repository_id`.
+Business application context is derived through the relationship tables
+rather than stored directly on findings, preserving the many-to-many
+application-to-repository mapping without duplicating finding records.
+
+##### Reference Tables
+
+Reference tables store external intelligence used for enrichment:
+
+- **vulnerabilities** — <span acronym-label="cve"
+  acronym-form="singular+short">cve</span> records with description,
+  published date, and <span acronym-label="cvss"
+  acronym-form="singular+short">cvss</span> base score from the
+  <span acronym-label="nvd" acronym-form="singular+short">nvd</span>.
+
+- **epss_scores** — daily <span acronym-label="epss"
+  acronym-form="singular+short">epss</span> probabilities per
+  <span acronym-label="cve" acronym-form="singular+short">cve</span>,
+  enabling time-series analysis of exploitation likelihood.
+
+- **kev_entries** — <span acronym-label="cisa"
+  acronym-form="singular+short">cisa</span> <span acronym-label="kev"
+  acronym-form="singular+short">kev</span> catalog entries indicating
+  confirmed active exploitation, with the date added.
+
+These tables are refreshed on a scheduled basis from their respective
+external sources. Findings link to them through
+<span acronym-label="cve" acronym-form="singular+short">cve</span>
+identifiers, forming the three-signal enrichment model described in
+<a href="#sec:static-appsec" data-reference-type="autoref"
+data-reference="sec:static-appsec">[sec:static-appsec]</a>.
+
+##### Relationship Tables
+
+Three relationship tables implement the key mappings identified in the
+domain model:
+
+- **app_repo_mapping** — links applications to repositories
+  (many-to-many). This is the most critical relationship for business
+  context attribution.
+
+- **finding_cve_mapping** — links findings to <span acronym-label="cve"
+  acronym-form="singular+short">cve</span> records, enabling
+  vulnerability enrichment.
+
+- **dedup_links** — links findings identified as duplicates across
+  tools, preserving traceability to each source report while
+  establishing a canonical finding.
+
 #### Aggregation Model
+
+The gold layer computes consumption-ready metrics from silver data using
+the aggregation pattern. Each gold table targets a specific stakeholder
+need identified in
+<a href="#sec:data-entities" data-reference-type="autoref"
+data-reference="sec:data-entities">[sec:data-entities]</a>.
+
+##### Application Risk Scores
+
+The `app_risk_scores` table computes a composite risk metric per
+application per period. Grain columns are `application_id` and time
+period. Metric columns include: open finding counts by severity,
+weighted risk score (combining severity, <span acronym-label="epss"
+acronym-form="singular+short">epss</span> probability, and application
+criticality tier), <span acronym-label="sla"
+acronym-form="singular+short">sla</span> compliance percentage, and a
+trend indicator (improving, stable, degrading). This table serves
+application owners who need a single view of their application’s
+security posture.
+
+##### Team Metrics
+
+The `team_metrics` table aggregates remediation performance per team per
+period. Metrics include: <span acronym-label="mttr"
+acronym-form="singular+short">mttr</span> by severity, finding closure
+rate, new vs. resolved finding ratio, and <span acronym-label="sla"
+acronym-form="singular+short">sla</span> breach count. Leadership uses
+these metrics for cross-team comparisons and resource allocation
+decisions.
+
+##### Vulnerability Trends
+
+The `vulnerability_trends` table provides time-series data at
+configurable grains (daily, weekly, monthly). Metrics include: new
+findings introduced, findings resolved, net open count, severity
+distribution shifts, and mean age of open findings. These trends power
+the longitudinal dashboards that track organizational progress.
+
+##### Coverage Analysis
+
+The `coverage_analysis` table identifies gaps in security tool coverage.
+For each repository, it records which tool categories have produced
+findings or scan records (indicating active scanning) and which have
+not. Missing coverage is flagged per category: a repository with no
+<span acronym-label="sast" acronym-form="singular+short">sast</span>
+findings and no <span acronym-label="sast"
+acronym-form="singular+short">sast</span> pipeline runs likely lacks
+static analysis integration. This table enables security teams to
+prioritize tooling rollout.
+
+##### Extension Guide
+
+Adding a new gold table follows a consistent process: define the grain
+(which entity, which time period), specify the metrics (what to
+compute), write a silver-to-gold <span acronym-label="dltables"
+acronym-form="singular+short">dltables</span> transformation, and
+configure the refresh strategy (incremental or full). The aggregation
+pattern ensures all gold tables share a common query interface, so
+dashboards and reporting tools can consume new tables without structural
+changes.
 
 ### Connector Framework
 
