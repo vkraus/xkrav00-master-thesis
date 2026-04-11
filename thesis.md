@@ -10,26 +10,32 @@
 - [Objective](#objective)
 - [Methodology](#methodology)
 - [Structure](#structure)
-  - [Analysis and Requirements](#analysis-and-requirements)
-- [Application Inventory](#application-inventory)
+  - [Analysis](#analysis)
+- [Asset Discovery and Inventory](#asset-discovery-and-inventory)
   - [Application Portfolio Management](#application-portfolio-management)
   - [Configuration Management Databases](#configuration-management-databases)
   - [Integration Options](#integration-options)
         - [ServiceNow APIs](#servicenow-apis)
         - [ServiceNow Application](#servicenow-application)
         - [Integration Challenges](#integration-challenges)
+  - [Cloud Asset Discovery](#cloud-asset-discovery)
+  - [Cross-Layer Correlation](#cross-layer-correlation)
 - [Software Development](#software-development)
   - [Source Code Management](#source-code-management)
   - [Continuous Integration and Delivery](#continuous-integration-and-delivery)
   - [Issue Tracking](#issue-tracking)
-- [Application Security](#application-security)
+- [Static Application Security](#static-application-security)
   - [Static Application Security Testing](#static-application-security-testing)
   - [Software Composition Analysis](#software-composition-analysis)
   - [Secret Detection](#secret-detection)
-  - [Dynamic Testing and Penetration Testing](#dynamic-testing-and-penetration-testing)
   - [Container Image Scanning](#container-image-scanning)
   - [Infrastructure as Code Security](#infrastructure-as-code-security)
-  - [Runtime Security Monitoring](#runtime-security-monitoring)
+- [Dynamic Application Security](#dynamic-application-security)
+  - [Dynamic Application Security Testing](#dynamic-application-security-testing)
+  - [Penetration Testing](#penetration-testing)
+  - [Web Application Firewalls](#web-application-firewalls)
+  - [Runtime Application Self-Protection](#runtime-application-self-protection)
+  - [Vulnerability Management and Cloud Posture](#vulnerability-management-and-cloud-posture)
 - [Data Engineering](#data-engineering)
   - [Data Platform Architecture](#data-platform-architecture)
   - [Data Integration Patterns](#data-integration-patterns)
@@ -59,7 +65,7 @@
   - [Deployment Strategy](#deployment-strategy)
   - [Project Structure](#project-structure)
   - [Testing Strategy](#testing-strategy)
-  - [Reference Implementation](#reference-implementation)
+  - [Implementation](#implementation)
 - [Environment and Deployment](#environment-and-deployment)
   - [Workspace Setup](#workspace-setup)
   - [Silver Schema](#silver-schema)
@@ -167,7 +173,7 @@ integration, data consolidation, medallion architecture, Databricks
 
 ### Structure
 
-## Analysis and Requirements
+## Analysis
 
 This chapter surveys the literature and analyzes the functional domains
 relevant to building an application security data platform. Each section
@@ -178,18 +184,29 @@ system interfaces, data models, and integration patterns, not on
 prescribing a solution. Technology choices for the target platform are
 deferred to <a href="#ch:framework" data-reference-type="autoref"
 data-reference="ch:framework">[ch:framework]</a> and
-<a href="#ch:reference-implementation" data-reference-type="autoref"
-data-reference="ch:reference-implementation">[ch:reference-implementation]</a>.
+<a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a>.
 
+The chapter is organized as follows.
 <a href="#sec:app-inventory" data-reference-type="autoref"
 data-reference="sec:app-inventory">[sec:app-inventory]</a> establishes
-the business context underlying all security findings.
-<a href="#sec:sw-dev-analysis" data-reference-type="autoref"
-data-reference="sec:sw-dev-analysis">[sec:sw-dev-analysis]</a> and
-<a href="#sec:appsec-analysis" data-reference-type="autoref"
-data-reference="sec:appsec-analysis">[sec:appsec-analysis]</a> examine
-the software development and security tooling landscapes as data
-sources. <a href="#sec:data-eng-analysis" data-reference-type="autoref"
+the business and infrastructure asset context underlying all security
+findings. <a href="#sec:sw-dev-analysis" data-reference-type="autoref"
+data-reference="sec:sw-dev-analysis">[sec:sw-dev-analysis]</a> examines
+software development platforms as data sources. Application security
+tooling is split into two sections:
+<a href="#sec:static-appsec" data-reference-type="autoref"
+data-reference="sec:static-appsec">[sec:static-appsec]</a> covers tools
+that analyze source code and build artifacts before deployment, while
+<a href="#sec:dynamic-appsec" data-reference-type="autoref"
+data-reference="sec:dynamic-appsec">[sec:dynamic-appsec]</a> covers
+tools that test running applications and monitor deployed
+infrastructure. This separation reflects a fundamental difference in how
+findings are produced and correlated: static tools identify targets by
+repository and file path, while dynamic tools identify targets by
+<span acronym-label="url" acronym-form="singular+short">url</span>,
+host, or cloud resource, requiring different integration strategies.
+<a href="#sec:data-eng-analysis" data-reference-type="autoref"
 data-reference="sec:data-eng-analysis">[sec:data-eng-analysis]</a>
 covers the data engineering patterns that underpin the framework’s
 design. Finally,
@@ -197,17 +214,20 @@ design. Finally,
 data-reference="sec:related-work">[sec:related-work]</a> surveys
 existing solutions and identifies the gap this thesis addresses.
 
-### Application Inventory
+### Asset Discovery and Inventory
 
-The application inventory is the foundational data source for any
+Asset discovery and inventory is the foundational data source for any
 application security data platform. It establishes the business context
-for all security findings. Organizations typically manage this inventory
-in a <span acronym-label="cmdb"
-acronym-form="singular+short">cmdb</span> or a custom-built catalog.
-Without a reliable catalog of business applications and their mapping to
-technical assets, a vulnerability discovered in a repository or a
-running service cannot be attributed to an owner, assessed for business
-impact, or prioritized against organizational risk criteria.
+for all security findings. On the business side, organizations maintain
+application inventories in a <span acronym-label="cmdb"
+acronym-form="singular+short">cmdb</span> or a custom-built catalog. On
+the infrastructure side, cloud providers and container orchestrators
+expose asset inventories through <span acronym-label="api"
+acronym-form="plural+short">apis</span>. Without a reliable catalog of
+business applications and their mapping to technical and infrastructure
+assets, a vulnerability discovered in a repository or a running service
+cannot be attributed to an owner, assessed for business impact, or
+prioritized against organizational risk criteria.
 
 #### Application Portfolio Management
 
@@ -227,7 +247,8 @@ dimensions to produce criticality ratings, commonly structured as tiers:
 Tier 1 for mission-critical applications, Tier 2 for important
 supporting systems, and Tier 3 for non-critical internal tools.
 Separately, regulatory scope flags identify which compliance frameworks
-(e.g., PCI DSS, GDPR, SOX) apply to a given application.
+apply to a given application, further contributing to the security
+requirement set.
 
 The most important attribute from a data integration perspective is the
 mapping between business applications and their technical assets. A
@@ -390,6 +411,64 @@ Without the business context it provides, security findings lack the
 organizational meaning needed for effective prioritization and
 governance.
 
+#### Cloud Asset Discovery
+
+Major cloud providers offer asset inventory <span acronym-label="api"
+acronym-form="plural+short">apis</span>. <span acronym-label="aws"
+acronym-form="singular+short">aws</span> Config maintains a continuously
+updated resource inventory through a <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span>. Azure Resource Graph supports
+a query language for cross-subscription metadata retrieval. Google Cloud
+provides the Cloud Asset Inventory <span acronym-label="api"
+acronym-form="singular+short">api</span>. All three offer mature
+<span acronym-label="sdk" acronym-form="plural+short">sdks</span> that
+abstract authentication, pagination, and retry logic. Kubernetes exposes
+workload metadata (deployments, pods, container specifications) through
+its <span acronym-label="api" acronym-form="singular+short">api</span>,
+enabling the framework to trace from runtime workloads to container
+images and, through <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> metadata, to source
+repositories.
+
+Cloud asset data serves as the infrastructure counterpart to the
+business application inventory in the preceding subsections. While the
+application inventory maps business applications to repositories and
+teams, cloud asset discovery maps applications to their runtime
+infrastructure: compute instances, containers, load balancers, and
+network configurations. Joining these two inventories enables the
+framework to link security findings from any layer to both code owners
+and infrastructure owners.
+
+#### Cross-Layer Correlation
+
+The central challenge in asset inventory is correlating identifiers
+across layers. Security tools that analyze source code identify targets
+by repository, file path, and code location. Tools that operate on
+running infrastructure identify targets by host, container, cloud
+resource, or <span acronym-label="url"
+acronym-form="singular+short">url</span>. Bridging these two coordinate
+systems requires the application-to-asset mapping described in the
+preceding subsections, which serves as the joining entity linking
+runtime infrastructure to business applications and their source
+repositories.
+
+This correlation enables cross-layer analyses: tracing a runtime
+vulnerability to the code that introduced it, linking a
+<span acronym-label="waf" acronym-form="singular+short">waf</span> alert
+to the responsible application and team, or determining which
+<span acronym-label="iac" acronym-form="singular+short">iac</span>
+finding corresponds to a live <span acronym-label="cspm"
+acronym-form="singular+short">cspm</span> detection. Without it,
+findings from dynamic security tools
+(<a href="#sec:dynamic-appsec" data-reference-type="autoref"
+data-reference="sec:dynamic-appsec">[sec:dynamic-appsec]</a>) remain
+isolated from the development context, limiting their actionability. The
+data model in <a href="#ch:framework" data-reference-type="autoref"
+data-reference="ch:framework">[ch:framework]</a> addresses this by
+defining explicit relationships between application entities,
+infrastructure assets, and security findings across all layers.
+
 ### Software Development
 
 Modern software is built collaboratively from source code, organized in
@@ -516,7 +595,7 @@ tools. GitHub Actions exposes build data through its
 <span acronym-label="api" acronym-form="singular+short">api</span> with
 <span acronym-label="json" acronym-form="singular+short">json</span>
 responses, consistent with the broader GitHub <span acronym-label="api"
-acronym-form="singular+short">api</span> suite. Jenkins uses an
+acronym-form="singular+short">api</span> surface. Jenkins uses an
 <span acronym-label="xml" acronym-form="singular+short">xml</span>-based
 <span acronym-label="api" acronym-form="singular+short">api</span> with
 a different authentication model. Azure Pipelines follows the Azure
@@ -569,21 +648,539 @@ idempotency (avoiding duplicate issue creation) and state
 synchronization (keeping the framework’s view consistent with the
 tracker’s current state).
 
-### Application Security
+### Static Application Security
+
+Application security encompasses the practices and tools for identifying
+vulnerabilities in software throughout its lifecycle . advocated for
+security touchpoints spanning the entire development process. The
+DevSecOps paradigm  realizes this vision by embedding security testing
+into <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> pipelines:
+<span acronym-label="sast" acronym-form="singular+short">sast</span>
+examines source code, <span acronym-label="sca"
+acronym-form="singular+short">sca</span> checks third-party
+dependencies, secret scanners flag leaked credentials, and
+<span acronym-label="dast" acronym-form="singular+short">dast</span>
+probes running applications. The practical consequence is a high volume
+of security data from dozens of tools, each with different
+<span acronym-label="api" acronym-form="plural+short">apis</span>,
+output formats, and severity models. The <span acronym-label="owasp"
+acronym-form="singular+short">owasp</span> Top 10  provides a widely
+referenced risk classification, but it is not a data interchange
+standard.
+
+Several cross-cutting data standards bring partial consistency. The
+<span acronym-label="cve" acronym-form="singular+short">cve</span>
+system  assigns unique identifiers to known vulnerabilities. The
+<span acronym-label="cwe" acronym-form="singular+short">cwe</span> 
+classifies underlying weakness types. The <span acronym-label="cvss"
+acronym-form="singular+short">cvss</span>  scores attack vector,
+complexity, and impact on a 0–10 scale. The <span acronym-label="epss"
+acronym-form="singular+short">epss</span>  complements
+<span acronym-label="cvss" acronym-form="singular+short">cvss</span>
+with a predictive signal: the probability that a vulnerability will be
+exploited within 30 days, computed by <span acronym-label="ml"
+acronym-form="singular+short">ml</span> models.
+<span acronym-label="cisa" acronym-form="singular+short">cisa</span>
+maintains the <span acronym-label="kev"
+acronym-form="singular+short">kev</span> catalog , which adds a third
+signal: confirmed active exploitation curated from real-world incident
+data. Together, <span acronym-label="cvss"
+acronym-form="singular+short">cvss</span>, <span acronym-label="epss"
+acronym-form="singular+short">epss</span>, and <span acronym-label="kev"
+acronym-form="singular+short">kev</span> form a three-signal enrichment
+model used throughout the framework.
+
+For data interchange, <span acronym-label="sarif"
+acronym-form="singular+short">sarif</span>  defines a
+<span acronym-label="json"
+acronym-form="singular+short">json</span>-based format for static
+analysis results. CycloneDX  and <span acronym-label="spdx"
+acronym-form="singular+short">spdx</span>  provide
+<span acronym-label="sbom" acronym-form="singular+short">sbom</span>
+schemas. The <span acronym-label="ocsf"
+acronym-form="singular+short">ocsf</span>  targets
+<span acronym-label="siem" acronym-form="singular+short">siem</span>
+events and <span acronym-label="soar"
+acronym-form="singular+short">soar</span> workflows. No single format
+covers all tool categories. <span acronym-label="sarif"
+acronym-form="singular+short">sarif</span> addresses static analysis but
+not <span acronym-label="sca" acronym-form="singular+short">sca</span>
+or runtime findings. CycloneDX and <span acronym-label="spdx"
+acronym-form="singular+short">spdx</span> cover software composition,
+not code-level vulnerabilities. <span acronym-label="ocsf"
+acronym-form="singular+short">ocsf</span> serves security operations,
+not application security posture. This gap motivates the normalization
+model in <a href="#ch:framework" data-reference-type="autoref"
+data-reference="ch:framework">[ch:framework]</a>.
+
+The analysis of security tooling is organized into two sections by
+operational model. This section covers static analysis tools that
+examine source code and build artifacts without executing the
+application. Their findings reference repositories, file paths, and line
+numbers, making them directly attributable to development teams.
+<a href="#sec:dynamic-appsec" data-reference-type="autoref"
+data-reference="sec:dynamic-appsec">[sec:dynamic-appsec]</a> covers
+tools that operate on running applications and deployed infrastructure,
+where findings reference <span acronym-label="url"
+acronym-form="plural+short">urls</span>, hosts, and cloud resources,
+requiring additional mapping to connect them back to source code.
 
 #### Static Application Security Testing
 
+<span acronym-label="sast" acronym-form="singular+short">sast</span>
+examines source code, bytecode, or binary code for vulnerabilities
+without executing the program. provide the foundations, covering taint
+analysis, control flow analysis, and pattern matching to detect
+injection flaws, buffer overflows, and insecure data handling. A key
+tradeoff is between detection coverage and false positive rates: tools
+with broader rule sets catch more issues but generate more noise .
+
+SonarQube provides the most mature integration surface among
+<span acronym-label="sast" acronym-form="singular+short">sast</span>
+tools. Its <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span> offers paginated endpoints with
+server-side filtering by project, severity, status, and rule, returning
+<span acronym-label="json" acronym-form="singular+short">json</span>
+responses . Beyond individual findings, the <span acronym-label="api"
+acronym-form="singular+short">api</span> exposes project-level quality
+metrics useful for coverage analysis. Semgrep operates as a
+<span acronym-label="cli" acronym-form="singular+short">cli</span> tool
+running user-defined rules against source code, producing
+<span acronym-label="json" acronym-form="singular+short">json</span> or
+<span acronym-label="sarif" acronym-form="singular+short">sarif</span>
+output . The Semgrep Cloud Platform adds a centralized
+<span acronym-label="api" acronym-form="singular+short">api</span> for
+managing rules and results across projects. Checkmarx exposes a
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span> for
+scan management and result retrieval, with <span acronym-label="sarif"
+acronym-form="singular+short">sarif</span> export support.
+
+<span acronym-label="scm" acronym-form="singular+short">scm</span>
+platforms also provide built-in <span acronym-label="sast"
+acronym-form="singular+short">sast</span> capabilities. GitHub Code
+Scanning runs CodeQL analysis and exposes results through the code
+scanning alerts <span acronym-label="api"
+acronym-form="singular+short">api</span> . GitLab integrates
+<span acronym-label="sast" acronym-form="singular+short">sast</span> as
+a <span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+pipeline job with findings accessible through its security
+<span acronym-label="api" acronym-form="singular+short">api</span> .
+When both platform-native and standalone tools scan the same repository,
+the resulting overlap requires deduplication in the normalization layer.
+
+Each finding typically includes a rule identifier, the affected file
+path and line number, a severity rating, the offending code snippet, and
+remediation guidance. However, severity models differ across tools.
+SonarQube uses a five-level scale (blocker, critical, major, minor,
+info). Semgrep and Checkmarx use high, medium, and low, sometimes with a
+numerical score. This divergence makes severity normalization one of the
+most important tasks in the framework’s transformation layer. The
+reference implementation integrates SonarQube, Semgrep, and additional
+<span acronym-label="sast" acronym-form="singular+short">sast</span>
+sources as described in
+<a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a>.
+
 #### Software Composition Analysis
+
+<span acronym-label="sca" acronym-form="singular+short">sca</span>
+identifies known vulnerabilities in third-party dependencies. Modern
+applications commonly include hundreds of transitive dependencies,
+creating a large attack surface . provide a systematic review of supply
+chain attacks, including typosquatting, dependency confusion, and
+malicious package injection. <span acronym-label="sca"
+acronym-form="singular+short">sca</span> tools analyze dependency
+manifests, resolve the full dependency tree, and cross-reference
+versions against vulnerability databases such as the
+<span acronym-label="nvd" acronym-form="singular+short">nvd</span>.
+
+Snyk provides <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="plural+short">apis</span> (legacy v1 and current v3)
+returning <span acronym-label="json"
+acronym-form="singular+short">json</span> responses with filtering by
+severity and project . Dependabot, integrated into GitHub, exposes
+alerts through the GitHub GraphQL <span acronym-label="api"
+acronym-form="singular+short">api</span> . <span acronym-label="owasp"
+acronym-form="singular+short">owasp</span> Dependency-Track is an
+open-source platform that ingests <span acronym-label="sbom"
+acronym-form="plural+short">sboms</span> in CycloneDX or
+<span acronym-label="spdx" acronym-form="singular+short">spdx</span>
+format and identifies vulnerabilities against multiple databases . It
+provides a <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span> for project management and
+findings retrieval. Many <span acronym-label="sca"
+acronym-form="singular+short">sca</span> tools also generate
+<span acronym-label="sbom" acronym-form="plural+short">sboms</span> ,
+increasingly required by regulatory frameworks . The reference
+implementation integrates Dependabot, Dependency-Track, and GitLab
+dependency scanning, as described in
+<a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a>.
+
+<span acronym-label="sca" acronym-form="singular+short">sca</span>
+output is comparatively well standardized because the underlying data
+originates from shared public databases. Each finding typically includes
+the vulnerable dependency name and version, a <span acronym-label="cve"
+acronym-form="singular+short">cve</span> identifier, a
+<span acronym-label="cvss" acronym-form="singular+short">cvss</span>
+score, the fixed version when available, and exploitability metadata.
+Despite this, transitive dependency resolution remains a challenge:
+different tools may resolve the same dependency tree differently,
+causing one tool to flag a <span acronym-label="cve"
+acronym-form="singular+short">cve</span> while another does not. The
+framework must handle this during deduplication, recognizing that the
+same <span acronym-label="cve" acronym-form="singular+short">cve</span>
+reported by multiple tools against the same repository likely represents
+a single issue.
 
 #### Secret Detection
 
-#### Dynamic Testing and Penetration Testing
+Secret detection tools scan version control history for credentials,
+<span acronym-label="api" acronym-form="singular+short">api</span> keys,
+tokens, and other sensitive material. Once a secret is committed, it
+persists in Git history even after deletion from the working tree. Tools
+use two complementary detection approaches. Pattern-based detection
+matches strings against known credential formats using regular
+expressions. Entropy-based detection flags strings with unusually high
+randomness, catching novel credential formats at the cost of higher
+false positive rates.
+
+GitLeaks scans repositories against over 150 predefined patterns and
+produces <span acronym-label="json"
+acronym-form="singular+short">json</span> output . It runs as a
+<span acronym-label="cli" acronym-form="singular+short">cli</span> tool,
+typically in <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> pipelines or pre-commit hooks.
+TruffleHog supports over 800 secret types, combines pattern and entropy
+analysis, and adds live credential verification to confirm whether a
+detected secret remains valid . Both tools operate as
+<span acronym-label="cli" acronym-form="singular+short">cli</span> tools
+without server-side <span acronym-label="api"
+acronym-form="plural+short">apis</span>; integration requires executing
+the tool and parsing its output.
+
+Platform-integrated scanners take a different approach. GitHub Secret
+Scanning exposes alerts through the GitHub <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="singular+short">api</span> with webhook notifications for
+new detections . GitLab Secret Detection runs as a
+<span acronym-label="cicd" acronym-form="singular+short">cicd</span>
+pipeline job and reports results through GitLab’s security dashboard and
+<span acronym-label="api" acronym-form="singular+short">api</span> .
+These tools are simpler to integrate because they use existing platform
+<span acronym-label="api" acronym-form="singular+short">api</span>
+surfaces, but they only cover repositories hosted on their respective
+platforms.
+
+The primary integration challenge is the absence of a standard output
+format. Each tool defines its own <span acronym-label="json"
+acronym-form="singular+short">json</span> schema, and none supports
+<span acronym-label="sarif" acronym-form="singular+short">sarif</span>.
+Findings include the secret type, file path, commit reference, and
+sometimes a validity status, but field names and structures vary across
+tools.
 
 #### Container Image Scanning
 
+Container image scanning examines built container images for
+vulnerabilities in <span acronym-label="os"
+acronym-form="singular+short">os</span> packages, application libraries,
+and configuration. While <span acronym-label="sca"
+acronym-form="singular+short">sca</span> analyzes source-level
+dependency manifests, container scanners operate on assembled images,
+detecting <span acronym-label="os"
+acronym-form="singular+short">os</span>-level vulnerabilities and
+misconfigurations that source-level analysis does not cover.
+
+Trivy is a widely adopted open-source scanner supporting container
+images, filesystems, and Git repositories . It produces
+<span acronym-label="json" acronym-form="singular+short">json</span> or
+<span acronym-label="sarif" acronym-form="singular+short">sarif</span>
+output and integrates into <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> pipelines as a
+<span acronym-label="cli" acronym-form="singular+short">cli</span> tool.
+Commercial alternatives such as Aqua and Prisma Cloud add registry
+scanning, policy enforcement, and centralized management through
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="plural+short">apis</span>.
+Findings typically include the vulnerable package name and version, a
+<span acronym-label="cve" acronym-form="singular+short">cve</span>
+identifier, the fixed version, and the image layer where the package was
+introduced.
+
+The integration challenge is linking image vulnerabilities to source
+code repositories. Container images are identified by registry, name,
+and tag, not by the source code that produced them. Establishing this
+mapping requires tracing through <span acronym-label="cicd"
+acronym-form="singular+short">cicd</span> metadata: which pipeline built
+the image, from which repository, at which commit.
+
 #### Infrastructure as Code Security
 
-#### Runtime Security Monitoring
+<span acronym-label="iac" acronym-form="singular+short">iac</span>
+security tools perform static analysis on infrastructure definitions:
+Terraform configurations, CloudFormation templates, Kubernetes
+manifests, and Dockerfiles. They detect misconfigurations before
+deployment, such as overly permissive access policies, unencrypted
+storage, exposed ports, and missing logging.
+
+Checkov is a prominent open-source scanner supporting over 1 000
+built-in policies across multiple <span acronym-label="iac"
+acronym-form="singular+short">iac</span> frameworks . tfsec focuses on
+Terraform, and KICS covers a broad range of formats. All operate as
+<span acronym-label="cli" acronym-form="singular+short">cli</span> tools
+producing <span acronym-label="json"
+acronym-form="singular+short">json</span> or <span acronym-label="sarif"
+acronym-form="singular+short">sarif</span> output. Findings are
+file-and-line-based, structurally similar to <span acronym-label="sast"
+acronym-form="singular+short">sast</span> output, but target
+infrastructure configuration rather than application logic.
+
+These tools complement the runtime monitoring tools discussed in
+<a href="#sec:dynamic-appsec" data-reference-type="autoref"
+data-reference="sec:dynamic-appsec">[sec:dynamic-appsec]</a>.
+<span acronym-label="cspm" acronym-form="singular+short">cspm</span>
+scanners and <span acronym-label="vmdr"
+acronym-form="singular+short">vmdr</span> platforms detect the same
+misconfiguration classes after deployment in the live environment.
+Correlating pre-deployment <span acronym-label="iac"
+acronym-form="singular+short">iac</span> findings with post-deployment
+runtime detections is a challenge the framework addresses through its
+unified data model.
+
+### Dynamic Application Security
+
+While the static analysis tools in
+<a href="#sec:static-appsec" data-reference-type="autoref"
+data-reference="sec:static-appsec">[sec:static-appsec]</a> examine
+source code and build artifacts, the tools in this section operate on
+running applications and deployed infrastructure. The cross-cutting data
+standards introduced in
+<a href="#sec:static-appsec" data-reference-type="autoref"
+data-reference="sec:static-appsec">[sec:static-appsec]</a>, particularly
+<span acronym-label="cve" acronym-form="singular+short">cve</span>,
+<span acronym-label="cvss" acronym-form="singular+short">cvss</span>,
+<span acronym-label="epss" acronym-form="singular+short">epss</span>,
+and <span acronym-label="kev" acronym-form="singular+short">kev</span>,
+apply equally to dynamic findings. The cross-layer correlation challenge
+that connects these findings to business applications is addressed in
+<a href="#sec:runtime-correlation" data-reference-type="autoref"
+data-reference="sec:runtime-correlation">[sec:runtime-correlation]</a>.
+
+#### Dynamic Application Security Testing
+
+<span acronym-label="dast" acronym-form="singular+short">dast</span>
+tests running applications by sending crafted <span acronym-label="http"
+acronym-form="singular+short">http</span> requests and analyzing
+responses for vulnerability indicators . Unlike
+<span acronym-label="sast" acronym-form="singular+short">sast</span>,
+which works on source code, <span acronym-label="dast"
+acronym-form="singular+short">dast</span> requires a deployed
+application and detects vulnerabilities that manifest only at runtime,
+such as authentication bypass, server misconfiguration, and certain
+injection flaws.
+
+<span acronym-label="owasp" acronym-form="singular+short">owasp</span>
+<span acronym-label="zap" acronym-form="singular+short">zap</span> is
+the most widely used open-source <span acronym-label="dast"
+acronym-form="singular+short">dast</span> tool, providing a
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span> for
+scan management and result retrieval with <span acronym-label="json"
+acronym-form="singular+short">json</span> and <span acronym-label="xml"
+acronym-form="singular+short">xml</span> output . Burp Suite exposes a
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span> in
+its Enterprise edition; the Professional edition is a desktop tool
+without programmatic access. Findings from both tools include the target
+<span acronym-label="url" acronym-form="singular+short">url</span>, the
+affected <span acronym-label="http"
+acronym-form="singular+short">http</span> parameter, the vulnerability
+type mapped to <span acronym-label="cwe"
+acronym-form="singular+short">cwe</span> identifiers , exploitation
+evidence, and a confidence rating.
+
+The core integration challenge is that <span acronym-label="dast"
+acronym-form="singular+short">dast</span> findings are
+<span acronym-label="url"
+acronym-form="singular+short">url</span>-based, not code-based. A
+<span acronym-label="sast" acronym-form="singular+short">sast</span>
+finding points to a file and line in a repository; a
+<span acronym-label="dast" acronym-form="singular+short">dast</span>
+finding points to a <span acronym-label="url"
+acronym-form="singular+short">url</span> endpoint. Mapping
+<span acronym-label="url" acronym-form="singular+short">url</span>-based
+findings to source repositories requires deployment metadata or
+application inventory data from
+<a href="#sec:app-inventory" data-reference-type="autoref"
+data-reference="sec:app-inventory">[sec:app-inventory]</a>. Without this
+mapping, <span acronym-label="dast"
+acronym-form="singular+short">dast</span> findings can be attributed to
+applications but not to development teams or code locations.
+
+#### Penetration Testing
+
+Manual penetration testing traditionally produces no machine-readable
+output. External firms deliver results as narrative
+<span acronym-label="pdf" acronym-form="singular+short">pdf</span> or
+Word reports, requiring a structured upload mechanism (e.g., a
+<span acronym-label="json" acronym-form="singular+short">json</span> or
+<span acronym-label="csv" acronym-form="singular+short">csv</span>
+template) for security teams to transcribe key fields.
+<span acronym-label="ml" acronym-form="singular+short">ml</span>-based
+document parsing could automate extraction, though the inconsistent
+formatting of penetration test reports makes this non-trivial.
+
+Emerging platforms such as XBOW use autonomous <span acronym-label="ai"
+acronym-form="singular+short">ai</span> agents to perform penetration
+testing at scale, delivering validated findings with reproducible
+exploit evidence . These platforms offer <span acronym-label="api"
+acronym-form="singular+short">api</span> access for test orchestration
+and integrate with security data ecosystems, moving penetration testing
+toward the structured, automatable data exchange that other tool
+categories already provide.
+
+Despite low frequency, penetration testing findings are often among the
+most critical, representing validated exploitable vulnerabilities. The
+framework must accommodate both manual uploads and automated
+<span acronym-label="api" acronym-form="singular+short">api</span>
+ingestion to cover the full spectrum of penetration testing practices.
+
+#### Web Application Firewalls
+
+<span acronym-label="waf" acronym-form="plural+short">wafs</span>
+operate at the network perimeter, inspecting inbound
+<span acronym-label="http" acronym-form="singular+short">http</span>
+traffic against rule sets such as the <span acronym-label="owasp"
+acronym-form="singular+short">owasp</span> Core Rule Set. They log
+blocked and flagged requests, recording the matched rule, request
+details, and action taken. Most commercial <span acronym-label="waf"
+acronym-form="plural+short">wafs</span> (<span acronym-label="aws"
+acronym-form="singular+short">aws</span> WAF, Cloudflare, Akamai) expose
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="plural+short">apis</span> for
+log retrieval and configuration management.
+
+<span acronym-label="waf" acronym-form="plural+short">wafs</span>
+generate high-volume event data rather than discrete findings. The
+framework ingests aggregated attack patterns and anomaly indicators
+rather than individual request logs, focusing on the subset relevant to
+application security posture assessment.
+
+#### Runtime Application Self-Protection
+
+<span acronym-label="rasp" acronym-form="singular+short">rasp</span>
+tools instrument the application runtime, detecting attacks such as
+<span acronym-label="sql" acronym-form="singular+short">sql</span>
+injection and path traversal from within the application context. Unlike
+<span acronym-label="waf" acronym-form="plural+short">wafs</span>, which
+operate at the network perimeter, <span acronym-label="rasp"
+acronym-form="singular+short">rasp</span> can correlate attacks with
+specific application functions and code paths. This produces richer
+contextual data per event, but <span acronym-label="rasp"
+acronym-form="singular+short">rasp</span> adoption remains limited
+compared to <span acronym-label="waf"
+acronym-form="plural+short">wafs</span>, and integration surfaces vary
+across vendors.
+
+Like <span acronym-label="waf" acronym-form="plural+short">wafs</span>,
+<span acronym-label="rasp" acronym-form="singular+short">rasp</span>
+tools produce event streams rather than discrete findings. The
+integration approach is similar: the framework consumes aggregated
+indicators rather than raw event logs.
+
+#### Vulnerability Management and Cloud Posture
+
+<span acronym-label="vmdr" acronym-form="singular+short">vmdr</span>
+tools scan infrastructure for <span acronym-label="os"
+acronym-form="singular+short">os</span> vulnerabilities, missing
+patches, and exposed services. Qualys exposes data through a
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="api" acronym-form="singular+short">api</span> with
+<span acronym-label="xml" acronym-form="singular+short">xml</span>
+responses. Wiz uses a GraphQL <span acronym-label="api"
+acronym-form="singular+short">api</span> for selective queries across
+cloud environments. These tools produce findings tied to infrastructure
+identifiers (hostnames, IP addresses, cloud resource
+<span acronym-label="arn" acronym-form="plural+short">arns</span>), not
+to source code locations.
+
+<span acronym-label="cspm" acronym-form="singular+short">cspm</span>
+tools complement <span acronym-label="vmdr"
+acronym-form="singular+short">vmdr</span> by evaluating cloud
+configurations against compliance benchmarks such as
+<span acronym-label="cis" acronym-form="singular+short">cis</span>
+Benchmarks and organizational policies. Findings indicate
+misconfigurations (public S3 buckets, overly permissive
+<span acronym-label="iam" acronym-form="singular+short">iam</span>
+roles, unencrypted storage) rather than software vulnerabilities.
+<span acronym-label="cspm" acronym-form="singular+short">cspm</span>
+overlaps with <span acronym-label="iac"
+acronym-form="singular+short">iac</span> security
+(<a href="#sec:iac-security" data-reference-type="autoref"
+data-reference="sec:iac-security">[sec:iac-security]</a>): both detect
+the same misconfiguration classes, but <span acronym-label="iac"
+acronym-form="singular+short">iac</span> tools scan before deployment
+while <span acronym-label="cspm"
+acronym-form="singular+short">cspm</span> scans the live environment.
+Correlating pre-deployment and post-deployment findings is a key
+integration challenge.
+
+<a href="#tab:data-source-comparison" data-reference-type="autoref"
+data-reference="tab:data-source-comparison">[tab:data-source-comparison]</a>
+summarizes the integration characteristics across all source categories
+analyzed in this chapter.
+
+<div id="tab:data-source-comparison">
+
+| **Source Category**   |     **API**     | **Format** | **Frequency** | **Standardization** |
+|:----------------------|:---------------:|:----------:|:-------------:|:-------------------:|
+| Application Inventory |      REST       |    JSON    |      Low      |         Low         |
+| Cloud Assets          |      REST       |    JSON    |  Continuous   |       Medium        |
+| SCM Platforms         |  REST/GraphQL   |    JSON    |    Medium     |        High         |
+| Issue Trackers        |      REST       |    JSON    |    Medium     |       Medium        |
+| CI/CD Platforms       |    REST/XML     |  JSON/XML  |    Medium     |       Medium        |
+| SAST                  |    REST/CLI     | JSON/SARIF |   On-demand   |       Medium        |
+| SCA                   |  REST/GraphQL   |    JSON    |  Continuous   |        High         |
+| Secret Scanning       |    CLI/REST     |    JSON    |   On-demand   |         Low         |
+| Container Scanning    |       CLI       | JSON/SARIF |   On-demand   |       Medium        |
+| IaC Scanning          |       CLI       | JSON/SARIF |   On-demand   |       Medium        |
+| DAST                  |    REST/CLI     |  JSON/XML  |   On-demand   |       Medium        |
+| Penetration Testing   |      None       |    PDF     |   Periodic    |        None         |
+| WAF                   |      REST       |    JSON    |  Continuous   |         Low         |
+| RASP                  | Vendor-specific |    JSON    |  Continuous   |         Low         |
+| VMDR/CSPM             |  REST/GraphQL   |  JSON/XML  |  Continuous   |       Medium        |
+
+Data Source Integration Characteristics
+
+</div>
+
+Several patterns emerge from this comparison. <span acronym-label="rest"
+acronym-form="singular+short">rest</span> <span acronym-label="api"
+acronym-form="plural+short">apis</span> with <span acronym-label="json"
+acronym-form="singular+short">json</span> responses are the dominant
+integration surface, but <span acronym-label="xml"
+acronym-form="singular+short">xml</span> responses, GraphQL queries,
+<span acronym-label="cli" acronym-form="singular+short">cli</span>
+output parsing, and manual uploads are all necessary. Standardization
+varies: <span acronym-label="sca"
+acronym-form="singular+short">sca</span> benefits from the
+<span acronym-label="cve"
+acronym-form="singular+short">cve</span>/<span acronym-label="nvd"
+acronym-form="singular+short">nvd</span> ecosystem,
+<span acronym-label="sast" acronym-form="singular+short">sast</span> is
+partially standardized through <span acronym-label="sarif"
+acronym-form="singular+short">sarif</span>, and secret scanning has no
+standard format. Update frequencies range from continuous dependency
+monitoring to periodic penetration tests. These characteristics define
+what the ingestion layer described in
+<a href="#ch:framework" data-reference-type="autoref"
+data-reference="ch:framework">[ch:framework]</a> must accommodate.
 
 ### Data Engineering
 
@@ -643,7 +1240,7 @@ tracker’s current state).
 
 #### Testing Strategy
 
-## Reference Implementation
+## Implementation
 
 ### Environment and Deployment
 
