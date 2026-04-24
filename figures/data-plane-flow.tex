@@ -1,0 +1,66 @@
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=0.5cm,
+    stage/.style={rectangle, draw=black!60, fill=white, minimum width=3.2cm, minimum height=0.8cm, rounded corners=3pt, font=\footnotesize, align=center},
+    bronze/.style={fill={rgb,255:red,159;green,122;blue,52}, fill opacity=0.25, text opacity=1},
+    silver/.style={fill={rgb,255:red,192;green,192;blue,192}, fill opacity=0.35, text opacity=1},
+    gold/.style={fill={rgb,255:red,212;green,175;blue,55}, fill opacity=0.25, text opacity=1},
+    task/.style={rectangle, draw=black!50, fill=gray!8, minimum width=2.4cm, minimum height=0.6cm, rounded corners=2pt, font=\scriptsize\itshape, align=center},
+    side/.style={rectangle, draw=black!40, fill=gray!3, minimum width=3.0cm, minimum height=0.7cm, rounded corners=2pt, font=\scriptsize, align=center},
+    quar/.style={rectangle,
+        draw={rgb,255:red,180;green,60;blue,60},
+        fill={rgb,255:red,180;green,60;blue,60}, fill opacity=0.10, text opacity=1,
+        minimum width=3.0cm, minimum height=0.8cm, rounded corners=2pt,
+        font=\scriptsize, align=center},
+    arr/.style={-{Stealth[length=2mm]}, thick, black!60},
+    arrq/.style={-{Stealth[length=2mm]}, thick, draw={rgb,255:red,180;green,60;blue,60}, densely dashed},
+    tether/.style={-, thin, black!30, dashed},
+    gutterlbl/.style={font=\scriptsize, text=black!65, align=left, text width=3.2cm},
+    rulelbl/.style={font=\tiny, text=black!60},
+]
+
+% Spine (centered at x=0, top to bottom)
+\node[stage] (src) at (0, 8.5) {Source API};
+\node[task, below=0.5cm of src] (ing) {ingest task};
+\node[stage, bronze, below=0.5cm of ing] (bronze) {Bronze table};
+\node[task, below=0.5cm of bronze] (tx) {transform task};
+\node[stage, silver, below=0.5cm of tx] (silver) {Silver table};
+\node[task, below=0.5cm of silver] (agg) {aggregate task};
+\node[stage, gold, below=0.5cm of agg] (gold) {Gold table};
+
+% Right gutter annotations
+\node[side, right=1.0cm of ing] (hwm)
+    {HWM state table\\ (\texttt{\_hwm\_value})};
+\node[gutterlbl, right=1.0cm of silver] (scd)
+    {SCD2 on entity tables:\\ \texttt{valid\_from}/\texttt{valid\_to}};
+\node[side, right=1.0cm of agg, align=left, text width=3.2cm, minimum height=1.2cm] (dedup)
+    {\texttt{dedup\_links} + \texttt{finding\_group\_id} clustering};
+
+% Left gutter: quarantine tables
+\node[quar, left=1.0cm of bronze] (qb)
+    {\texttt{quarantine\_\textit{source}}\\ (malformed JSON)};
+\node[quar, left=1.0cm of silver] (qs)
+    {silver quarantine\\ (null required field,\\ lookup miss)};
+
+% Spine arrows
+\draw[arr] (src) -- (ing);
+\draw[arr] (ing) -- (bronze);
+\draw[arr] (bronze) -- (tx);
+\draw[arr] (tx) -- (silver);
+\draw[arr] (silver) -- (agg);
+\draw[arr] (agg) -- (gold);
+
+% Tethers to gutter annotations
+\draw[tether] (ing.east) -- (hwm.west);
+\draw[tether] (silver.east) -- (scd.west);
+\draw[tether] (agg.east) -- (dedup.west);
+
+% Quarantine branches (red dashed arrows)
+\draw[arrq] (ing.west) -| node[rulelbl, pos=0.25, above] {invalid payload} (qb.north);
+\draw[arrq] (tx.west) -| node[rulelbl, pos=0.25, above] {validation fail} (qs.north);
+
+\end{tikzpicture}
+\caption[Data plane flow]{Data plane flow within the framework: ingestion with auditable high water mark state (right), quarantine on the Bronze side and on the Silver side for records that fail structural or required field validation (left), SCD2 tracking on entity tables, and materialization from Silver to Gold with cross tool deduplication.}
+\label{fig:data-plane-flow}
+\end{figure}
