@@ -55,10 +55,17 @@ I would like to thank Ing. Aleš Kotuč for his guidance and valuable feedback.
 }
 
 %%% Abstract (recommended range of about 150-250 words; this is not a thesis assignment)
+%%% Only \AbstraktEN / \KlicovaSlovaEN are rendered; the Czech macros are kept
+%%% for reference / possible reinstatement but are not included in the output.
 \def\Abstrakt{%
+Pro ochranu svých kriticky důležitých aplikací před kybernetickými hrozbami využívají podnikové bezpečnostní týmy řadu nástrojů k detekci a řešení zranitelností ve zdrojovém kódu aplikací, konfiguraci, závislostech, CI/CD pipeline a běhové infrastruktuře. Tyto nástroje používají různé integrační vzory, protokoly a datové formáty, což ztěžuje konzistentní parsování, deduplikaci, triáž a seskupování jejich nálezů. Ve velkých prostředích vznikají další výzvy při propojování všech nálezů s odpovídajícími podnikovými aplikacemi. Tato diplomová práce představuje datový rámec, který tyto výzvy řeší, a přináší tři odlišné přínosy: (1) specifikaci požadavků na datovou platformu pro bezpečnost aplikací, (2) znovupoužitelný a rozšiřitelný návrh pokrývající architekturu, datový model a datovou pipeline založenou na medallion architektuře, a (3) referenční implementaci postavenou na platformě Databricks. Tyto přínosy dohromady nabízejí bezpečnostním týmům základ pro vybudování robustní datové platformy nezávislé na jednotlivých dodavatelích kybernetické bezpečnosti, čímž je zbavují rizik obvykle spojených s vendor lock-inem.
+}
+\def\KlicovaSlova{aplikační bezpečnost, softwarová bezpečnost, DevSecOps, bezpečnostní integrace, konsolidace dat, medallion architektura, Databricks}
+
+\def\AbstraktEN{%
 To protect their business-critical applications from cybersecurity threats, enterprise security teams rely on numerous tools to detect and resolve vulnerabilities in application source code, configuration, dependencies, CI/CD pipelines, and runtime infrastructure. These tools use different integration patterns, protocols, and data formats, making it difficult to consistently parse, deduplicate, triage, and group their findings. In large environments, additional challenges emerge when linking all findings to the corresponding business applications. This thesis presents a data framework to tackle those challenges, delivering three distinct contributions: (1) a requirements specification for an application security data platform, (2) a reusable and extensible design covering architecture, data model, and medallion-based data pipeline, and (3) a reference implementation built on the Databricks platform. Together, these contributions offer application security teams a foundation for building a robust data platform independent of individual cybersecurity vendors, relieving them of risks usually associated with vendor lock-in.
 }
-\def\KlicovaSlova{application security, software security, DevSecOps, security integration, data consolidation, medallion architecture, Databricks}
+\def\KlicovaSlovaEN{application security, software security, DevSecOps, security integration, data consolidation, medallion architecture, Databricks}
 
 %%% Titulní strana a různé povinné informativní strany
 %%% Title page and various mandatory information pages
@@ -118,6 +125,7 @@ To protect their business-critical applications from cybersecurity threats, ente
 %%% least once in your own text. The appendices are numbered.
 \part*{\Prilohy\thispagestyle{empty}}
 \appendix
+% \include{chapters/05-api-reference}
 \include{chapters/05-genai}
 % \include{...}
 % \include{...}

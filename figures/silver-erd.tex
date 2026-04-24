@@ -1,0 +1,66 @@
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    node distance=0.3cm,
+    band/.style={rectangle, draw=black!20, rounded corners=4pt, inner sep=8pt, fill opacity=0.35, text opacity=1},
+    entbg/.style={band, fill={rgb,255:red,200;green,220;blue,240}},
+    findbg/.style={band, fill={rgb,255:red,240;green,220;blue,220}},
+    refbg/.style={band, fill={rgb,255:red,220;green,240;blue,220}},
+    relbg/.style={band, fill={rgb,255:red,240;green,235;blue,210}},
+    bandlabel/.style={font=\scriptsize\bfseries, text=black!55},
+    primary/.style={rectangle, draw={rgb,255:red,40;green,80;blue,120},
+        fill=white, minimum width=2.8cm, minimum height=1.4cm,
+        rounded corners=2pt, font=\scriptsize\sffamily\bfseries, align=left,
+        inner sep=3pt, text width=2.6cm},
+    secondary/.style={rectangle, draw=black!45, fill=white,
+        minimum width=2.8cm, minimum height=1.4cm, rounded corners=2pt,
+        font=\scriptsize\sffamily, align=left, inner sep=3pt, text width=2.6cm},
+    arr/.style={-{Stealth[length=1.8mm]}, thin, black!55},
+    lbl/.style={font=\tiny, text=black!55},
+]
+
+% Entity tables
+\node[primary] (teams) at (-4.2, 5.5) {teams\\[2pt]{\tiny\sffamily\mdseries id (PK)\\ natural\_key\\ valid\_from/to}};
+\node[primary] (apps) at (0, 5.5) {applications\\[2pt]{\tiny\sffamily\mdseries id (PK)\\ criticality\_tier\\ valid\_from/to}};
+\node[primary] (repos) at (4.2, 5.5) {repositories\\[2pt]{\tiny\sffamily\mdseries id (PK)\\ full\_name\\ valid\_from/to}};
+
+% Finding table (single table with category discriminator)
+\node[primary] (findings) at (-3.2, 1.2) {findings\\[2pt]{\tiny\sffamily\mdseries finding\_id (PK)\\ repository\_id (FK)\\ category, severity\\ rule\_id, cve\_id}};
+
+% Reference table
+\node[secondary] (vuln) at (3.2, 1.2) {vulnerabilities\\[2pt]{\tiny\sffamily\mdseries cve\_id (PK)\\ cvss\_score\\ published\_at}};
+
+% Relationship tables
+\node[secondary] (appmap) at (-4.2, -3.0) {app\_repo\_mapping\\[2pt]{\tiny\sffamily\mdseries application\_id (FK)\\ repository\_id (FK)\\ valid\_from/to}};
+\node[secondary] (cvemap) at (0, -3.0) {finding\_cve\_mapping\\[2pt]{\tiny\sffamily\mdseries finding\_id (FK)\\ cve\_id (FK)}};
+\node[secondary] (dedup) at (4.2, -3.0) {dedup\_links\\[2pt]{\tiny\sffamily\mdseries finding\_id\_a (FK)\\ finding\_id\_b (FK)\\ match\_tuple}};
+
+% Band backgrounds drawn behind nodes
+\begin{scope}[on background layer]
+\node[entbg, fit=(teams)(apps)(repos), label={[bandlabel]above:Entities}] {};
+\node[findbg, fit=(findings), label={[bandlabel]above:Findings}] {};
+\node[refbg, fit=(vuln), label={[bandlabel]above:Reference}] {};
+\node[relbg, fit=(appmap)(cvemap)(dedup), label={[bandlabel]below:Relationship tables}] {};
+\end{scope}
+
+% Entity level relationships
+\draw[arr] (teams.east) -- node[lbl, above] {owns} (apps.west);
+
+% Applications / Repositories M:N via app_repo_mapping
+\draw[arr] (apps.south) -- (appmap.north east);
+\draw[arr] (repos.south) to[out=-110, in=30] (appmap.north east);
+
+% Findings reference repositories
+\draw[arr] (findings.east) -- node[lbl, above, pos=0.55] {repository\_id} (repos.south west);
+
+% finding_cve_mapping bridges findings and vulnerabilities
+\draw[arr] (findings.south east) -- (cvemap.north west);
+\draw[arr] (vuln.south) -- (cvemap.north east);
+
+% Self reference on findings via dedup_links
+\draw[arr] (findings.west) to[out=180, in=170, looseness=2.2] node[lbl, left, pos=0.5] {dedup\_links} (findings.south west);
+
+\end{tikzpicture}
+\caption[Silver layer entity relationship diagram]{Silver layer entity relationship diagram. Representative subset: \textbf{8} of the \textbf{15} silver tables. Four groupings are visible through background shading: entities, findings, reference, and relationship tables. The remaining 7 tables follow the same schema patterns.}
+\label{fig:silver-erd}
+\end{figure}

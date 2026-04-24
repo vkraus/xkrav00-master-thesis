@@ -1,0 +1,64 @@
+\begin{tikzpicture}[
+    node distance=0.4cm,
+    card/.style={rectangle, draw=black!50, rounded corners=3pt,
+        inner sep=5pt, align=left, font=\scriptsize\ttfamily,
+        text width=9.3cm, minimum width=9.5cm},
+    cardhead/.style={font=\footnotesize\sffamily\bfseries, text=black!70},
+    bronze/.style={fill={rgb,255:red,159;green,122;blue,52}, fill opacity=0.20, text opacity=1},
+    silver/.style={fill={rgb,255:red,192;green,192;blue,192}, fill opacity=0.28, text opacity=1},
+    gold/.style={fill={rgb,255:red,212;green,175;blue,55}, fill opacity=0.22, text opacity=1},
+    src/.style={fill=black!4},
+    arr/.style={-{Stealth[length=2mm]}, thick, black!60},
+    arrlbl/.style={font=\scriptsize\sffamily, text=black!70, align=left, text width=5.5cm},
+]
+
+\node[card, src, label={[cardhead]above:API response (SonarQube)}] (api) at (0,0) {%
+"key": "AX7-f2c9-3e5a",\\
+"rule": "java:S2259",\\
+"severity": "BLOCKER",\\
+"status": "OPEN",\\
+"component": "myproj:src/Foo.java",\\
+"line": 42%
+};
+
+\node[card, bronze, below=1.3cm of api,
+    label={[cardhead]above:Bronze row (\texttt{bronze\_sonarqube.issues})}] (bronze) {%
+\_ingestion\_timestamp = 2026-04-18T07:00:00Z\\
+\_source\_system = "sonarqube"\\
+\_batch\_id = "b-20260418-07"\\
+\_hwm\_value = "2026-04-18T06:59:59Z"\\
+\_raw\_payload = \{"key": "AX7-f2c9-3e5a", "rule": "...", ...\}%
+};
+
+\node[card, silver, below=1.3cm of bronze,
+    label={[cardhead]above:Silver row (\texttt{silver.findings})}] (silver) {%
+finding\_id = "sonarqube:AX7-f2c9-3e5a"\\
+tool\_source = "sonarqube"\\
+category = "sast"\\
+severity\_canonical = "critical"\\
+status\_canonical = "open"\\
+rule\_id\_native = "java:S2259"\\
+trigger\_context = "code"\\
+file\_path = "src/Foo.java"\\
+start\_line = 42%
+};
+
+\node[card, gold, below=1.3cm of silver,
+    label={[cardhead]above:Gold aggregate contribution (\texttt{gold.app\_risk\_scores})}] (gold) {%
+application\_id = 47\\
+period\_start = 2026-04-18\\
+critical\_count += 1\\
+weighted\_risk\_score += w(CRITICAL) * c(critical\_tier)%
+};
+
+\draw[arr] (api.south) -- node[arrlbl, right, xshift=3pt]
+    {preserve raw payload, add metadata, advance HWM}
+    (bronze.north);
+\draw[arr] (bronze.south) -- node[arrlbl, right, xshift=3pt]
+    {schema mapping (\texttt{mapping.yml}), severity + status lookups}
+    (silver.north);
+\draw[arr] (silver.south) -- node[arrlbl, right, xshift=3pt]
+    {aggregate by (\texttt{application\_id}, period)}
+    (gold.north);
+
+\end{tikzpicture}

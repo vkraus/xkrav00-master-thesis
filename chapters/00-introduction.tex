@@ -4,11 +4,74 @@
 \section*{Motivation}
 \addcontentsline{toc}{section}{\protect\numberline{}Motivation}
 
+To protect business critical applications, security teams rely on a large variety of tools: \gls{sast} scanners analyze source code, \gls{sca} tools check software dependencies, \gls{dast} probes running applications, and secret scanners flag exposed credentials in code~\parencite{Chess2007, Howard2006, Stuttard2011}.
+
+Further detection runs against build and deployment pipelines, which face their own classes of threats such as malicious dependencies published to public package registries, compromised build agents injecting code into release artifacts, tampered container base images, or leaked \gls{cicd} credentials used to push unauthorized changes~\parencite{Ohm2020, SLSA2024}. Security teams also deploy \gls{ide} plugins and security context tools integrated into \gls{ai} coding assistants such as Claude Code or GitHub Copilot to catch problems before code reaches version control~\parencite{GitHubGHAS2025, Snyk2024, Semgrep2024}.
+
+In large enterprises, dozens of such tools produce findings through different data formats and integration patterns~\parencite{Anderson2020, Stallings2024}. As application security architect in a large organization with thousands of developers and tens of thousands of repositories, I have seen firsthand how hard this environment is to secure. Two classes of difficulty dominate.
+
+The first is \textbf{detection heterogeneity}. Tools in the same category scan differently and produce different results, so a single tool is rarely sufficient~\parencite{Chess2007, McGraw2006}. Running multiple tools in parallel improves coverage but creates the opposite problem: the same vulnerability is reported several times, and findings must be deduplicated before they can be triaged or counted~\parencite{Jacobs2020, Gartner2023ASPM}.
+
+The second is \textbf{data consolidation}. Findings lack the business context needed for prioritization: the owning application, its criticality tier, and its regulatory scope live in a separate \gls{cmdb}, not in the security tool~\parencite{AXELOS2019, Gartner2021CMDB}. Correlation within the findings themselves is nontrivial: \gls{sast} results point to a repository, file, and line, while \gls{dast} results point to a \gls{url} or host, so cross tool correlation requires additional deployment and inventory metadata~\parencite{Chess2007, Stuttard2011}. Integration patterns compound the problem. Push based models, where scanners upload reports into a vulnerability management interface, fragment data and do not scale across dozens of tools, and robust pull based \gls{api} connectors, where they exist, are usually gated behind commercial tiers~\parencite{DefectDojo2024, Gartner2023ASPM}.
+
+Consolidating application security data is a data engineering problem. Industry addresses it with commercial \gls{aspm} products offering dashboards and aggregated views~\parencite{Gartner2023ASPM}, but these are proprietary and inflexible. They create vendor lockin and prevent security teams from customizing pipelines, applying their own \gls{ml} models, or integrating with internal systems.
+
+The most notable open source alternative, DefectDojo, is a Django based vulnerability management web application~\parencite{DefectDojo2024}, not a data first platform. Its relational backend limits scale, and ingestion relies mostly on push based integrations or manual uploads. Pull based \gls{api} connectors exist only in the commercial DefectDojo Pro tier.
+
+Databricks Lakewatch, announced in March 2026, is a lakehouse native \gls{siem}~\parencite{Databricks2026Lakewatch}. It runs on the same lakehouse platform this thesis adopts but addresses a different domain: runtime threat detection, alert triage, and log analytics, not application security posture. The distinction is discussed in~\autoref{sec:lakewatch}.
+
+What is missing is a vendor agnostic framework that approaches application security as a data engineering problem, providing a reusable architecture for ingestion, normalization, deduplication, and serving at enterprise scale. The pace of tool adoption outstrips the engineering effort available to write connectors for each one. A framework that encodes integration logic declaratively, as schemas, a connector contract, and a catalog of skills an \gls{ai} coding agent can execute, \textbf{should reduce onboarding a new source to a four step procedure} (\autoref{sec:impl-methodology}) rather than a pipeline redesign, with the cost per source bounded by the cost of invoking the skill catalog under supervision. \autoref{ch:implementation} and \autoref{sec:ai-eval} examine how far this reduction holds under the empirical methodology actually exercised.
+
+This raises the central research question: \textbf{how can heterogeneous enterprise application security findings be consolidated into a unified, vendor agnostic data platform that serves the analytical and operational needs of security teams?}
+
 \section*{Objective}
 \addcontentsline{toc}{section}{\protect\numberline{}Objective}
+
+The main goal is to specify, design, and implement a data integration framework for enterprise application security that consolidates findings from tools into a unified platform, enabling consistent normalization, deduplication, triage, and correlation across business applications.
+
+The subgoals are:
+
+\begin{enumerate}
+    \item \textbf{Analysis} (\autoref{ch:analysis}): Survey the application security domain and its adjacent data sources. Characterize asset inventories, software development platforms, static and dynamic security tooling, and the relevant data engineering patterns. Review related work, identify the research gap, and select source systems to carry forward. The \gls{api} analysis per source grounding these findings is collected on the external \href{https://vkraus.github.io/appsec-docs/}{documentation site}.
+    \item \textbf{Framework} (\autoref{ch:framework}): Formalize the requirements specification and propose a reusable blueprint covering solution architecture, a medallion based data model (bronze, silver, gold)~\parencite{Strengholt2025}, a connector framework, and an analytics and serving framework. The blueprint targets the Databricks lakehouse~\parencite{Lee2024, DatabricksUC2025, DatabricksLDP2025} while separating general patterns from platform specific choices. The technology rationale is given in~\autoref{sec:tech-stack}.
+    \item \textbf{Implementation} (\autoref{ch:implementation}): Produce a reference implementation on Databricks that instantiates the framework for the nine selected sources, with two built as full connectors covering the path from source API to silver and the remaining seven resolved as declared schema and mapping artifacts. The intended methodology is to drive generation by invoking the published skill catalog against each source. \autoref{sec:ai-eval} reports where this held empirically and where supervised direct coding was required. The deliverable is a minimum viable product that instantiates the framework end to end on a representative sample chosen to cover the ingestion and integration patterns the framework must support, rather than an exhaustive integration of every security tool an enterprise might deploy. Validation runs through automated tests with requirement traceability and through \gls{ldp} data quality expectations.
+\end{enumerate}
+
+The scope is application security posture across three tiers of detection. \textbf{Static testing} covers preexecution analysis of source, dependencies, configuration, and build artifacts: \gls{sast}, \gls{sca}, secret scanning, container and \gls{iac} scanning, and supply chain integrity checks. \textbf{Dynamic testing} covers active probing of running applications: \gls{dast} (OWASP ZAP~\parencite{OWASPZAP2024}) and penetration testing. \textbf{Runtime security} covers observational and protective telemetry from production systems. One representative source is included, AWS WAF sampled requests~\parencite{AWSWAF2026}, to demonstrate that the correlation model links runtime findings to applications via deployment metadata. Broader runtime security operations (general threat detection, incident response, log analytics) remain out of scope. In all three tiers, findings are correlated to business applications, owners, and criticality.
+
+\autoref{ch:analysis} and \autoref{ch:framework} are framed against the full \gls{aspm} scope. \autoref{ch:implementation} instantiates the framework against the nine sources selected in \autoref{sec:selected-sources}. Two are built as full connectors that exercise the two ends of the category range from source API to silver. The remaining seven are resolved as declared schema and mapping artifacts. Extending to them repeats the procedure per source described in \autoref{sec:impl-methodology} and does not require changes to the framework.
+
+The intended audience is application security architects and data platform engineers who need to consolidate security findings at scale without vendor lockin.
 
 \section*{Methodology}
 \addcontentsline{toc}{section}{\protect\numberline{}Methodology}
 
+This thesis follows the design science research methodology of~\textcite{Hevner2004, Peffers2007} in three phases aligned with the three main chapters. The \textbf{analysis} phase combines a literature review with a systematic study of source systems, then identifies the research gap. The \textbf{framework} phase derives requirements and designs the architecture, data model, connector contract, and analytics and serving patterns. The \textbf{implementation} phase targets an \gls{ai} instantiable reference implementation, intended to be produced by invoking the skills cataloged on the documentation site. \autoref{ch:implementation} records which sources were built and \autoref{sec:ai-eval} records the empirical deviation: the delivered code was produced by \gls{ai} assisted direct coding against the framework contract and the external requirements specification, not by invoking the published skill catalog. Validation runs through automated tests with requirement traceability and through \gls{ldp} data quality expectations.
+
+The thesis delivers three contributions: a \textbf{requirements specification}, a \textbf{reusable framework} covering architecture, data model, connector contract, and analytics and serving patterns, and an \textbf{\gls{ai} instantiable reference implementation} on Databricks.
+
 \section*{Structure}
 \addcontentsline{toc}{section}{\protect\numberline{}Structure}
+
+\autoref{ch:analysis} surveys the problem domain and closes with related work, a gap analysis, and source system selection. \autoref{ch:framework} presents the framework: solution architecture, data model, connector framework, and analytics and serving framework. \autoref{ch:implementation} reports on the MVP reference implementation, produced by \gls{ai} assisted direct coding against the framework contract, which instantiates two of the nine selected sources as full connectors from source API to silver and the remaining seven as declared schema and mapping artifacts. The Conclusion evaluates outcomes against the objectives, defends the \gls{ai} instantiability claim in \autoref{sec:ai-eval}, discusses limitations, and suggests future work. \autoref{app:genai} discloses the use of generative \gls{ai} tooling. \autoref{fig:contribution-flow} summarizes the contribution flow.
+
+\begin{figure}[htbp]
+\centering
+\input{figures/contribution-flow}
+\caption[Thesis contribution flow]{Thesis contribution flow. \autoref{ch:analysis} (Analysis) and \autoref{ch:framework} (Framework) each contribute material to the Requirements Specification published at \url{https://vkraus.github.io/appsec-docs/}. \autoref{ch:implementation} (MVP Implementation) consumes the specification. Invocations of the published skill catalog required iterative amendment at every connector and are evaluated in \autoref{sec:ai-eval}. Implementation results populate the Implementation reports per source on the specification (dashed return arrow).}
+\label{fig:contribution-flow}
+\end{figure}
+
+\section*{External Documentation Site}
+\addcontentsline{toc}{section}{\protect\numberline{}External Documentation Site}
+
+The full requirements specification is published as an external documentation site rather than inline in this thesis. It is structured into four sections (Requirements, Functional Specification, Design, Tests) generated with MkDocs Material from \inlinecode{docs/} in the project repository and deployed via GitHub Pages. Normative language (\textsc{shall}, \textsc{should}) is preserved on the site.
+
+\begin{center}
+\textbf{Documentation site:} \url{https://vkraus.github.io/appsec-docs/}\\
+\textbf{Source:} \url{https://github.com/vkraus/appsec-docs}
+\end{center}
+
+Where the main chapters name a page on the documentation site, they link to it directly via an inline hyperlink. The top level sections of the site relevant to the thesis are the \href{https://vkraus.github.io/appsec-docs/platform/reference/source-capability-matrix/}{per category capability matrix}, the \href{https://vkraus.github.io/appsec-docs/platform/reference/canonical-mapping/}{canonical mapping requirements}, the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}, and the \href{https://vkraus.github.io/appsec-docs/platform/reference/catalog/}{requirement catalog and traceability matrix}.
+
+Offline copies of both the reference implementation and the documentation site are attached to this submission as \texttt{mvp.zip} (source code) and \texttt{docs.zip} (MkDocs sources and a prerendered static site under \texttt{docs/site/index.html}). The attachments are snapshots of the repository at the commit from which this \gls{pdf} was built. The live version remains at the URL above.

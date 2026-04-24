@@ -32,9 +32,9 @@
 			\usepackage[autostyle,english=british]{csquotes}
 	 }
 
-%%% Fira Sans + Fira Mono fonts
+%%% Fira Sans + Inconsolata (condensed mono)
 \usepackage[sfdefault]{FiraSans}
-\usepackage{FiraMono}
+\usepackage[narrow,var0,varqu,varl]{inconsolata}
 \ifluatex
 \makeatletter
 \let\pdfstrcmp\pdf@strcmp
@@ -63,7 +63,7 @@
 \usepackage{longtable}      % vhodné pro vícestránkové tabulky / suitable for multi-page tables
 \usepackage{dirtree}        % vykreslování adresářových stromů / rendering directory trees
 \usepackage{tikz}           % diagramy / diagrams
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
 \makeatletter
 \@ifpackageloaded{xcolor}{
    \@ifpackagewith{xcolor}{usenames}{}{\PassOptionsToPackage{usenames}{xcolor}}
@@ -76,15 +76,9 @@
 \setglossarystyle{long}
 \renewcommand{\glsnamefont}[1]{\textbf{#1}}  % Bold acronyms
 \setlength{\glsdescwidth}{0.8\textwidth}     % Left-aligned descriptions
-% First occurrence: teal hyperlink; subsequent uses: black hyperlink
+% All acronym occurrences rendered in black (hyperlink still present, just uncoloured)
 \definecolor{glsfirstuse}{RGB}{0,105,92}
-\newif\ifglssubsequent
-\renewcommand*{\glslinkcheckfirsthyperhook}{%
-  \ifglsused{\glslabel}{\glssubsequenttrue}{\glssubsequentfalse}%
-}
-\renewcommand{\glstextformat}[1]{%
-  \ifglssubsequent\textcolor{black}{#1}\else#1\fi
-}
+\renewcommand{\glstextformat}[1]{\textcolor{black}{#1}}
 \makeglossaries
 \input{acronyms}
 \usepackage{multirow}
@@ -140,6 +134,28 @@
 \usepackage{sectsty}
 \allsectionsfont{\sffamily}
 \usepackage[normalem]{ulem}  % restore \underbar after sectsty redefines it
+
+% \paragraph as block heading (own line), not run-in.
+% The \@startsection after-skip must be positive; negative selects run-in.
+\makeatletter
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+  {2.25ex \@plus 1ex \@minus .2ex}%
+  {1ex \@plus .2ex}%
+  {\normalfont\normalsize\sffamily\bfseries}}
+\makeatother
+
+% \subsubsubsection: numbered fourth-level heading, same visual weight as the
+% \paragraph redefine above. Shares LaTeX sectioning slot 4; secnumdepth=4
+% below makes subsubsection and subsubsubsection both numbered. tocdepth
+% stays at 2 (set in thesis.tex), so level-4 entries are written to the .toc
+% file but filtered from the rendered table of contents.
+\makeatletter
+\newcommand\subsubsubsection{\@startsection{paragraph}{4}{\z@}%
+  {2.25ex \@plus 1ex \@minus .2ex}%
+  {1ex \@plus .2ex}%
+  {\normalfont\normalsize\sffamily\bfseries}}
+\makeatother
+\setcounter{secnumdepth}{4}
 
 % nastavení hlavy a paty stránek
 % page head and foot settings
@@ -256,13 +272,56 @@
 \definecolor{backcolour}{rgb}{0.99,0.99,0.99}
 \definecolor{framecolour}{rgb}{0.85,0.85,0.85}
 
+%%% Inline code with soft background: \inlinecode{identifier}
+%%% Uses soul's \hl so long identifiers break across lines.
+\usepackage{soul}
+\definecolor{inlinecodebg}{HTML}{F2F2F2}
+\definecolor{nohighlight}{HTML}{FFFFFF}
+\sethlcolor{inlinecodebg}
+\soulregister{\textbackslash}{0}
+%%% soul's \hl paints background only across letter tokens. \_ as a command
+%%% (or as an implicit \chardef character) leaves a gap in the highlight.
+%%% Stash a cat-11 underscore token so \_ inside \inlinecode expands to
+%%% something soul treats as a regular letter.
+\begingroup
+  \catcode`\_=11
+  \gdef\inlinecodeus{_}
+\endgroup
+\DeclareRobustCommand{\inlinecode}[1]{%
+  {\ttfamily\begingroup
+    \let\_\inlinecodeus
+    \hl{#1}%
+  \endgroup}%
+}
+%%% Break-friendly monospace without background highlight: \brtt{identifier}
+%%% Same breaking behaviour as \inlinecode but invisible (page-matching) highlight.
+%%% Use inside tables where \texttt content would overflow narrow columns.
+\DeclareRobustCommand{\brtt}[1]{%
+  {\ttfamily\begingroup
+    \sethlcolor{nohighlight}%
+    \let\_\inlinecodeus
+    \hl{#1}%
+  \endgroup}%
+}
+
+%%% Minimal yaml language definition for listings package (not built in).
+\lstdefinelanguage{yaml}{
+    keywords={true,false,null,yes,no,on,off},
+    sensitive=true,
+    comment=[l]{\#},
+    string=[b]",
+    string=[b]',
+    morestring=[b]",
+    morestring=[b]',
+}
+
 \lstset{
     backgroundcolor=\color{backcolour},
     commentstyle=\color{codegreen}\itshape,
     keywordstyle=\color{codeblue}\bfseries,
     stringstyle=\color{codepurple},
     numberstyle=\footnotesize\color{codegray},
-    basicstyle=\small\ttfamily,
+    basicstyle=\small\ttfamily\linespread{0.95}\selectfont,
     breakatwhitespace=false,
     breaklines=true,
     keepspaces=true,
@@ -271,6 +330,9 @@
     showtabs=false,
     tabsize=4,
     rulecolor=\color{framecolour},
+    inputencoding=utf8,
+    extendedchars=true,
+    literate={—}{{\textemdash}}1 {–}{{\textendash}}1 {§}{{\S}}1 {→}{{$\rightarrow$}}1,
 }
 
 \lstnewenvironment{code}[3]{\lstset{language=#1, caption=#2, label=#3, numbers=left, xleftmargin=2em, frame=single, framexleftmargin=2em}}{}
@@ -314,6 +376,7 @@
 \def\KonzultantText{Consultant}
 \def\Praha{Prague}
 \def\PodekovaniText{Acknowledgements}
+\def\ProhlaseniAIText{Declaration on the Use of Artificial Intelligence}
 \def\bibnamex{References}
 \renewcommand*{\lstlistlistingname}{List of source codes}
 \def\lstlistingname{Source code}

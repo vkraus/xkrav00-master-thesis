@@ -1,0 +1,47 @@
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+    >={Stealth[length=2.5mm]},
+    every node/.style={font=\small},
+    chapterbox/.style={
+        rectangle, draw=black!50, rounded corners=3pt,
+        minimum width=3.0cm, minimum height=2.0cm,
+        align=center, font=\small,
+        inner sep=4pt
+    },
+    specbox/.style={
+        rectangle, draw=black!70, rounded corners=3pt,
+        fill=black!8,
+        minimum width=3.8cm,
+        align=center, font=\small,
+        inner sep=6pt
+    },
+    edgelabel/.style={font=\small, text=black!70, inner sep=2pt, align=center},
+]
+
+% Left column: Chapter 1 (top) and Chapter 2 (bottom)
+\node[chapterbox] (analysis) {\textbf{Chapter~1} \\ Domain analysis, \\ capability matrix \\ per category};
+\node[chapterbox, below=0.5cm of analysis] (framework) {\textbf{Chapter~2} \\ Framework \\ schema patterns, \\ connector contract, \\ pipeline patterns};
+
+% Center: Appendix A (spec + skills) — auto-sized to fit content
+\node[specbox, right=3.4cm of $(analysis.east)!0.5!(framework.east)$] (spec) {\textbf{Documentation site} \\ Requirements \\ Specification, \\ canonical mapping, \\ AI agent skills, \\ per-source reference, \\ traceability matrix};
+
+% Right: Chapter 3 — extra breathing room for the "skills consumed by" label
+\node[chapterbox, right=3.6cm of spec] (impl) {\textbf{Chapter~3} \\ Implementation \\ follows skills to build product \\ and reports results};
+
+% Forward arrows from the chapter boxes into the spec.
+% Labels wrap in two lines and sit above the arrow, centered on the midpoint.
+\draw[->, thick] (analysis.east) -- ([yshift=0pt]spec.west |- analysis.east)
+    node[edgelabel, above, pos=0.5, text width=2.8cm] {contributes\\domain facts};
+\draw[->, thick] (framework.east) -- ([yshift=0pt]spec.west |- framework.east)
+    node[edgelabel, below, pos=0.5, text width=2.8cm] {commits generic\\patterns};
+
+% Spec -> Chapter 3, label wrapped above the arrow
+\draw[->, thick] (spec.east) -- (impl.west)
+    node[edgelabel, above, pos=0.5, text width=2.8cm] {skills\\consumed by};
+
+% Feedback arrow: wider bezier sweep so the wrapped label has clear vertical room
+\draw[->, thick, dashed] (impl.south) .. controls +(down:2.0cm) and +(down:2.0cm) ..
+    node[edgelabel, below, pos=0.5, text width=3.2cm] {results populate\\per-source reports} (spec.south);
+
+\end{tikzpicture}%
+}
