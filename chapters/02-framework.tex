@@ -133,13 +133,13 @@ The processing tier applies the medallion architecture pattern from \autoref{sec
 
 \subsubsection{Bronze Layer}
 
-The bronze layer stores raw data from each source with minimal transformation. Each connector writes to its own schema (e.g., \inlinecode{github}, \inlinecode{servicenow}, \inlinecode{sonarqube}), preserving the native source structure. Records are appended with standard metadata columns: ingestion timestamp, source system identifier, and batch identifier. No business logic is applied. The goal is an exact, auditable copy of source data.
+The bronze layer stores raw data from each source with none or minimal transformation. Each connector writes to its own bronze schema (e.g., \inlinecode{github}, \inlinecode{servicenow}, \inlinecode{sonarqube}), preserving the native data structure. Records are appended with standard metadata columns: ingestion timestamp, source system identifier, and batch identifier. No business logic is applied. The goal is a precise, traceable copy of source data.
 
-Bronze tables use schema on read. New fields from source \gls{api} changes are accepted through additive schema evolution without breaking pipelines. Partitioning by ingestion date enables efficient time range queries. Records failing structural validation at ingestion (malformed \gls{json}, missing required fields) are routed to quarantine tables per source with diagnostic metadata.
+Bronze tables use schema-on-read. New fields from source \gls{api} changes are accepted through incremental schema evolution without disrupting pipelines. Partitioning by ingestion date enables efficient time range queries. Records failing structural validation at ingestion (malformed \gls{json}, missing required fields) are routed to quarantine tables per data source, along with diagnostic metadata.
 
 \subsubsection{Silver Layer}
 
-The silver layer is the system of record. Silver transformations normalize heterogeneous source data into the vendor agnostic domain model from \autoref{sec:data-entities}. Three table categories make up this layer:
+The silver layer is the system of record. Silver transformations normalize diverse source data into the vendor agnostic domain model from \autoref{sec:data-entities}. Three table categories make up this layer:
 
 \begin{itemize}
     \item \textbf{Entity tables} store normalized dimension data: applications, repositories, teams, commits, pull requests, pipeline runs, dependencies, and branch protection policies. Each entity table uses a surrogate key, a natural key from the source system, and \inlinecode{valid\_from}/\inlinecode{valid\_to} timestamps for change tracking.
@@ -530,7 +530,7 @@ The \inlinecode{mapping.yml} for every connector has the same structure: a targe
 
 \subsubsection{Normalization}
 
-Three normalization rules bring heterogeneous source data to a common form:
+Three normalization rules bring diverse source data to a common form:
 
 \begin{itemize}
     \item \textbf{Severity harmonization.} Tools use different severity scales, catalogued in \autoref{sec:selected-sources} and detailed per source on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. The framework maps the native scale of each tool to the canonical four level model (critical, high, medium, low) through per tool lookup tables. The \inlinecode{severity\_lookup.yml} for each source must map every documented source value to a canonical level. Undocumented values fall through to a configurable default (\inlinecode{medium} unless overridden in the \inlinecode{config.yml} for the connector) and trigger a data quality warning. A null or missing severity is mapped to \inlinecode{medium} and flagged. These lookup tables are maintained as configuration, not code, enabling vocabulary updates without pipeline changes.
