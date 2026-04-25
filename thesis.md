@@ -93,7 +93,7 @@
         - [Connector Categories](#connector-categories)
         - [Cross cutting concerns](#cross-cutting-concerns)
         - [Connector Contract](#connector-contract)
-        - [Extension Points](#extension-points)
+        - [Connector Artifacts](#connector-artifacts)
   - [Ingestion Patterns](#ingestion-patterns)
         - [Common landing pattern](#common-landing-pattern)
         - [Bronze table template](#bronze-table-template)
@@ -3189,7 +3189,7 @@ acronym-form="singular+short">api</span> connectors implement the two
 operations directly and delegate cross cutting concerns to the
 corresponding library or helper.
 
-##### Extension Points
+##### Connector Artifacts
 
 Adding a connector produces a fixed set of artifacts that instantiate
 the contract and populate the module layout from
@@ -3826,26 +3826,68 @@ passes.
 
 ### A Note on Extension and AI Assistance
 
-Every extension point in this chapter is a template to fill in the
-blanks, covering connectors
+Every artifact this chapter prescribes is a template with named slots to
+fill in, not free form code. This covers the connector files
 (<a href="#sec:connector-framework" data-reference-type="autoref"
 data-reference="sec:connector-framework">[sec:connector-framework]</a>),
-analytics
+the analytics jobs
 (<a href="#sec:analytics-serving" data-reference-type="autoref"
 data-reference="sec:analytics-serving">[sec:analytics-serving]</a>), and
-tests (<a href="#sec:connector-testing" data-reference-type="autoref"
+the test suites
+(<a href="#sec:connector-testing" data-reference-type="autoref"
 data-reference="sec:connector-testing">[sec:connector-testing]</a>,
 <a href="#sec:analytics-testing" data-reference-type="autoref"
 data-reference="sec:analytics-testing">[sec:analytics-testing]</a>).
 This was deliberate. The framework should be amenable to AI assisted
 extension. The [external requirements
 specification](https://vkraus.github.io/appsec-docs/) catalogs three
-Claude Code skills that consume the framework extension points and
-produce a reference implementation.
+Claude Code skills that consume these templates and produce a reference
+implementation. The catalog is organized by lifecycle role, not by
+source: <span class="mark">analyze-source</span> maps a candidate source
+onto the framework taxonomy,
+<span class="mark">generate-connector</span> produces the eight
+connector artifacts listed in
+<a href="#sec:connector-framework" data-reference-type="autoref"
+data-reference="sec:connector-framework">[sec:connector-framework]</a>,
+and <span class="mark">validate-implementation</span> drives the layered
+test suite from
+<a href="#sec:connector-testing" data-reference-type="autoref"
+data-reference="sec:connector-testing">[sec:connector-testing]</a> until
+the requirement IDs from the specification are bound to passing tests.
+
+The catalog stays at three skills rather than one skill for every
+combination of role and application security category. This follows the
+recommended pattern for skills that span multiple variants of the same
+task . Each <span class="mark">SKILL.md</span> carries the role wide
+procedure. Guidance per category lives one level deeper, in a
+<span class="mark">references/\<category\>.md</span> file the agent
+reads on demand. The seven application security categories the Selected
+Nine exercise are <span class="mark">cmdb</span> ,
+<span class="mark">scm</span> , <span class="mark">sast</span> ,
+<span class="mark">sca</span> , <span class="mark">secret</span> ,
+<span class="mark">dast</span> , and <span class="mark">waf</span> . The
+category here is the source axis from the [per category capability
+matrix](https://vkraus.github.io/appsec-docs/platform/reference/source-capability-matrix/),
+not the connector category triad of
+<a href="#sec:connector-abstraction" data-reference-type="autoref"
+data-reference="sec:connector-abstraction">[sec:connector-abstraction]</a>.
+Each reference file specializes the role procedure with the dedup tuple
+from <a href="#sec:dedup" data-reference-type="autoref"
+data-reference="sec:dedup">[sec:dedup]</a>, the schema discriminator
+from the silver finding pattern
+(<a href="#sec:entity-model" data-reference-type="autoref"
+data-reference="sec:entity-model">[sec:entity-model]</a>), and the
+entries per source from the capability matrix. New categories add a
+reference file. The role procedure does not change.
+
+This shape inherits two properties from the underlying skills
+mechanism . The metadata cost stays at three descriptions in the agent
+system prompt no matter how many categories the framework grows to
+cover. The role procedure is authored once and shared across categories.
 <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a> reports on
-their execution against the nine selected sources. Hand writing
-connectors is routine with modern <span acronym-label="ai"
+the execution of the catalog against the nine selected sources. Hand
+writing connectors is routine with modern <span acronym-label="ai"
 acronym-form="singular+short">ai</span> assistance. The claim of this
 thesis is different. A well specified framework plus a small skill
 catalog makes the platform reproducibly buildable, with full
@@ -4964,14 +5006,21 @@ drives the Silver DataFrame construction would close the gap between the
 framework contract and the realized code, and would make the addition
 cost per source a configuration edit rather than a code edit.
 
-The third thread is **fine tuning the published skill catalog** until
-its invocations are self sustaining. The catalog was invoked during the
-MVP build but every connector required iterative amendments to the skill
-outputs before the delivered artifact converged. Refining the skill
-prompts, tightening the preconditions they assert, and widening the
-worked examples they carry would reduce the amendment cost per
-invocation. Running the refined catalog against the remaining seven
-sources from
+The third thread is **refining the published skill catalog**. The shape
+is settled. The catalog uses three role wide skills with specialization
+per category in <span class="mark">references/\<category\>.md</span> ,
+defended at the close of
+<a href="#ch:framework" data-reference-type="autoref"
+data-reference="ch:framework">[ch:framework]</a> against the recommended
+pattern for skills that span multiple variants of the same task.
+Structural redesign is no longer in scope. What remains is content
+tuning. The catalog was invoked during the MVP build but every connector
+required iterative amendments to the skill outputs before the delivered
+artifact converged. Tightening the preconditions asserted in each
+<span class="mark">SKILL.md</span> and widening the worked examples
+carried in each reference file per category would reduce the amendment
+cost per invocation. Running the refined catalog against the remaining
+seven sources from
 <a href="#sec:selected-sources" data-reference-type="autoref"
 data-reference="sec:selected-sources">[sec:selected-sources]</a> would
 then produce a direct measurement of the distance between
