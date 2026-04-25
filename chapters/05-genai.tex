@@ -5,28 +5,32 @@ This appendix expands the Declaration on the Use of Artificial Intelligence from
 
 The grammar and language style assistance described in the first section below used the Overleaf \gls{ai} assistant on the thesis manuscript. All other \gls{ai} assistance reported in this appendix used Claude models (Anthropic) accessed through the Claude Code \gls{cli}, with model versions spanning Claude Opus~4.5 through Claude Opus~4.7 over the drafting period of the thesis.
 
-\section{Grammar and Language Style}
+\section{Text Editing}
 
-\Gls{ai} assistance in Overleaf editor was used for grammar checking, style refinement, and editing of content I authored. I relied on the assistant throughout my drafts to identify errors, tighten phrasing, and highlight inconsistencies. I accepted, rejected, or revised the suggestions. I did not use an AI assistant as an autonomous writer of thesis content.
+\Gls{ai} assistance feature in Overleaf online editor was used for grammar checking, style refinement, synonym replacement, sentence rephrasing, and other editing of the content I originally authored. I relied on the assistant throughout my drafts to identify errors, tighten phrasing, and highlight inconsistencies. I accepted, rejected, or revised the suggestions. \textbf{I did not rely on any AI assistant to autonomously generate thesis content. I wrote all new text material in the Overleaf editor, and only afterward revised it with \Gls{ai} support.}
 
-Several review cycles were carried out across the entire thesis using the Claude Code tool with Claude Opus 4.5-4.7 models to condense it to its target length. These passes rephrased longer passages into more concise wording and relocated some details into the attached product documentation, which contains the requirements specification and reference material per data source. The restructuring decisions were mine. The AI assistant proposed cuts and re-phrasing that I accepted, rejected, or revised.
+Several review cycles were carried out across the entire thesis using the Claude Code tool with Claude Opus models to condense it to its target length. These iterations rephrased longer passages into more concise wording and relocated some details into the attached product documentation, which contains the requirements specification and reference material per data source. The restructuring decisions were mine. The AI assistant proposed cuts and rephrasing that I accepted, rejected, or revised.
 
-The research question, chapter structure, major contributions, and central claims are all mine. Literature selection, positioning against prior work (\autoref{sec:related-work}), and the conceptual domain model (\autoref{sec:data-entities}) were also authored by me.
+The research question, chapter structure, major contributions, and central claims are all mine. Positioning against prior work (\autoref{sec:related-work}) and the conceptual domain model (\autoref{sec:data-entities}) were also authored by me. Literature selection is mine, Claude Code was used to generate most bibliography entries in LaTex format.
 
-\section{Images and Other Media}
+\section{Images}
 
 \Gls{ai} assistant generated TikZ figures from my sketch or textual description of the content and layout, and together we iterated them for correctness and readability.
 
 \section{Product Documentation (\texttt{docs.zip})}
 
-The \href{https://vkraus.github.io/appsec-docs/}{product documentation}, attached as \texttt{docs.zip}, is \gls{ai} assisted content.
+The \href{https://vkraus.github.io/appsec-mvp/}{product documentation}, attached as \texttt{docs.zip}, is \gls{ai} assisted content.
 
-I authored the three skills on the \href{https://vkraus.github.io/appsec-docs/connectors/scm/skills/}{skills page} in Claude Code tool, using Anthropic skill-writing skill. I iterated each one until it produced desired output.
+I authored the three skills on the \href{https://vkraus.github.io/appsec-mvp/connectors/scm/skills/}{skills page} in Claude Code tool, using Anthropic skill writing skill. Each skill carries one \inlinecode{SKILL.md} for the role and one \inlinecode{references/<category>.md} per application security category, following the published Anthropic Pattern~2 layout defended in the Extension Blueprint section of \autoref{ch:framework}. I iterated each skill until it produced the intended output. The catalog was then used to generate connector code for the reference implementation, as disclosed in the Source Code section below..
 
 \section{Source Code (\texttt{mvp.zip})}
 
-The reference implementation in \autoref{ch:implementation} (submitted as \texttt{mvp.zip}) was built by directly coding against the framework contract (\autoref{ch:framework}) and the external requirements specification, with \gls{ai} assistance from Claude Code used conversationally through a brainstorm, plan, and execute loop. Specs and plans for the two connectors delivered (ServiceNow and GitHub) are committed under \inlinecode{docs/superpowers/} in the \inlinecode{appsec-mvp} repository. The iteration cases documented in \autoref{sec:iteration-summary} are the empirical record of this use. This is my main \gls{ai} use. \autoref{sec:ai-eval} evaluates it. The three skill files published on the \href{https://vkraus.github.io/appsec-docs/connectors/scm/skills/}{documentation site} (\inlinecode{analyze-source}, \inlinecode{generate-connector}, \inlinecode{validate-implementation}) are considered an AI executable part of the requirements specification.
+The reference implementation in \autoref{ch:implementation} (submitted as \texttt{mvp.zip}) was built in two modes, both with \gls{ai} assistance from Claude Code. The first mode was direct coding against the framework contract (\autoref{ch:framework}) and the external requirements specification, using Claude Code conversationally through a brainstorm, plan, and execute loop. The first four connectors (ServiceNow, GitHub, Semgrep, OWASP ZAP) were initially produced this way.
 
-\section{Supporting Tooling}
+The second mode was the skill chain described in the Product Documentation section above. It ran end to end against all nine selected data sources. Each pass wrote evidence rows to the product documentation (a Generation log entry and a Validation table keyed by requirement IDs).
 
-I used \gls{ai} assistance for maintaining LaTeX script files that were used to build this document.
+Both modes followed the Subagent-Driven Development pattern from the Superpowers workflow (brainstorm, spec, plan, execute). Each task was implemented by a fresh Opus subagent and then reviewed by a separate specification compliance subagent and a separate code quality subagent. The reviewer cycles caught the defect classes recorded in \autoref{sec:iteration-summary}. This is my main \gls{ai} use. \autoref{sec:ai-eval} evaluates it. The three skill files published on the \href{https://vkraus.github.io/appsec-mvp/connectors/scm/skills/}{documentation site} (\inlinecode{analyze-source}, \inlinecode{generate-connector}, \inlinecode{validate-implementation}) are considered an AI executable part of the requirements specification.
+
+\section{Supporting Tools}
+
+I used \gls{ai} assistance in Claude Code for maintaining LaTeX script files that were used to build this document.
