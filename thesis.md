@@ -43,7 +43,7 @@
   - [Comparative Analysis and Research Gap](#comparative-analysis-and-research-gap)
 - [Selected Sources](#selected-sources)
   - [Selection Criteria](#selection-criteria)
-  - [The Selected Nine](#the-selected-nine)
+  - [Selected Sources](#selected-sources-1)
   - [Considered and Excluded](#considered-and-excluded)
   - [Cross Source Synthesis](#cross-source-synthesis)
   - [Framework](#framework)
@@ -81,7 +81,7 @@
         - [Team metrics](#team-metrics)
         - [Vulnerability trends](#vulnerability-trends)
         - [Coverage analysis](#coverage-analysis)
-        - [Extension guide](#extension-guide)
+        - [Extension blueprint](#extension-blueprint)
 - [Environment and Deployment](#environment-and-deployment)
   - [Deployment Strategy](#deployment-strategy)
   - [Project Structure](#project-structure)
@@ -108,7 +108,7 @@
   - [Testing and Validation](#testing-and-validation-1)
 - [Analytics and Serving Framework](#analytics-and-serving-framework)
   - [Analytics Patterns](#analytics-patterns)
-        - [Extension blueprint](#extension-blueprint)
+        - [Extension blueprint](#extension-blueprint-1)
         - [Rule Based Analytics](#rule-based-analytics)
         - [ML Driven Analytics](#ml-driven-analytics)
   - [Serving Patterns](#serving-patterns)
@@ -116,7 +116,7 @@
         - [Operational serving](#operational-serving)
         - [Event driven serving](#event-driven-serving)
   - [Testing and Validation](#testing-and-validation-2)
-- [A Note on Extension and AI Assistance](#a-note-on-extension-and-ai-assistance)
+- [Extension Blueprint and AI Assistance](#extension-blueprint-and-ai-assistance)
   - [MVP Implementation](#mvp-implementation)
 - [Methodology](#methodology-1)
 - [Project Structure](#project-structure-1)
@@ -132,11 +132,10 @@
   - [Iteration Summary](#iteration-summary)
   - [Conclusion](#conclusion)
 - [Thesis Outcomes and Contributions](#thesis-outcomes-and-contributions)
-- [Evaluation of the AI Instantiability Claim](#evaluation-of-the-ai-instantiability-claim)
-  - [Acceptance rubric](#acceptance-rubric)
+- [Evaluation of AI Instantiability](#evaluation-of-ai-instantiability)
+  - [Acceptance criterion](#acceptance-criterion)
   - [Empirical outcome](#empirical-outcome)
   - [Claim defended](#claim-defended)
-  - [Provenance](#provenance)
 - [Limitations](#limitations)
 - [Future Work](#future-work)
 - [Appendices](#appendices)
@@ -189,20 +188,18 @@ preparation of the submitted work. Specifically, they were used in the
 following ways:
 
 - improvement of grammar, language style, and conciseness of the thesis,
-  including review passes that shortened the manuscript by rephrasing
-  longer prose and relocating detail into the attached product
+  including review cycles that shortened the text by rephrasing longer
+  passages and relocating details into the attached product
   documentation,
 
-- generation of images and other media in the thesis,
+- generation of source code for figures in the thesis,
+
+- generation of source code attached to the thesis (`mvp.zip`),
 
 - generation of product documentation attached to the thesis
   (`docs.zip`),
 
-- generation of source code attached to the thesis (`mvp.zip`),
-
-- assistance with supporting tooling not submitted with the thesis, such
-  as LaTeX build and continuous integration configuration and prose
-  migration scripts.
+- assistance with the LaTeX build scripts.
 
 =1.5em Each use of any of the above methods is separately documented in
 an appendix to the thesis, which provides a more detailed explanation of
@@ -828,10 +825,7 @@ acronym-form="singular+short">scm</span> platforms expose comparable
 (and sometimes GraphQL) <span acronym-label="api"
 acronym-form="plural+short">apis</span>:
 [GitLab](https://vkraus.github.io/appsec-docs/connectors/scm/gitlab/),
-Bitbucket, and Azure DevOps Repos. Details for each of the selected nine
-sources are on the [connectors reference
-hub](https://vkraus.github.io/appsec-docs/connectors/). Other tools
-named in this survey do not have dedicated reference pages.
+Bitbucket, and Azure DevOps Repos.
 
 #### Continuous Integration and Delivery
 
@@ -879,9 +873,6 @@ retrieved data is structurally similar: pipeline identifiers, run
 statuses, timestamps, and commit references. None of these
 <span acronym-label="cicd" acronym-form="singular+short">cicd</span>
 platforms is built as a connector in the reference implementation.
-Details for each of the selected nine sources are on the [connectors
-reference hub](https://vkraus.github.io/appsec-docs/connectors/). Other
-tools named in this survey do not have dedicated reference pages.
 
 #### Issue Tracking
 
@@ -906,10 +897,7 @@ acronym-form="plural+short">apis</span> with <span acronym-label="json"
 acronym-form="singular+short">json</span> responses and paginated
 results, and most support webhooks for real time status change
 notifications. None is built as a connector in the reference
-implementation. Details for each of the selected nine sources are on the
-[connectors reference
-hub](https://vkraus.github.io/appsec-docs/connectors/). Other tools
-named in this survey do not have dedicated reference pages.
+implementation.
 
 Integration is bidirectional: the framework reads remediation status and
 may create new issues when findings require attention. This raises
@@ -1015,12 +1003,9 @@ acronym-form="singular+short">scm</span> <span acronym-label="api"
 acronym-form="singular+short">api</span>. Commercial alternatives
 include Checkmarx and Fortify, both exposing <span acronym-label="rest"
 acronym-form="singular+short">rest</span> <span acronym-label="api"
-acronym-form="plural+short">apis</span>. Details for each of the
-selected nine sources are on the [connectors reference
-hub](https://vkraus.github.io/appsec-docs/connectors/). Other tools
-named in this survey do not have dedicated reference pages. When
-platform native and standalone tools scan the same repository, the
-overlap requires deduplication in the normalization layer.
+acronym-form="plural+short">apis</span>. When platform native and
+standalone tools scan the same repository, the overlap requires
+deduplication in the normalization layer.
 
 Findings typically include a rule identifier, affected file path and
 line number, severity, code snippet, and remediation guidance. Severity
@@ -1061,14 +1046,11 @@ Snyk exposes a <span acronym-label="rest"
 acronym-form="singular+short">rest</span> <span acronym-label="api"
 acronym-form="singular+short">api</span>, and Dependabot exposes alerts
 through the GitHub GraphQL <span acronym-label="api"
-acronym-form="singular+short">api</span>. Details for each of the
-selected nine sources are on the [connectors reference
-hub](https://vkraus.github.io/appsec-docs/connectors/). Other tools
-named in this survey do not have dedicated reference pages. Many
-<span acronym-label="sca" acronym-form="singular+short">sca</span> tools
-also generate <span acronym-label="sbom"
-acronym-form="plural+short">sboms</span> , increasingly required by
-regulators . <a href="#ch:implementation" data-reference-type="autoref"
+acronym-form="singular+short">api</span>. Many <span acronym-label="sca"
+acronym-form="singular+short">sca</span> tools also generate
+<span acronym-label="sbom" acronym-form="plural+short">sboms</span> ,
+increasingly required by regulators .
+<a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a> resolves
 Dependency-Track to <span acronym-label="dltool"
 acronym-form="singular+short">dltool</span>, and GitHub Dependabot and
@@ -1114,10 +1096,7 @@ acronym-form="singular+short">xml</span> reports from
 runs, fits the same <span acronym-label="cli"
 acronym-form="singular+short">cli</span> artifact ingestion pattern as
 Semgrep’s <span acronym-label="cli"
-acronym-form="singular+short">cli</span> mode. Details for each of the
-selected nine sources are on the [connectors reference
-hub](https://vkraus.github.io/appsec-docs/connectors/). Other tools
-named in this survey do not have dedicated reference pages.
+acronym-form="singular+short">cli</span> mode.
 
 #### Secret Detection
 
@@ -1140,10 +1119,7 @@ acronym-form="singular+short">cli</span> oriented alternatives, and
 commercial offerings such as GitGuardian expose
 <span acronym-label="rest" acronym-form="singular+short">rest</span>
 <span acronym-label="api" acronym-form="plural+short">apis</span> for
-centralized management. Details for each of the selected nine sources
-are on the [connectors reference
-hub](https://vkraus.github.io/appsec-docs/connectors/). Other tools
-named in this survey do not have dedicated reference pages.
+centralized management.
 
 Scanners integrated into the platform differ. GitHub Secret Scanning
 exposes alerts through the GitHub <span acronym-label="rest"
@@ -1200,11 +1176,8 @@ reference](https://vkraus.github.io/appsec-docs/connectors/dast/owasp-zap/)).
 Burp Suite Enterprise exposes a <span acronym-label="rest"
 acronym-form="singular+short">rest</span> <span acronym-label="api"
 acronym-form="singular+short">api</span>, while the Professional edition
-is a desktop tool without programmatic access. Details for each of the
-selected nine sources are on the [connectors reference
-hub](https://vkraus.github.io/appsec-docs/connectors/). Other tools
-named in this survey do not have dedicated reference pages. Findings
-include the target <span acronym-label="url"
+is a desktop tool without programmatic access. Findings include the
+target <span acronym-label="url"
 acronym-form="singular+short">url</span>, affected
 <span acronym-label="http" acronym-form="singular+short">http</span>
 parameter, vulnerability type mapped to <span acronym-label="cwe"
@@ -1261,10 +1234,7 @@ reference](https://vkraus.github.io/appsec-docs/connectors/waf/aws-waf/)).
 Cloudflare and Akamai expose comparable <span acronym-label="rest"
 acronym-form="singular+short">rest</span> <span acronym-label="api"
 acronym-form="plural+short">apis</span> for log retrieval and
-configuration. Details for each of the selected nine sources are on the
-[connectors reference
-hub](https://vkraus.github.io/appsec-docs/connectors/). Other tools
-named in this survey do not have dedicated reference pages.
+configuration.
 
 These platforms bundle <span acronym-label="ddos"
 acronym-form="singular+short">ddos</span> protection alongside
@@ -1680,8 +1650,8 @@ The nine sources are selected based on five criteria:
 
 5.  **Industry adoption.** Each tool is in widespread enterprise use.
 
-A summary of the variation in incremental strategies among the Selected
-Nine is presented in
+A summary of the variation in incremental strategies among the selected
+sources is presented in
 <a href="#tab:incremental-strategies" data-reference-type="autoref"
 data-reference="tab:incremental-strategies">[tab:incremental-strategies]</a>.
 
@@ -1705,7 +1675,7 @@ in and the Lakeflow Declarative Pipelines operations guidance in .
 Pairings of source and strategy are author attributions based on the API
 capability matrix per source.
 
-#### The Selected Nine
+#### Selected Sources
 
 - **ServiceNow**: <span acronym-label="cmdb"
   acronym-form="singular+short">cmdb</span>. Dominant enterprise
@@ -1788,7 +1758,7 @@ capability matrix per source.
   tag represent the runtime security tier and exercise the time window
   sampled retrieval pattern.
 
-Details for each of the selected nine sources are on the [connectors
+Details for each of the selected sources are on the [connectors
 reference hub](https://vkraus.github.io/appsec-docs/connectors/). Other
 tools named in this survey do not have dedicated reference pages.
 
@@ -1796,10 +1766,10 @@ tools named in this survey do not have dedicated reference pages.
 
 <a href="#tab:considered-excluded" data-reference-type="autoref"
 data-reference="tab:considered-excluded">[tab:considered-excluded]</a>
-enumerates the principal tools that were considered and the criterion
-that excluded each. Tools marked **within scope, deferred** pass all
-criteria but sit outside the cap in Criterion 4. Onboarding them is a
-repeat of the procedure per source in
+enumerates the key tools that were considered and the criterion that
+excluded each. Tools marked **within scope, deferred** satisfy all
+criteria but are excluded based on the cap in Criterion 4. Onboarding
+them would simply be a repeat of the procedure per source in
 <a href="#sec:impl-methodology" data-reference-type="autoref"
 data-reference="sec:impl-methodology">[sec:impl-methodology]</a>.
 
@@ -2659,10 +2629,10 @@ acronym-form="singular+short">sast</span> pipeline runs likely lacks
 static analysis integration. This lets security teams prioritize tooling
 rollout.
 
-##### Extension guide
+##### Extension blueprint
 
-Adding a new gold table follows a consistent process: define the grain
-(entity and time period), specify the metrics, write a
+Adding a new gold table follows a consistent process: define the
+granularity (entity and time period), specify the metrics, write a
 <span acronym-label="ldp" acronym-form="singular+short">ldp</span>
 transformation from silver to gold, and configure the refresh strategy.
 The aggregation pattern ensures all gold tables share a common query
@@ -2676,10 +2646,10 @@ with connectors or analytics, the deployment environment must be
 provisioned and the codebase organized. **This section assumes a working
 Databricks environment.** Account onboarding, workspace creation,
 networking, and <span acronym-label="iam"
-acronym-form="singular+short">iam</span> federation are outside scope.
-The scope of the framework begins at the workspace level and divides its
-own deployment into two tiers: workspace scoped resources are
-provisioned with Terraform, and application artifacts run inside the
+acronym-form="singular+short">iam</span> federation are outside the
+scope. The scope of the framework begins at the workspace level and
+divides its own deployment into two tiers: workspace scoped resources
+are provisioned with Terraform, and application artifacts run inside the
 workspace as Databricks Asset Bundles. The rest of this section covers
 those two tiers, the project structure they organize, pipeline
 orchestration, monitoring, and deployment level verification. These are
@@ -3192,15 +3162,15 @@ corresponding library or helper.
 
 ##### Connector Artifacts
 
-Adding a connector produces a fixed set of artifacts that instantiate
-the contract and populate the module layout from
+Adding a connector produces a set of artifacts that instantiate the
+contract and populate the module template from
 <a href="#sec:project-structure" data-reference-type="autoref"
 data-reference="sec:project-structure">[sec:project-structure]</a>. The
-list is identical for all three categories. Differences appear only in
-how individual artifacts are populated:
+list is identical for all three categories. Differences are only in how
+individual artifacts are populated:
 
 1.   <span class="mark">src/connectors/{source}/config.yml</span> :
-    source parameters, namely the base <span acronym-label="url"
+    source parameters, like the base <span acronym-label="url"
     acronym-form="singular+short">url</span>, endpoints, pagination
     strategy (offset or cursor), rate limit, the high water mark column
     name, and the target bronze table name.
@@ -3783,9 +3753,9 @@ resolution progress.
 #### Testing and Validation
 
 Rule based analytics are validated by snapshot comparison. Each test
-supplies silver fixtures with known values and asserts the gold output
-matches a curated expected table exactly, using PySpark DataFrame
-assertions on aggregation outputs. Fixtures cover the computation
+supplies silver test cases with known values and confirms that the gold
+output matches expected table exactly, using PySpark DataFrame
+assertions on aggregation outputs. Test cases cover the computation
 boundaries from
 <a href="#sec:analytics-patterns" data-reference-type="autoref"
 data-reference="sec:analytics-patterns">[sec:analytics-patterns]</a>:
@@ -3824,10 +3794,10 @@ The required test suite covers:
 New analytics or serving configurations do not merge until this suite
 passes.
 
-### A Note on Extension and AI Assistance
+### Extension Blueprint and AI Assistance
 
-Every artifact this chapter prescribes is a template with named slots to
-fill in, not free form code. This covers the connector files
+Each artifact specified in this chapter is a template rather than
+unrestricted, free-form code. This covers the connector files
 (<a href="#sec:connector-framework" data-reference-type="autoref"
 data-reference="sec:connector-framework">[sec:connector-framework]</a>),
 the analytics jobs
@@ -3838,60 +3808,48 @@ the test suites
 data-reference="sec:connector-testing">[sec:connector-testing]</a>,
 <a href="#sec:analytics-testing" data-reference-type="autoref"
 data-reference="sec:analytics-testing">[sec:analytics-testing]</a>).
-This was deliberate. The framework should be amenable to AI assisted
+This was an objective. The framework should be suited to AI assisted
 extension. The [external requirements
-specification](https://vkraus.github.io/appsec-docs/) catalogs three
+specification](https://vkraus.github.io/appsec-docs/) provides three
 Claude Code skills that consume these templates and produce a reference
-implementation. The catalog is organized by lifecycle role, not by
-source: <span class="mark">analyze-source</span> maps a candidate source
-onto the framework taxonomy,
-<span class="mark">generate-connector</span> produces the eight
-connector artifacts listed in
+implementation. The skills are organized by phase:
+<span class="mark">analyze-source</span> maps a new data source onto the
+framework, <span class="mark">generate-connector</span> produces the
+eight connector artifacts listed in
 <a href="#sec:connector-framework" data-reference-type="autoref"
 data-reference="sec:connector-framework">[sec:connector-framework]</a>,
-and <span class="mark">validate-implementation</span> drives the layered
-test suite from
+and <span class="mark">validate-implementation</span> runs the test
+suite from
 <a href="#sec:connector-testing" data-reference-type="autoref"
 data-reference="sec:connector-testing">[sec:connector-testing]</a> until
-the requirement IDs from the specification are bound to passing tests.
+the requirements from the specification are mapped to passing tests.
 
-The catalog stays at three skills rather than one skill for every
-combination of role and application security category. This follows the
-recommended pattern for skills that span multiple variants of the same
-task . Each <span class="mark">SKILL.md</span> carries the role wide
-procedure. Guidance per category lives one level deeper, in a
-<span class="mark">references/\<category\>.md</span> file the agent
-reads on demand. The seven application security categories the Selected
-Nine exercise are <span class="mark">cmdb</span> ,
-<span class="mark">scm</span> , <span class="mark">sast</span> ,
-<span class="mark">sca</span> , <span class="mark">secret</span> ,
-<span class="mark">dast</span> , and <span class="mark">waf</span> . The
-category here is the source axis from the [per category capability
-matrix](https://vkraus.github.io/appsec-docs/platform/reference/source-capability-matrix/),
-not the connector category triad of
-<a href="#sec:connector-abstraction" data-reference-type="autoref"
-data-reference="sec:connector-abstraction">[sec:connector-abstraction]</a>.
-Each reference file specializes the role procedure with the dedup tuple
-from <a href="#sec:dedup" data-reference-type="autoref"
-data-reference="sec:dedup">[sec:dedup]</a>, the schema discriminator
-from the silver finding pattern
-(<a href="#sec:entity-model" data-reference-type="autoref"
-data-reference="sec:entity-model">[sec:entity-model]</a>), and the
-entries per source from the capability matrix. New categories add a
-reference file. The role procedure does not change.
+It was a conscious design decision that the set consists of three skills
+rather than a dedicated skill for every combination of role and
+application security category. This follows the recommended pattern for
+skills that span multiple variants of the same task . Each
+<span class="mark">SKILL.md</span> carries the role wide procedure.
+Guidance per category lives one level deeper, in a
+<span class="mark">references/\<category\>.md</span> file that the agent
+reads on demand. The seven application security categories are
+<span class="mark">cmdb</span> , <span class="mark">scm</span> ,
+<span class="mark">sast</span> , <span class="mark">sca</span> ,
+<span class="mark">secret</span> , <span class="mark">dast</span> , and
+<span class="mark">waf</span> .
 
-This shape inherits two properties from the underlying skills
-mechanism . The metadata cost stays at three descriptions in the agent
-system prompt no matter how many categories the framework grows to
-cover. The role procedure is authored once and shared across categories.
+This structure inherits two properties from the underlying skills
+mechanism .The metadata overhead in the agent’s system prompt remains
+fixed at three descriptions, regardless of how many categories are
+eventually added to the framework. The procedure is authored once and
+shared across categories.
 <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a> reports on
-the execution of the catalog against the nine selected sources. Hand
-writing connectors is routine with modern <span acronym-label="ai"
-acronym-form="singular+short">ai</span> assistance. The claim of this
-thesis is different. A well specified framework plus a small skill
-catalog makes the platform reproducibly buildable, with full
-traceability from test to requirement in the specification itself.
+the execution of the catalog against the selected sources. Manually
+writing connectors is mundane. The approach of this thesis relies on
+modern <span acronym-label="ai" acronym-form="singular+short">ai</span>
+assistance. A well specified framework plus a compact skill set makes
+the platform reproducibly constructible, with full traceability from
+test to requirement directly in the specification.
 
 ## MVP Implementation
 
@@ -4758,19 +4716,20 @@ further specification.
 ### Thesis Outcomes and Contributions
 
 This thesis delivers the three contributions announced in the abstract,
-each grounded in a dedicated chapter, and evaluated against the design
-science framing of and the outcome evaluation guidance of . The first
+each targeted in a dedicated chapter and evaluated against the design
+science framework of and the outcome evaluation guidance of . The first
 contribution is a **requirements specification** for an application
 security data platform.
 <a href="#ch:analysis" data-reference-type="autoref"
 data-reference="ch:analysis">[ch:analysis]</a> motivates the
 specification, surveys the data sources and integration patterns that
 inform it, and catalogs the functional and nonfunctional requirements it
-must satisfy. The specification text itself was externalized to the
-product documentation site rather than carried as a thesis appendix, and
+must satisfy. Because of its substantial length, the specification text
+was moved to the product documentation website and included as a thesis
+attachment instead of being placed in an appendix, and
 <a href="#ch:analysis" data-reference-type="autoref"
-data-reference="ch:analysis">[ch:analysis]</a> links into that site at
-the relevant points. The second contribution is a **reusable and
+data-reference="ch:analysis">[ch:analysis]</a> refers to the website
+where appropriate.. The second contribution is a **reusable and
 extensible framework** delivered in
 <a href="#ch:framework" data-reference-type="autoref"
 data-reference="ch:framework">[ch:framework]</a>, covering the reference
@@ -4779,17 +4738,17 @@ carries source records through to the consumption layer. The third
 contribution is a **reference implementation** delivered in
 <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a>, built on the
-Databricks platform and instantiating the framework against two
-representative sources.
+Databricks platform and instantiating the framework against selected
+data sources.
 
 The reusability and extensibility claim of the framework is defended
 empirically by
 <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a>. The
-reference implementation instantiates the framework against two sources
-with distinct integration patterns. ServiceNow is ingested through
-Lakeflow Connect as a managed connector, and GitHub is ingested through
-PyGitHub under the connector contract specified in
+reference implementation instantiates the framework against selected
+sources with distinct integration patterns. For instance, ServiceNow is
+ingested through Lakeflow Connect as a managed connector, and GitHub is
+ingested through PyGitHub under the connector contract specified in
 <a href="#sec:connector-framework" data-reference-type="autoref"
 data-reference="sec:connector-framework">[sec:connector-framework]</a>.
 The framework is **reusable** in the concrete sense that
@@ -4797,56 +4756,44 @@ The framework is **reusable** in the concrete sense that
 data-reference="ch:implementation">[ch:implementation]</a> introduced no
 new connector level design decisions beyond the choice of which sources
 to onboard. Every architectural question had already been answered by
-the framework contract. The framework is **extensible** in the concrete
-sense that onboarding a further source reduces to the four step
-procedure described in
+the framework contract. The framework is **extensible** in the sense
+that onboarding a new source reduces to the four step procedure
+described in
 <a href="#sec:impl-methodology" data-reference-type="autoref"
 data-reference="sec:impl-methodology">[sec:impl-methodology]</a>. That
 procedure covers ingestion category resolution, module instantiation per
 connector, declarative mapping, and layered testing, and it leaves no
 design work at the connector level.
 
-The decision to externalize the requirements specification to the
-[product documentation site](https://vkraus.github.io/appsec-docs/) is
-deliberate. It keeps the specification reviewable and updatable on its
-own cadence, independently of the thesis manuscript, and it lets
-downstream consumers track changes without reprinting a frozen appendix.
-The thesis chapters link into the site at the points where a requirement
-is first introduced, so the narrative remains self contained for a
-reader who follows only the printed text, while the requirement text
-remains a single source of truth for the implementation.
-
-### Evaluation of the AI Instantiability Claim
+### Evaluation of AI Instantiability
 
 <a href="#ch:framework" data-reference-type="autoref"
-data-reference="ch:framework">[ch:framework]</a> committed the artifacts
-of the framework to a declarative form intended to be consumable by an
-<span acronym-label="ai" acronym-form="singular+short">ai</span> coding
-agent. The original Methodology target was fully autonomous generation
-of the reference implementation from the [skill catalog on the
-documentation
-site](https://vkraus.github.io/appsec-docs/connectors/scm/skills/). The
-reference implementation delivered in
+data-reference="ch:framework">[ch:framework]</a> aimed the outputs of
+the framework to be consumable by an <span acronym-label="ai"
+acronym-form="singular+short">ai</span> coding agent. The original
+methodology target was fully autonomous generation of the reference
+implementation from the agent [skill catalog on the documentation
+site](https://vkraus.github.io/appsec-docs/connectors/scm/skills/). MVP
+implementation delivered in
 <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a> was produced
-by <span acronym-label="ai" acronym-form="singular+short">ai</span>
-assisted direct coding against the framework contract and the external
-requirements specification. Invocations of the published skill catalog
-were attempted during the build. They required iterative amendment at
-every connector and did not produce the delivered artifact without
-supervision. This section states what that weaker empirical path does
-and does not establish.
+by invocations of the published skill set. At first, iterative
+amendments of the skills were necessary. These amendments served as
+feedback to improve the agent skill set.
 
-#### Acceptance rubric
+#### Acceptance criterion
 
-A correction counts as a **framework gap** when two conditions hold.
-Extending the framework specification (schema pattern, connector
-contract, or declarative artifact such as
-<span class="mark">mapping.yml</span> ) would have produced the right
-output on first pass, and the extension would generalize to other
-sources in the same category. Corrections that trace to source specific
-noise (**source quirks**) or to setup and authentication plumbing
-outside scope (**environment glue**) do not count against the framework.
+A correction counts as a **framework gap** when two conditions are met:
+
+- Extending the framework specification (schema pattern, connector
+  contract, or declarative artifact such as
+  <span class="mark">mapping.yml</span> ) would have produced the right
+  output on first pass
+
+- The extension would generalize to other sources in the same category.
+  Corrections that trace to source specific noise (**source quirks**) or
+  to setup and authentication plumbing outside scope (**environment
+  glue**) do not count against the framework.
 
 #### Empirical outcome
 
@@ -4884,16 +4831,10 @@ skill catalog until invocations are self sustaining would measure the
 distance from instantiable to autonomous. That is the subject of Future
 Work.
 
-#### Provenance
-
-The iteration log that supports this evaluation is disclosed in
-<a href="#app:genai" data-reference-type="autoref"
-data-reference="app:genai">[app:genai]</a>.
-
 ### Limitations
 
 The **scope of validation** is narrower than the scope of the framework.
-Of the nine sources selected in
+Of the sources selected in
 <a href="#sec:selected-sources" data-reference-type="autoref"
 data-reference="sec:selected-sources">[sec:selected-sources]</a>, only
 two were built as working connectors, namely ServiceNow and GitHub. The
@@ -4940,8 +4881,8 @@ stronger measurement. That measurement is the controlled user study
 queued in <a href="#sec:future-work" data-reference-type="autoref"
 data-reference="sec:future-work">[sec:future-work]</a>.
 
-The **variation** of the Selected Nine is biased toward REST JSON APIs
-with token authentication. Seven of the nine sources (ServiceNow,
+The **variation** of the selected sources is biased toward REST JSON
+APIs with token authentication. Seven of the nine sources (ServiceNow,
 GitHub, GitLab, SonarQube, Dependency-Track, OWASP ZAP, AWS WAF) fall
 into this category, which is also the category Lakeflow Connect and
 maintained Python SDKs support. The two artifact file sources (Semgrep
@@ -5030,7 +4971,7 @@ instantiable (demonstrated) and <span acronym-label="ai"
 acronym-form="singular+short">ai</span> autonomous (claimed as future).
 
 The fourth thread is **building connectors for the remaining seven
-Selected Nine**. GitLab, SonarQube, Semgrep, Dependency-Track,
+selected sources**. GitLab, SonarQube, Semgrep, Dependency-Track,
 TruffleHog, OWASP ZAP, and AWS WAF are resolved to ingestion categories
 in <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a> but sit as
@@ -5126,22 +5067,21 @@ authored by me.
 
 ### Images and Other Media
 
-The assistant drafted TikZ figures from a sketch or description of the
-content and layout, and I revised them for correctness and readability.
+<span acronym-label="ai" acronym-form="singular+short">ai</span>
+assistant generated TikZ figures from my sketch or textual description
+of the content and layout, and together we iterated them for correctness
+and readability.
 
 ### Product Documentation (`docs.zip`)
 
 The [product documentation](https://vkraus.github.io/appsec-docs/),
-attached as `docs.zip`, is human authored and <span acronym-label="ai"
-acronym-form="singular+short">ai</span> assisted content. I authored the
-capability matrix, data mapping, and reference sections per source with
-<span acronym-label="ai" acronym-form="singular+short">ai</span>
-assistance for drafting and consistency passes.
+attached as `docs.zip`, is <span acronym-label="ai"
+acronym-form="singular+short">ai</span> assisted content.
 
 I authored the three skills on the [skills
-page](https://vkraus.github.io/appsec-docs/connectors/scm/skills/) with
-Claude Code using Anthropic skill-writing skill. I iterated each one
-until it produced desired output.
+page](https://vkraus.github.io/appsec-docs/connectors/scm/skills/) in
+Claude Code tool, using Anthropic skill-writing skill. I iterated each
+one until it produced desired output.
 
 ### Source Code (`mvp.zip`)
 
