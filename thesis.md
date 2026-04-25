@@ -280,12 +280,12 @@ security architect in a large organization with thousands of developers
 and tens of thousands of repositories, I have seen firsthand how hard
 this environment is to secure. Two classes of difficulty dominate.
 
-The first is **detection heterogeneity**. Tools in the same category
-scan differently and produce different results, so a single tool is
-rarely sufficient . Running multiple tools in parallel improves coverage
-but creates the opposite problem: the same vulnerability is reported
-several times, and findings must be deduplicated before they can be
-triaged or counted .
+The first is **detection diversity**. Tools in the same category scan
+differently and produce different results, so a single tool is rarely
+sufficient . Running multiple tools in parallel improves coverage but
+creates the opposite problem: the same vulnerability is reported several
+times, and findings must be deduplicated before they can be triaged or
+counted .
 
 The second is **data consolidation**. Findings lack the business context
 needed for prioritization: the owning application, its criticality tier,
@@ -348,10 +348,10 @@ data-reference="ch:implementation">[ch:implementation]</a> and
 data-reference="sec:ai-eval">[sec:ai-eval]</a> examine how far this
 reduction holds under the empirical methodology actually exercised.
 
-This raises the central research question: **how can heterogeneous
-enterprise application security findings be consolidated into a unified,
-vendor agnostic data platform that serves the analytical and operational
-needs of security teams?**
+This raises the central research question: **how can diverse enterprise
+application security findings be consolidated into a unified, vendor
+agnostic data platform that serves the analytical and operational needs
+of security teams?**
 
 ### Objective
 
@@ -1308,7 +1308,7 @@ data-reference="ch:framework">[ch:framework]</a> must accommodate.
 
 ### Data Engineering
 
-Consolidating the heterogeneous sources analyzed above into a unified
+Consolidating the diverse sources analyzed above into a unified
 analytical platform is a data integration problem. This section surveys
 the architectural paradigms and engineering patterns relevant to solving
 it.
@@ -1640,13 +1640,13 @@ The reference implementation in
 <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a> instantiates
 the framework against nine source systems chosen to cover the ingestion
-and integration patterns the framework must support, while keeping the
-sample tractable. The selection spans all three detection tiers: static
-testing, dynamic testing, and runtime security.
+and integration patterns that the framework must support, while keeping
+the sample tractable. The selection spans all three detection tiers:
+static testing, dynamic testing, and runtime security.
 
 #### Selection Criteria
 
-The nine sources are selected against five criteria:
+The nine sources are selected based on five criteria:
 
 1.  **Open source or free tier available.** The reference implementation
     must be reproducible without commercial licenses.
@@ -1673,15 +1673,15 @@ The nine sources are selected against five criteria:
     TruffleHog) sources so the connector contract is exercised across
     integration styles.
 
-4.  **Heterogeneity bound at nine for scope control.** The nine sources
-    cover the ingestion and integration patterns the framework must
-    support. A wider sample would dilute pattern coverage without
-    strengthening the framework claim.
+4.  **Limit heterogeneity to nine to maintain scope control.** The nine
+    sources cover the ingestion and integration patterns that the
+    framework must support. A wider sample would dilute pattern coverage
+    without strengthening the framework claim.
 
 5.  **Industry adoption.** Each tool is in widespread enterprise use.
 
-Incremental strategy heterogeneity across the Selected Nine is
-summarized in
+A summary of the variation in incremental strategies among the Selected
+Nine is presented in
 <a href="#tab:incremental-strategies" data-reference-type="autoref"
 data-reference="tab:incremental-strategies">[tab:incremental-strategies]</a>.
 
@@ -2101,29 +2101,30 @@ illustrates the layer structure and transformations between them.
 
 ##### Bronze Layer
 
-The bronze layer stores raw data from each source with minimal
-transformation. Each connector writes to its own schema (e.g.,
+The bronze layer stores raw data from each source with none or minimal
+transformation. Each connector writes to its own bronze schema (e.g.,
 <span class="mark">github</span> , <span class="mark">servicenow</span>
-, <span class="mark">sonarqube</span> ), preserving the native source
+, <span class="mark">sonarqube</span> ), preserving the native data
 structure. Records are appended with standard metadata columns:
 ingestion timestamp, source system identifier, and batch identifier. No
-business logic is applied. The goal is an exact, auditable copy of
+business logic is applied. The goal is a precise, traceable copy of
 source data.
 
-Bronze tables use schema on read. New fields from source
+Bronze tables use schema-on-read. New fields from source
 <span acronym-label="api" acronym-form="singular+short">api</span>
-changes are accepted through additive schema evolution without breaking
-pipelines. Partitioning by ingestion date enables efficient time range
-queries. Records failing structural validation at ingestion (malformed
-<span acronym-label="json" acronym-form="singular+short">json</span>,
-missing required fields) are routed to quarantine tables per source with
-diagnostic metadata.
+changes are accepted through incremental schema evolution without
+disrupting pipelines. Partitioning by ingestion date enables efficient
+time range queries. Records failing structural validation at ingestion
+(malformed <span acronym-label="json"
+acronym-form="singular+short">json</span>, missing required fields) are
+routed to quarantine tables per data source, along with diagnostic
+metadata.
 
 ##### Silver Layer
 
 The silver layer is the system of record. Silver transformations
-normalize heterogeneous source data into the vendor agnostic domain
-model from <a href="#sec:data-entities" data-reference-type="autoref"
+normalize diverse source data into the vendor agnostic domain model from
+<a href="#sec:data-entities" data-reference-type="autoref"
 data-reference="sec:data-entities">[sec:data-entities]</a>. Three table
 categories make up this layer:
 
@@ -3381,8 +3382,7 @@ redeploy. A worked example for one source (SonarQube) is published at
 
 ##### Normalization
 
-Three normalization rules bring heterogeneous source data to a common
-form:
+Three normalization rules bring diverse source data to a common form:
 
 - **Severity harmonization.** Tools use different severity scales,
   catalogued in
@@ -4940,20 +4940,20 @@ stronger measurement. That measurement is the controlled user study
 queued in <a href="#sec:future-work" data-reference-type="autoref"
 data-reference="sec:future-work">[sec:future-work]</a>.
 
-The **sampled heterogeneity** of the Selected Nine is biased toward REST
-JSON APIs with token authentication. Seven of the nine sources
-(ServiceNow, GitHub, GitLab, SonarQube, Dependency-Track, OWASP ZAP, AWS
-WAF) fall into this category, which is also the category Lakeflow
-Connect and maintained Python SDKs support. The two artifact file
-sources (Semgrep CLI, TruffleHog) deliver reports via S3 rather than an
-interactive API. Source categories that the framework has **not** been
-demonstrated against include SOAP APIs, gRPC, syslog streams, Kafka
-event streams, binary protocol telemetry, and push only webhook native
+The **variation** of the Selected Nine is biased toward REST JSON APIs
+with token authentication. Seven of the nine sources (ServiceNow,
+GitHub, GitLab, SonarQube, Dependency-Track, OWASP ZAP, AWS WAF) fall
+into this category, which is also the category Lakeflow Connect and
+maintained Python SDKs support. The two artifact file sources (Semgrep
+CLI, TruffleHog) deliver reports via S3 rather than an interactive API.
+Source categories against which the framework has **not** been
+demonstrated include SOAP APIs, gRPC, syslog streams, Kafka event
+streams, binary protocol telemetry, and push only webhook native
 sources. The contract in
 <a href="#sec:connector-framework" data-reference-type="autoref"
 data-reference="sec:connector-framework">[sec:connector-framework]</a>
 is written to accommodate these categories, but the evidence supporting
-that claim is category by category absent.
+that claim is absent on a category by category basis.
 
 The **threats to validity** of the empirical claims are correspondingly
 concrete. The reference implementation has not been deployed into a
@@ -4970,15 +4970,16 @@ summarized in
 data-reference="sec:iteration-summary">[sec:iteration-summary]</a> is
 observational and does not establish a statistical bound on the rate at
 which framework gaps occur. The published skill catalog on the product
-documentation site was invoked during the MVP build but its invocations
+documentation site was invoked during the MVP build, but its invocations
 required iterative amendment at every connector rather than sustaining
 themselves end to end, which leaves its fitness for autonomous
 instantiation unproven.
 
 ### Future Work
 
-The most immediate thread is **closing the framework gaps** identified
-in <a href="#sec:iteration-summary" data-reference-type="autoref"
+The most immediate area of focus is **closing the framework gaps**
+identified in
+<a href="#sec:iteration-summary" data-reference-type="autoref"
 data-reference="sec:iteration-summary">[sec:iteration-summary]</a>. Both
 gaps trace to the same missing primitive, an enforced boundary between
 <span class="mark">src/common/</span> and connectors for each source. A
@@ -5014,10 +5015,10 @@ defended at the close of
 data-reference="ch:framework">[ch:framework]</a> against the recommended
 pattern for skills that span multiple variants of the same task.
 Structural redesign is no longer in scope. What remains is content
-tuning. The catalog was invoked during the MVP build but every connector
-required iterative amendments to the skill outputs before the delivered
-artifact converged. Tightening the preconditions asserted in each
-<span class="mark">SKILL.md</span> and widening the worked examples
+tuning. The catalog was invoked during the MVP build, but every
+connector required iterative amendments to the skill outputs before the
+delivered artifact converged. Tightening the preconditions asserted in
+each <span class="mark">SKILL.md</span> and widening the worked examples
 carried in each reference file per category would reduce the amendment
 cost per invocation. Running the refined catalog against the remaining
 seven sources from
@@ -5048,15 +5049,15 @@ and would expose any residual coupling to Databricks specific runtime
 assumptions.
 
 The sixth thread is **downstream analytics on the gold layer**. The gold
-tables are positioned for consumption but no consumer has been
+tables are positioned for consumption, but no consumer has been
 implemented against them. Large Language Model assisted triage and
 correlation over the gold layer is a natural extension and would
 exercise the data model in the direction it was designed for.
 
 The seventh thread is a **controlled user study**. The
 <span acronym-label="ai" acronym-form="singular+short">ai</span>
-instantiability evaluation is a demonstration by a single operator, and
-a study across multiple operators, or across sources handed to operators
+feasibility evaluation is a demonstration by a single operator, and a
+study across multiple operators, or across sources handed to operators
 blind, would produce statistical evidence rather than existence proof
 evidence.
 
@@ -5098,70 +5099,51 @@ drafting period of the thesis.
 
 ### Grammar and Language Style
 
-**Declaration item 1.** This section discloses the use described as
-improvement of grammar, language style, and conciseness of the thesis.
-
 <span acronym-label="ai" acronym-form="singular+short">ai</span>
-assistance was used for grammar checking, style refinement, and copy
-editing passes over prose I had already authored. I ran the assistant
-over drafts to identify infelicities, tighten phrasing, and flag
-inconsistencies, and I accepted, rejected, or revised the suggestions. I
-reviewed and edited every paragraph in the submitted document. I did not
-use the assistant as an autonomous writer.
+assistance in Overleaf editor was used for grammar checking, style
+refinement, and editing of content I authored. I relied on the assistant
+throughout my drafts to identify errors, tighten phrasing, and highlight
+inconsistencies. I accepted, rejected, or revised the suggestions. I did
+not use an AI assistant as an autonomous writer of thesis content.
 
-Several review passes were run across the full manuscript to bring the
-thesis to its target length. These passes rephrased longer prose into
-more concise wording and relocated noncore detail into the attached
-product documentation, which carries the requirements specification and
-the reference material per source. The restructuring decisions were
-mine. The assistant proposed candidate cuts and rephrasings that I
-accepted, rejected, or revised.
+Several review cycles were carried out across the entire thesis using
+the Claude Code tool with Claude Opus 4.5-4.7 models to condense it to
+its target length. These passes rephrased longer passages into more
+concise wording and relocated some details into the attached product
+documentation, which contains the requirements specification and
+reference material per data source. The restructuring decisions were
+mine. The AI assistant proposed cuts and re-phrasing that I accepted,
+rejected, or revised.
 
-The research question, chapter structure, contributions, and
-argumentative framing are mine. Literature selection, claim positioning
-against prior work
-(<a href="#sec:related-work" data-reference-type="autoref"
+The research question, chapter structure, major contributions, and
+central claims are all mine. Literature selection, positioning against
+prior work (<a href="#sec:related-work" data-reference-type="autoref"
 data-reference="sec:related-work">[sec:related-work]</a>), and the
 conceptual domain model
 (<a href="#sec:data-entities" data-reference-type="autoref"
-data-reference="sec:data-entities">[sec:data-entities]</a>) are human
-authored decisions.
+data-reference="sec:data-entities">[sec:data-entities]</a>) were also
+authored by me.
 
 ### Images and Other Media
 
-**Declaration item 2.** This section discloses the use described as
-generation of images and other media in the thesis.
-
-I wrote some TikZ figures from scratch. Others the assistant drafted
-from a description of the content and layout, and I revised them for
-correctness and readability. A third group I wrote, then accepted
-readability suggestions the assistant proposed. Per figure attribution
-lives in the git history of each figure file under
-<span class="mark">figures/</span> .
+The assistant drafted TikZ figures from a sketch or description of the
+content and layout, and I revised them for correctness and readability.
 
 ### Product Documentation (`docs.zip`)
 
-**Declaration item 3.** This section discloses the use described as
-generation of product documentation attached to the thesis (`docs.zip`).
-
-The [external requirements
-specification](https://vkraus.github.io/appsec-docs/), attached as
-`docs.zip`, is a mix of human authored and <span acronym-label="ai"
+The [product documentation](https://vkraus.github.io/appsec-docs/),
+attached as `docs.zip`, is human authored and <span acronym-label="ai"
 acronym-form="singular+short">ai</span> assisted content. I authored the
-per category capability matrix, canonical mapping, and reference
-sections per source with targeted <span acronym-label="ai"
-acronym-form="singular+short">ai</span> assistance for drafting and
-consistency passes. I authored the three skill files on the [skills
-page](https://vkraus.github.io/appsec-docs/connectors/scm/skills/). I
-iterated each one until it produced acceptable output against
-representative sources. I did not generate any of the submitted skills
-with another <span acronym-label="ai"
-acronym-form="singular+short">ai</span> invocation.
+capability matrix, data mapping, and reference sections per source with
+<span acronym-label="ai" acronym-form="singular+short">ai</span>
+assistance for drafting and consistency passes.
+
+I authored the three skills on the [skills
+page](https://vkraus.github.io/appsec-docs/connectors/scm/skills/) with
+Claude Code using Anthropic skill-writing skill. I iterated each one
+until it produced desired output.
 
 ### Source Code (`mvp.zip`)
-
-**Declaration item 4.** This section discloses the use described as
-generation of source code attached to the thesis (`mvp.zip`).
 
 The reference implementation in
 <a href="#ch:implementation" data-reference-type="autoref"
@@ -5178,7 +5160,7 @@ committed under <span class="mark">docs/superpowers/</span> in the
 documented in
 <a href="#sec:iteration-summary" data-reference-type="autoref"
 data-reference="sec:iteration-summary">[sec:iteration-summary]</a> are
-the empirical record of this use. This is my central
+the empirical record of this use. This is my main
 <span acronym-label="ai" acronym-form="singular+short">ai</span> use.
 <a href="#sec:ai-eval" data-reference-type="autoref"
 data-reference="sec:ai-eval">[sec:ai-eval]</a> evaluates it. The three
@@ -5186,25 +5168,11 @@ skill files published on the [documentation
 site](https://vkraus.github.io/appsec-docs/connectors/scm/skills/) (
 <span class="mark">analyze-source</span> ,
 <span class="mark">generate-connector</span> ,
-<span class="mark">validate-implementation</span> ) are authored as part
-of the requirements specification and are framework consumable in
-principle, but they were not used to generate the delivered code.
-Empirical validation of the skill catalog as a generator remains open
-(<a href="#sec:ai-eval" data-reference-type="autoref"
-data-reference="sec:ai-eval">[sec:ai-eval]</a>).
+<span class="mark">validate-implementation</span> ) are considered an AI
+executable part of the requirements specification.
 
 ### Supporting Tooling
 
-**Declaration item 5.** This section discloses the use described as
-assistance with supporting tooling not submitted with the thesis.
-
 I used <span acronym-label="ai" acronym-form="singular+short">ai</span>
-assistance at the line level on artifacts that are not part of the
-submitted `mvp.zip` or `docs.zip`: the LaTeX build scripts and
-<span acronym-label="cicd" acronym-form="singular+short">cicd</span>
-configuration, the sweep tooling that converted inline
-<span class="mark">\texttt</span> in body text to
-<span class="mark">\inlinecode</span> , and local scripts for plan
-execution. This assistance is not the subject of the
-<span acronym-label="ai" acronym-form="singular+short">ai</span>
-instantiability claim in the thesis.
+assistance for maintaining LaTeX script files that were used to build
+this document.
