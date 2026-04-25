@@ -206,7 +206,7 @@ Of the nine sources resolved in \autoref{sec:ingestion-category-assignment}, all
 
 The skill chain pass under step~5 of \autoref{sec:impl-methodology} ran end to end against all nine sources. Each source page on the operator docs site carries a Generation log with three rows (analyze, generate, validate), each row referencing the commit that produced it. Each source page also carries a Validation table keyed by requirement IDs that maps directly to \inlinecode{@pytest.mark.requirement} markers in the test suite. The cross source matrix at \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{platform/reference/catalog} aggregates the per source tables into one view. Both the per source pages and the catalog form the auditable trail of evidence behind the \gls{ai} claim defended in \autoref{sec:ai-eval}.
 
-The aggregate test counts at \gls{head} are 184 passed, 15 skipped, 0 failed. Tests run under the layered strategy of step~4: pure Python tests run locally without a \inlinecode{SparkSession}, and DataFrame tests run through a session scoped Databricks Connect fixture against a remote workspace. The skipped tests are integration suites gated on live tenant credentials.
+The aggregate test counts at HEAD are 184 passed, 15 skipped, 0 failed. Tests run under the layered strategy of step~4: pure Python tests run locally without a \inlinecode{SparkSession}, and DataFrame tests run through a session scoped Databricks Connect fixture against a remote workspace. The skipped tests are integration suites gated on live tenant credentials.
 
 \section{Discussion}
 \label{sec:impl-discussion}
