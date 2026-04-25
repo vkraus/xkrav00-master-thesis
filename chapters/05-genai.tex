@@ -7,34 +7,26 @@ The grammar and language style assistance described in the first section below u
 
 \section{Grammar and Language Style}
 
-\textbf{Declaration item 1.} This section discloses the use described as improvement of grammar, language style, and conciseness of the thesis.
+\Gls{ai} assistance in Overleaf editor was used for grammar checking, style refinement, and editing of content I authored. I relied on the assistant throughout my drafts to identify errors, tighten phrasing, and highlight inconsistencies. I accepted, rejected, or revised the suggestions. I did not use an AI assistant as an autonomous writer of thesis content.
 
-\Gls{ai} assistance was used for grammar checking, style refinement, and copy editing passes over prose I had already authored. I ran the assistant over drafts to identify infelicities, tighten phrasing, and flag inconsistencies, and I accepted, rejected, or revised the suggestions. I reviewed and edited every paragraph in the submitted document. I did not use the assistant as an autonomous writer.
+Several review cycles were carried out across the entire thesis using the Claude Code tool with Claude Opus 4.5-4.7 models to condense it to its target length. These passes rephrased longer passages into more concise wording and relocated some details into the attached product documentation, which contains the requirements specification and reference material per data source. The restructuring decisions were mine. The AI assistant proposed cuts and re-phrasing that I accepted, rejected, or revised.
 
-Several review passes were run across the full manuscript to bring the thesis to its target length. These passes rephrased longer prose into more concise wording and relocated noncore detail into the attached product documentation, which carries the requirements specification and the reference material per source. The restructuring decisions were mine. The assistant proposed candidate cuts and rephrasings that I accepted, rejected, or revised.
-
-The research question, chapter structure, contributions, and argumentative framing are mine. Literature selection, claim positioning against prior work (\autoref{sec:related-work}), and the conceptual domain model (\autoref{sec:data-entities}) are human authored decisions.
+The research question, chapter structure, major contributions, and central claims are all mine. Literature selection, positioning against prior work (\autoref{sec:related-work}), and the conceptual domain model (\autoref{sec:data-entities}) were also authored by me.
 
 \section{Images and Other Media}
 
-\textbf{Declaration item 2.} This section discloses the use described as generation of images and other media in the thesis.
-
-I wrote some TikZ figures from scratch. Others the assistant drafted from a description of the content and layout, and I revised them for correctness and readability. A third group I wrote, then accepted readability suggestions the assistant proposed. Per figure attribution lives in the git history of each figure file under \inlinecode{figures/}.
+The assistant drafted TikZ figures from a sketch or description of the content and layout, and I revised them for correctness and readability.
 
 \section{Product Documentation (\texttt{docs.zip})}
 
-\textbf{Declaration item 3.} This section discloses the use described as generation of product documentation attached to the thesis (\texttt{docs.zip}).
+The \href{https://vkraus.github.io/appsec-docs/}{product documentation}, attached as \texttt{docs.zip}, is human authored and \gls{ai} assisted content. I authored the capability matrix, data mapping, and reference sections per source with \gls{ai} assistance for drafting and consistency passes.
 
-The \href{https://vkraus.github.io/appsec-docs/}{external requirements specification}, attached as \texttt{docs.zip}, is a mix of human authored and \gls{ai} assisted content. I authored the per category capability matrix, canonical mapping, and reference sections per source with targeted \gls{ai} assistance for drafting and consistency passes. I authored the three skill files on the \href{https://vkraus.github.io/appsec-docs/connectors/scm/skills/}{skills page}. I iterated each one until it produced acceptable output against representative sources. I did not generate any of the submitted skills with another \gls{ai} invocation.
+I authored the three skills on the \href{https://vkraus.github.io/appsec-docs/connectors/scm/skills/}{skills page} with Claude Code using Anthropic skill-writing skill. I iterated each one until it produced desired output.
 
 \section{Source Code (\texttt{mvp.zip})}
 
-\textbf{Declaration item 4.} This section discloses the use described as generation of source code attached to the thesis (\texttt{mvp.zip}).
-
-The reference implementation in \autoref{ch:implementation} (submitted as \texttt{mvp.zip}) was built by directly coding against the framework contract (\autoref{ch:framework}) and the external requirements specification, with \gls{ai} assistance from Claude Code used conversationally through a brainstorm, plan, and execute loop. Specs and plans for the two connectors delivered (ServiceNow and GitHub) are committed under \inlinecode{docs/superpowers/} in the \inlinecode{appsec-mvp} repository. The iteration cases documented in \autoref{sec:iteration-summary} are the empirical record of this use. This is my central \gls{ai} use. \autoref{sec:ai-eval} evaluates it. The three skill files published on the \href{https://vkraus.github.io/appsec-docs/connectors/scm/skills/}{documentation site} (\inlinecode{analyze-source}, \inlinecode{generate-connector}, \inlinecode{validate-implementation}) are authored as part of the requirements specification and are framework consumable in principle, but they were not used to generate the delivered code. Empirical validation of the skill catalog as a generator remains open (\autoref{sec:ai-eval}).
+The reference implementation in \autoref{ch:implementation} (submitted as \texttt{mvp.zip}) was built by directly coding against the framework contract (\autoref{ch:framework}) and the external requirements specification, with \gls{ai} assistance from Claude Code used conversationally through a brainstorm, plan, and execute loop. Specs and plans for the two connectors delivered (ServiceNow and GitHub) are committed under \inlinecode{docs/superpowers/} in the \inlinecode{appsec-mvp} repository. The iteration cases documented in \autoref{sec:iteration-summary} are the empirical record of this use. This is my main \gls{ai} use. \autoref{sec:ai-eval} evaluates it. The three skill files published on the \href{https://vkraus.github.io/appsec-docs/connectors/scm/skills/}{documentation site} (\inlinecode{analyze-source}, \inlinecode{generate-connector}, \inlinecode{validate-implementation}) are considered an AI executable part of the requirements specification.
 
 \section{Supporting Tooling}
 
-\textbf{Declaration item 5.} This section discloses the use described as assistance with supporting tooling not submitted with the thesis.
-
-I used \gls{ai} assistance at the line level on artifacts that are not part of the submitted \texttt{mvp.zip} or \texttt{docs.zip}: the LaTeX build scripts and \gls{cicd} configuration, the sweep tooling that converted inline \inlinecode{\textbackslash texttt} in body text to \inlinecode{\textbackslash inlinecode}, and local scripts for plan execution. This assistance is not the subject of the \gls{ai} instantiability claim in the thesis.
+I used \gls{ai} assistance for maintaining LaTeX script files that were used to build this document.

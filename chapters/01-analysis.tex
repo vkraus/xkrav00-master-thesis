@@ -221,7 +221,7 @@ Several patterns emerge. \gls{rest} \glspl{api} with \gls{json} responses are do
 
 \section{Data Engineering}
 
-Consolidating the heterogeneous sources analyzed above into a unified analytical platform is a data integration problem. This section surveys the architectural paradigms and engineering patterns relevant to solving it.
+Consolidating the diverse sources analyzed above into a unified analytical platform is a data integration problem. This section surveys the architectural paradigms and engineering patterns relevant to solving it.
 
 %%% 1.5.1 %%%
 
@@ -422,21 +422,21 @@ No existing approach satisfies all criteria. Commercial \gls{aspm} is proprietar
 \section{Selected Sources}
 \label{sec:selected-sources}
 
-The reference implementation in \autoref{ch:implementation} instantiates the framework against nine source systems chosen to cover the ingestion and integration patterns the framework must support, while keeping the sample tractable. The selection spans all three detection tiers: static testing, dynamic testing, and runtime security.
+The reference implementation in \autoref{ch:implementation} instantiates the framework against nine source systems chosen to cover the ingestion and integration patterns that the framework must support, while keeping the sample tractable. The selection spans all three detection tiers: static testing, dynamic testing, and runtime security.
 
 \subsection{Selection Criteria}
 
-The nine sources are selected against five criteria:
+The nine sources are selected based on five criteria:
 
 \begin{enumerate}
     \item \textbf{Open source or free tier available.} The reference implementation must be reproducible without commercial licenses.
     \item \textbf{Full domain coverage across three detection tiers.} The nine together must cover every domain in the framework: \gls{cmdb}, \gls{scm}, and the three detection tiers, namely static testing (\gls{sast}, \gls{sca}, secrets), dynamic testing (\gls{dast}), and runtime security (\gls{waf}).
     \item \textbf{\Gls{api} heterogeneity.} The selection deliberately includes \gls{rest} (ServiceNow, SonarQube, Dependency-Track, GitHub, GitLab, OWASP ZAP, AWS WAF), GraphQL (GitHub, GitLab), and \gls{cli} wrapped (Semgrep, TruffleHog) sources so the connector contract is exercised across integration styles.
-    \item \textbf{Heterogeneity bound at nine for scope control.} The nine sources cover the ingestion and integration patterns the framework must support. A wider sample would dilute pattern coverage without strengthening the framework claim.
+    \item \textbf{Limit heterogeneity to nine to maintain scope control.} The nine sources cover the ingestion and integration patterns that the framework must support. A wider sample would dilute pattern coverage without strengthening the framework claim.
     \item \textbf{Industry adoption.} Each tool is in widespread enterprise use.
 \end{enumerate}
 
-Incremental strategy heterogeneity across the Selected Nine is summarized in \autoref{tab:incremental-strategies}.
+A summary of the variation in incremental strategies among the Selected Nine is presented in \autoref{tab:incremental-strategies}.
 
 \begin{table}[htbp]
 \centering
