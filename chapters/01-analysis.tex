@@ -85,7 +85,7 @@ Beyond source code, \gls{scm} platforms expose security relevant metadata: prima
 
 GitHub exposes two \glspl{api}~\cite{GitHubAPI2024}: \gls{rest} (v3) with resource oriented endpoints and page based pagination, and GraphQL (v4) with selective field retrieval and cursor pagination. Both share authentication (OAuth tokens or \glspl{pat}) and a rate limit of 5\,000 requests per hour~\cite{GitHubRateLimits2024}. All use token based authentication and \gls{json} responses, enabling shared connector logic.
 
-Other enterprise \gls{scm} platforms expose comparable \gls{rest} (and sometimes GraphQL) \glspl{api}: \href{https://vkraus.github.io/appsec-docs/connectors/scm/gitlab/}{GitLab}, Bitbucket, and Azure DevOps Repos. Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages.
+Other enterprise \gls{scm} platforms expose comparable \gls{rest} (and sometimes GraphQL) \glspl{api}: \href{https://vkraus.github.io/appsec-docs/connectors/scm/gitlab/}{GitLab}, Bitbucket, and Azure DevOps Repos.
 
 %%% 1.2.2 %%%
 
@@ -97,7 +97,7 @@ GitHub Actions is the most adopted \gls{cicd} platform, used by 62\% of develope
 
 \Gls{cicd} platforms provide contextual data about security scans. Pipeline definitions reveal which tools run. Build results show whether gates passed. Execution metadata records commit, timing, and duration. This is operational context rather than a primary finding source: a repository whose last scan ran three months ago, or whose scans consistently fail, signals coverage gaps and tool health.
 
-Integration patterns vary more across \gls{cicd} platforms than across \gls{scm} tools. GitHub Actions and Azure Pipelines expose \gls{rest} \glspl{api} with \gls{json} responses, Jenkins uses an \gls{xml} based \gls{api} with a different authentication model, and GitLab CI piggybacks on the GitLab \gls{api}. Despite these differences, retrieved data is structurally similar: pipeline identifiers, run statuses, timestamps, and commit references. None of these \gls{cicd} platforms is built as a connector in the reference implementation. Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages.
+Integration patterns vary more across \gls{cicd} platforms than across \gls{scm} tools. GitHub Actions and Azure Pipelines expose \gls{rest} \glspl{api} with \gls{json} responses, Jenkins uses an \gls{xml} based \gls{api} with a different authentication model, and GitLab CI piggybacks on the GitLab \gls{api}. Despite these differences, retrieved data is structurally similar: pipeline identifiers, run statuses, timestamps, and commit references. None of these \gls{cicd} platforms is built as a connector in the reference implementation.
 
 %%% 1.2.3 %%%
 
@@ -107,7 +107,7 @@ Issue trackers record remediation status. When a finding is assigned for remedia
 
 Jira is the dominant enterprise issue tracker. The 2025 Stack Overflow Developer Survey reports Jira at 46\% adoption, behind only GitHub (81\%) and ahead of GitLab (36\%)~\cite{StackOverflow2025}. Azure DevOps Work Items serves the Microsoft ecosystem. GitHub Issues and GitLab Issues provide lightweight built in tracking tied to their \gls{scm} platforms. Many organizations use multiple trackers across teams.
 
-These platforms expose \gls{rest} \glspl{api} with \gls{json} responses and paginated results, and most support webhooks for real time status change notifications. None is built as a connector in the reference implementation. Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages.
+These platforms expose \gls{rest} \glspl{api} with \gls{json} responses and paginated results, and most support webhooks for real time status change notifications. None is built as a connector in the reference implementation. 
 
 Integration is bidirectional: the framework reads remediation status and may create new issues when findings require attention. This raises idempotency concerns (avoiding duplicate issue creation) and state synchronization (keeping the view of the framework consistent with the tracker).
 
@@ -138,7 +138,7 @@ Static analysis tools examine source code and build artifacts without executing 
 
 \Gls{sast} examines source code, bytecode, or binary code without executing the program. \textcite{Chess2007} cover taint analysis, control flow analysis, and pattern matching for detecting injection flaws, buffer overflows, and insecure data handling. Broader rule sets catch more issues and generate more noise~\cite{Chess2007}. That is the central \gls{sast} tradeoff.
 
-SonarQube exposes a \gls{rest} Web \gls{api} (\href{https://vkraus.github.io/appsec-docs/connectors/sast/sonarqube/}{source reference}), and Semgrep runs as a \gls{cli} tool producing \gls{json} or \gls{sarif} output with an optional Cloud Platform \gls{api} (\href{https://vkraus.github.io/appsec-docs/connectors/sast/semgrep/}{source reference}). \gls{scm} integrated scanners such as GitHub Code Scanning (CodeQL) and GitLab \gls{sast} report through the host \gls{scm} \gls{api}. Commercial alternatives include Checkmarx and Fortify, both exposing \gls{rest} \glspl{api}. Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages. When platform native and standalone tools scan the same repository, the overlap requires deduplication in the normalization layer.
+SonarQube exposes a \gls{rest} Web \gls{api} (\href{https://vkraus.github.io/appsec-docs/connectors/sast/sonarqube/}{source reference}), and Semgrep runs as a \gls{cli} tool producing \gls{json} or \gls{sarif} output with an optional Cloud Platform \gls{api} (\href{https://vkraus.github.io/appsec-docs/connectors/sast/semgrep/}{source reference}). \gls{scm} integrated scanners such as GitHub Code Scanning (CodeQL) and GitLab \gls{sast} report through the host \gls{scm} \gls{api}. Commercial alternatives include Checkmarx and Fortify, both exposing \gls{rest} \glspl{api}. When platform native and standalone tools scan the same repository, the overlap requires deduplication in the normalization layer.
 
 Findings typically include a rule identifier, affected file path and line number, severity, code snippet, and remediation guidance. Severity models differ. SonarQube uses a five level scale (blocker, critical, major, minor, info). Semgrep and Checkmarx use high, medium, and low, sometimes with a numerical score. Severity normalization is therefore a core transformation. \autoref{ch:implementation} resolves SonarQube and Semgrep to ingestion categories and publishes their reference pages per source. Only the ServiceNow and GitHub connectors are built as working code at \gls{mvp} time.
 
@@ -148,13 +148,13 @@ Findings typically include a rule identifier, affected file path and line number
 
 \Gls{sca} identifies known vulnerabilities in third party dependencies. Modern applications pull in hundreds of transitive dependencies~\cite{Anderson2020}, any of which can introduce a vulnerability. \textcite{Ohm2020} provide a systematic review of supply chain attacks including typosquatting, dependency confusion, and malicious package injection. \gls{sca} tools analyze dependency manifests, resolve the full tree, and cross reference versions against vulnerability databases such as the \gls{nvd}.
 
-\gls{owasp} Dependency-Track is an open source platform that ingests \glspl{sbom} in CycloneDX or \gls{spdx} format and exposes a \gls{rest} \gls{api} (\href{https://vkraus.github.io/appsec-docs/connectors/sca/dependency-track/}{source reference}). Snyk exposes a \gls{rest} \gls{api}, and Dependabot exposes alerts through the GitHub GraphQL \gls{api}. Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages. Many \gls{sca} tools also generate \glspl{sbom}~\cite{CycloneDX2024, SPDX2024}, increasingly required by regulators~\cite{NTIA2021}. \autoref{ch:implementation} resolves Dependency-Track to \gls{dltool}, and GitHub Dependabot and GitLab dependency scanning are reached through their respective platform \glspl{api}. Only the ServiceNow and GitHub connectors are built as working code at \gls{mvp} time.
+\gls{owasp} Dependency-Track is an open source platform that ingests \glspl{sbom} in CycloneDX or \gls{spdx} format and exposes a \gls{rest} \gls{api} (\href{https://vkraus.github.io/appsec-docs/connectors/sca/dependency-track/}{source reference}). Snyk exposes a \gls{rest} \gls{api}, and Dependabot exposes alerts through the GitHub GraphQL \gls{api}. Many \gls{sca} tools also generate \glspl{sbom}~\cite{CycloneDX2024, SPDX2024}, increasingly required by regulators~\cite{NTIA2021}. \autoref{ch:implementation} resolves Dependency-Track to \gls{dltool}, and GitHub Dependabot and GitLab dependency scanning are reached through their respective platform \glspl{api}. Only the ServiceNow and GitHub connectors are built as working code at \gls{mvp} time.
 
 \gls{sca} output is more standardized than other categories. The data comes from shared public databases (\gls{cve}, \gls{nvd}). Findings include the vulnerable dependency name and version, a \gls{cve} identifier, a \gls{cvss} score, the fixed version when available, and exploitability metadata. Tools may resolve the same dependency tree differently, so two scanners flag inconsistent \glspl{cve}. The framework handles this during deduplication, recognizing that the same \gls{cve} reported by multiple tools against the same repository likely represents a single issue.
 
 \gls{sca} tools also detect license violations (e.g., GPL licensed code in proprietary applications). The \gls{slsa} framework~\cite{SLSA2024} complements \gls{sca}. \gls{sca} checks whether dependencies contain known vulnerabilities. \gls{slsa} verifies the integrity and provenance of build artifacts.
 
-\gls{owasp} Dependency-Check, a \gls{cli} oriented alternative that writes \gls{json} or \gls{xml} reports from \gls{cicd} runs, fits the same \gls{cli} artifact ingestion pattern as Semgrep's \gls{cli} mode. Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages.
+\gls{owasp} Dependency-Check, a \gls{cli} oriented alternative that writes \gls{json} or \gls{xml} reports from \gls{cicd} runs, fits the same \gls{cli} artifact ingestion pattern as Semgrep's \gls{cli} mode.
 
 %%% 1.3.3 %%%
 
@@ -162,7 +162,7 @@ Findings typically include a rule identifier, affected file path and line number
 
 Secret detection tools scan version control history for credentials, \gls{api} keys, tokens, and other sensitive material. Once committed, a secret persists in Git history even after deletion from the working tree. Two techniques apply: regex patterns against known credential formats, and entropy scoring against unusually random strings. The entropy approach catches novel formats at higher false positive rates.
 
-TruffleHog is a \gls{cli} tool combining pattern and entropy analysis with live credential verification, producing \gls{json} output parsed as an artifact (\href{https://vkraus.github.io/appsec-docs/connectors/secrets/trufflehog/}{source reference}). GitLeaks and detect-secrets are similar \gls{cli} oriented alternatives, and commercial offerings such as GitGuardian expose \gls{rest} \glspl{api} for centralized management. Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages.
+TruffleHog is a \gls{cli} tool combining pattern and entropy analysis with live credential verification, producing \gls{json} output parsed as an artifact (\href{https://vkraus.github.io/appsec-docs/connectors/secrets/trufflehog/}{source reference}). GitLeaks and detect-secrets are similar \gls{cli} oriented alternatives, and commercial offerings such as GitGuardian expose \gls{rest} \glspl{api} for centralized management.
 
 Scanners integrated into the platform differ. GitHub Secret Scanning exposes alerts through the GitHub \gls{rest} \gls{api} with webhook notifications~\cite{GitHubAPI2024}, and GitLab Secret Detection reports through GitLab's security dashboard and \gls{api}. These are simpler to integrate because they reuse platform \glspl{api} but cover only repositories on their own platforms.
 
@@ -183,7 +183,7 @@ Dynamic application security testing operates on running applications by activel
 
 \Gls{dast} tests running applications by sending crafted \gls{http} requests and analyzing responses for vulnerability indicators~\cite{Stuttard2011}. Unlike \gls{sast}, \gls{dast} requires a deployed application and detects vulnerabilities that manifest only at runtime, such as authentication bypass, server misconfiguration, and certain injection flaws.
 
-\gls{owasp} \gls{zap} is the most widely used open source \gls{dast} tool, exposing a \gls{rest} \gls{api} for scan management and alert retrieval (\href{https://vkraus.github.io/appsec-docs/connectors/dast/owasp-zap/}{source reference}). Burp Suite Enterprise exposes a \gls{rest} \gls{api}, while the Professional edition is a desktop tool without programmatic access. Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages. Findings include the target \gls{url}, affected \gls{http} parameter, vulnerability type mapped to \gls{cwe}~\cite{CWE2024}, exploitation evidence, and confidence rating.
+\gls{owasp} \gls{zap} is the most widely used open source \gls{dast} tool, exposing a \gls{rest} \gls{api} for scan management and alert retrieval (\href{https://vkraus.github.io/appsec-docs/connectors/dast/owasp-zap/}{source reference}). Burp Suite Enterprise exposes a \gls{rest} \gls{api}, while the Professional edition is a desktop tool without programmatic access. Findings include the target \gls{url}, affected \gls{http} parameter, vulnerability type mapped to \gls{cwe}~\cite{CWE2024}, exploitation evidence, and confidence rating.
 
 The core integration challenge is that \gls{dast} findings are \gls{url} based, not code based. Mapping \gls{url} based findings to source repositories requires deployment metadata or inventory data from \autoref{sec:app-inventory}. Without this, \gls{dast} findings can be attributed to applications but not to development teams or code locations.
 
@@ -200,7 +200,7 @@ Runtime security covers passive telemetry from production workloads, sitting alo
 
 \subsection{Web Application Firewalls}
 
-\Glspl{waf} operate at the network perimeter, inspecting inbound \gls{http} traffic against rule sets such as the \gls{owasp} Core Rule Set~\cite{OWASPCRS2024}. They log blocked and flagged requests with matched rule, request details, and action taken. \gls{aws} WAF exposes the \inlinecode{GetSampledRequests} \gls{api} as the primary interface, with CloudWatch Logs as an opt in extension for deployments requiring full fidelity logging (\href{https://vkraus.github.io/appsec-docs/connectors/waf/aws-waf/}{source reference}). Cloudflare and Akamai expose comparable \gls{rest} \glspl{api} for log retrieval and configuration. Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages.
+\Glspl{waf} operate at the network perimeter, inspecting inbound \gls{http} traffic against rule sets such as the \gls{owasp} Core Rule Set~\cite{OWASPCRS2024}. They log blocked and flagged requests with matched rule, request details, and action taken. \gls{aws} WAF exposes the \inlinecode{GetSampledRequests} \gls{api} as the primary interface, with CloudWatch Logs as an opt in extension for deployments requiring full fidelity logging (\href{https://vkraus.github.io/appsec-docs/connectors/waf/aws-waf/}{source reference}). Cloudflare and Akamai expose comparable \gls{rest} \glspl{api} for log retrieval and configuration.
 
 These platforms bundle \gls{ddos} protection alongside \gls{waf} capabilities. \gls{ddos} mitigation logs traffic patterns, attack signatures, and mitigation actions, providing availability impact data that complements vulnerability findings.
 
@@ -436,7 +436,7 @@ The nine sources are selected based on five criteria:
     \item \textbf{Industry adoption.} Each tool is in widespread enterprise use.
 \end{enumerate}
 
-A summary of the variation in incremental strategies among the Selected Nine is presented in \autoref{tab:incremental-strategies}.
+A summary of the variation in incremental strategies among the selected sources is presented in \autoref{tab:incremental-strategies}.
 
 \begin{table}[htbp]
 \centering
@@ -457,7 +457,7 @@ AWS WAF                                      & Event time windowed sampled retri
 \par\footnotesize \textit{Note.} Classification synthesized from the medallion pattern treatment in \textcite{Strengholt2025} and the Lakeflow Declarative Pipelines operations guidance in~\cite{DatabricksLDP2025}. Pairings of source and strategy are author attributions based on the API capability matrix per source.
 \end{table}
 
-\subsection{The Selected Nine}
+\subsection{Selected Sources}
 
 \begin{itemize}
     \item \textbf{ServiceNow}: \gls{cmdb}. Dominant enterprise \gls{cmdb} with a free developer instance, \gls{rest} Table and CMDB Instance \glspl{api}, and native \inlinecode{sys\_updated\_on} high water mark.
@@ -471,11 +471,11 @@ AWS WAF                                      & Event time windowed sampled retri
     \item \textbf{AWS WAF}: \gls{waf} (runtime security). Managed web application firewall exposing matched request samples through the \inlinecode{GetSampledRequests} \gls{api}~\parencite{AWSWAF2026}, with full event logs available via CloudWatch. Event based findings linked to workloads by \gls{arn} and tag represent the runtime security tier and exercise the time window sampled retrieval pattern.
 \end{itemize}
 
-Details for each of the selected nine sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages.
+Details for each of the selected sources are on the \href{https://vkraus.github.io/appsec-docs/connectors/}{connectors reference hub}. Other tools named in this survey do not have dedicated reference pages.
 
 \subsection{Considered and Excluded}
 
-\autoref{tab:considered-excluded} enumerates the principal tools that were considered and the criterion that excluded each. Tools marked \textbf{within scope, deferred} pass all criteria but sit outside the cap in Criterion~4. Onboarding them is a repeat of the procedure per source in \autoref{sec:impl-methodology}.
+\autoref{tab:considered-excluded} enumerates the key tools that were considered and the criterion that excluded each. Tools marked \textbf{within scope, deferred} satisfy all criteria but are excluded based on the cap in Criterion~4. Onboarding them would simply be a repeat of the procedure per source in \autoref{sec:impl-methodology}.
 
 \begin{table}[htbp]
 \centering
