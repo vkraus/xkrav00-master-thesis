@@ -56,12 +56,12 @@
 - [Data Model](#data-model)
   - [Source Synthesis](#source-synthesis)
   - [Schema Patterns](#schema-patterns)
-        - [Bronze pattern](#bronze-pattern)
+        - [Bronze envelope](#bronze-envelope)
         - [Silver entity pattern](#silver-entity-pattern)
         - [Silver finding pattern](#silver-finding-pattern)
-        - [Deduplication pattern](#deduplication-pattern)
+        - [Deduplication](#deduplication)
         - [Relationship pattern](#relationship-pattern)
-        - [Gold aggregation pattern](#gold-aggregation-pattern)
+        - [Gold aggregation](#gold-aggregation)
   - [Entity Model](#entity-model)
         - [Entity Tables](#entity-tables)
         - [Finding Table](#finding-table)
@@ -260,8 +260,8 @@ In large enterprises, dozens of such tools produce findings through
 different data formats and integration patterns . As application
 security architect in a large organization with thousands of developers
 and tens of thousands of repositories, I have seen firsthand how
-difficult such environment is to secure. Two classes of difficulty
-dominate.
+difficult such environment is to secure. Two types of difficulty stand
+out.
 
 The first is **detection diversity**. Tools in the same category scan
 differently and produce different results, so a single tool is rarely
@@ -283,8 +283,8 @@ acronym-form="singular+short">url</span> or host, so cross tool
 correlation requires additional deployment and inventory metadata .
 Integration patterns compound the problem. Push based models, where
 scanners upload reports into a vulnerability management interface,
-fragment data and do not scale across dozens of tools, and robust pull
-based <span acronym-label="api" acronym-form="singular+short">api</span>
+fragment data and do not scale across dozens of tools, and pull based
+<span acronym-label="api" acronym-form="singular+short">api</span>
 connectors, where they exist, are usually gated behind commercial
 tiers .
 
@@ -326,7 +326,7 @@ data-reference="sec:impl-methodology">[sec:impl-methodology]</a>) rather
 than a pipeline redesign, with the cost per source bounded by the cost
 of invoking the documented skills under supervision. Step three of the
 procedure (apply the mapping declaratively) is currently a specification
-thread rather than an executed step in the <span acronym-label="mvp"
+thread, not an executed step in the <span acronym-label="mvp"
 acronym-form="singular+short">mvp</span>, which still builds the silver
 DataFrame in Python. Future Work in the Conclusion records the
 declarative applicator as the consolidation that closes this gap.
@@ -379,9 +379,8 @@ The subgoals are:
     framework for the nine selected sources, all of which ship working
     ingest and transform modules. Several open items remain at the
     surrounding orchestration layer: notebook entry wrappers for one
-    connector, silver writer code for the cross source repository and
-    application mapping tables, and the analytics layer scaffolding. The
-    traceability matrix at
+    connector and the analytics layer scaffolding. The traceability
+    matrix at
     [platform/reference/catalog](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/)
     records PASS or N/A for every (requirement $\times$ source) cell,
     and the Limitations section of the Conclusion enumerates the open
@@ -504,7 +503,7 @@ return arrow).</figcaption>
 ### External Documentation Site
 
 The full requirements specification is published at
-<https://vkraus.github.io/appsec-mvp/> rather than inline. It is
+<https://vkraus.github.io/appsec-mvp/> instead of inline. It is
 structured into four sections (Requirements, Functional Specification,
 Design, Tests), generated with MkDocs Material from
 <span class="mark">mkdocs/docs/</span> in the
@@ -790,9 +789,9 @@ tracker).
 
 ### Static Application Security
 
-Application security encompasses practices and tools for identifying
+Application security covers practices and tools for identifying
 vulnerabilities throughout the software lifecycle . advocated for
-security touchpoints spanning development. The DevSecOps paradigm 
+security touchpoints spanning development. The DevSecOps approach 
 realizes this by embedding security testing into
 <span acronym-label="cicd" acronym-form="singular+short">cicd</span>
 pipelines. <span acronym-label="sast"
@@ -969,7 +968,7 @@ validity status, but field names and structures vary.
 tests running applications by sending crafted <span acronym-label="http"
 acronym-form="singular+short">http</span> requests and analyzing
 responses for vulnerability indicators . It requires a deployed
-application and detects vulnerabilities that manifest only at runtime,
+application and detects vulnerabilities that appear only at runtime,
 such as authentication bypass, server misconfiguration, and injection
 flaws. This section covers active scanning.
 <a href="#sec:runtime-security" data-reference-type="autoref"
@@ -1010,7 +1009,7 @@ dynamic, and runtime. The representative tool in this tier is the
 does not execute scans. It inspects live <span acronym-label="http"
 acronym-form="singular+short">http</span> traffic and emits events when
 rules fire, marking exploitation attempts against a workload or endpoint
-and linking to applications through deployment metadata rather than
+and linking to applications through deployment metadata instead of
 source code coordinates. Broader runtime operations such as
 <span acronym-label="siem" acronym-form="singular+short">siem</span>
 driven incident response and general log analytics are adjacent but out
@@ -1058,8 +1057,8 @@ acronym-form="singular+short">waf</span> action and status fixed to
 
 The [source characteristics reference
 page](https://vkraus.github.io/appsec-mvp/platform/reference/source-characteristics/)
-tabulates integration characteristics across the AppSec source landscape
-surveyed for the thesis.
+tabulates integration characteristics across the AppSec sources surveyed
+for the thesis.
 
 Several patterns emerge. <span acronym-label="rest"
 acronym-form="singular+short">rest</span> <span acronym-label="api"
@@ -1265,8 +1264,8 @@ data-reference="ch:framework">[ch:framework]</a>.
 ### Related Work and Gap Analysis
 
 No standard approach exists for consolidating security tool output into
-a unified data platform. Organizations face a fragmented landscape of
-partial solutions.
+a unified data platform. Organizations face a fragmented set of partial
+solutions.
 
 #### Existing Approaches
 
@@ -1292,12 +1291,12 @@ cannot consolidate through them.
 
 DefectDojo  is the most prominent open source alternative, supporting
 imports from over 150 tools through format specific parsers. It was
-designed as a vulnerability management interface rather than a data
-platform. Its PostgreSQL backend limits enterprise scale analytics, and
-advanced <span acronym-label="api"
-acronym-form="singular+short">api</span> connectors are commercial only.
-<span acronym-label="ocsf" acronym-form="singular+short">ocsf</span> 
-standardizes security event schemas for <span acronym-label="siem"
+designed as a vulnerability management interface, not a data platform.
+Its PostgreSQL backend limits enterprise scale analytics, and advanced
+<span acronym-label="api" acronym-form="singular+short">api</span>
+connectors are commercial only. <span acronym-label="ocsf"
+acronym-form="singular+short">ocsf</span>  standardizes security event
+schemas for <span acronym-label="siem"
 acronym-form="singular+short">siem</span> and <span acronym-label="soar"
 acronym-form="singular+short">soar</span> but does not model application
 level entities such as repositories, applications, or teams.
@@ -1375,7 +1374,7 @@ implementation runs on Databricks alone, and lakehouse based enterprise
 scalability is supported by design but not empirically validated here
 (both noted in the Limitations section of the Conclusion). Academic work
 on application security consolidation as a data engineering problem is
-limited, focusing on detection techniques rather than cross tool
+limited, focusing on detection techniques instead of cross tool
 integration at scale.
 
 ### Selected Sources
@@ -1385,8 +1384,8 @@ The reference implementation in
 data-reference="ch:implementation">[ch:implementation]</a> instantiates
 the framework against nine source systems chosen to cover the ingestion
 and integration patterns that the framework must support, while keeping
-the sample tractable. The selection spans all three detection tiers:
-static testing, dynamic testing, and runtime security.
+the sample small enough to manage. The selection spans all three
+detection tiers: static testing, dynamic testing, and runtime security.
 
 #### Selection Criteria
 
@@ -1628,7 +1627,7 @@ extensibility for new data sources and analytics.
 
 A further design principle applies to the framework artifacts: every
 template defined in this chapter (schema patterns, mappings, connector
-contract) is declarative rather than procedural, so that an
+contract) is declarative, not procedural, so that an
 <span acronym-label="ai" acronym-form="singular+short">ai</span> coding
 agent reading the specification has enough material to produce a
 candidate implementation. The published skill catalog, which sits on the
@@ -1678,10 +1677,10 @@ as a finding source.
 
 #### Component Design
 
-The framework is organized into five tiers, illustrated in
+Five tiers organize the framework, illustrated in
 <a href="#fig:component-design" data-reference-type="autoref"
 data-reference="fig:component-design">[fig:component-design]</a>. Data
-flows from top to bottom, i.e. from sources through the platform to
+flows from top to bottom, from sources through the platform to
 consumers.
 
 <figure id="fig:component-design">
@@ -1860,7 +1859,7 @@ normalization into <span><span> <mark>silver.findings</mark>
 <span><span> <mark>app_risk_scores</mark> </span></span> .</figcaption>
 </figure>
 
-##### Bronze pattern
+##### Bronze envelope
 
 Every bronze table carries a uniform metadata envelope: four columns
 shared across connectors (
@@ -1938,7 +1937,7 @@ makes each mapping explicit, including the
 tables are published at
 <https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/#silver-finding-mapping-requirements>.
 
-##### Deduplication pattern
+##### Deduplication
 
 When several tools scan the same artifact, overlapping findings are
 linked rather than collapsed . Deduplication is applied within
@@ -1977,7 +1976,7 @@ application to repository, finding to <span acronym-label="cve"
 acronym-form="singular+short">cve</span>, and cross tool deduplication
 links.
 
-##### Gold aggregation pattern
+##### Gold aggregation
 
 Aggregation tables follow a grain, metric, period structure : grain
 columns define detail level (entity key plus time period), metric
@@ -2015,23 +2014,19 @@ data-reference="sec:future-work">[sec:future-work]</a>.
 <figcaption>Silver layer entity relationship diagram for the prescribed
 framework. Representative subset: <strong>8</strong> of the
 <strong>15</strong> prescribed silver tables grouped by type (entities,
-findings, reference, relationships). The MVP described in <a
-href="#ch:implementation" data-reference-type="autoref"
-data-reference="ch:implementation">[ch:implementation]</a> realizes the
-four table subset { <span><span> <mark>applications</mark>
-</span></span> , <span><span> <mark>repositories</mark> </span></span> ,
-<span><span> <mark>findings</mark> </span></span> , <span><span>
-<mark>app_repo_mapping</mark> </span></span> } shown as highlighted
-nodes, and simplifies SCD-2 to overwrite on update. The remaining tables
-follow the same schema patterns and are listed as Future
-Work.</figcaption>
+findings, reference, relationships). Highlighted nodes are the four
+tables realized by the MVP in <a href="#ch:implementation"
+data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a>, which
+simplifies SCD-2 to overwrite on update. The remaining tables follow the
+same schema patterns and are listed as Future Work.</figcaption>
 </figure>
 
 ##### Entity Tables
 
 Eight entity tables hold the stable business objects:
 <span class="mark">applications</span> and
-<span class="mark">repositories</span> as the two anchors, plus
+<span class="mark">repositories</span> as the two primary tables, plus
 <span class="mark">teams</span> , <span class="mark">commits</span> ,
 <span class="mark">pull_requests</span> ,
 <span class="mark">pipeline_runs</span> ,
@@ -2067,8 +2062,8 @@ defines them. Code located findings reference their repository through
 leave <span class="mark">repository_id</span> null and use
 <span class="mark">url</span> as the closest location coordinate.
 Business application context is derived through the
-<span class="mark">app_repo_mapping</span> relationship table rather
-than stored on the finding itself.
+<span class="mark">app_repo_mapping</span> relationship table instead of
+being stored on the finding itself.
 
 A single table is preferred over per category tables because the silver
 mapping is already a union over sources . Splitting it would force
@@ -2152,14 +2147,14 @@ new tables without structural changes.
 
 ### Environment and Deployment
 
-The framework assumes a working Databricks environment. Account
-onboarding, workspace creation, networking, and
-<span acronym-label="iam" acronym-form="singular+short">iam</span>
-federation are outside scope. Deployment splits into two tiers along
-resource ownership: every Databricks object that the bundle format has a
-native type for is declared in a Databricks Asset Bundle, and source
-side cloud infrastructure for each connector is declared in Terraform
-under the connector folder. The deployment model follows the declarative
+Deployment assumes a working Databricks environment. Account onboarding,
+workspace creation, networking, and <span acronym-label="iam"
+acronym-form="singular+short">iam</span> federation are outside scope.
+Deployment splits into two tiers along resource ownership: every
+Databricks object that the bundle format has a native type for is
+declared in a Databricks Asset Bundle, and source side cloud
+infrastructure for each connector is declared in Terraform under the
+connector folder. The deployment model follows the declarative
 infrastructure as code patterns established in the DevOps literature .
 
 #### Deployment Strategy
@@ -2186,9 +2181,9 @@ that needs to bring up its source system or supporting cloud resources
 (S3 buckets, <span acronym-label="iam"
 acronym-form="singular+short">iam</span> roles, OIDC trust policies,
 source side VMs). Each connector ships a Terraform runtime under
-<span class="mark">src/connectors/\<source\>/runtime/</span> , scoped to
-that connector and never referencing Databricks resources. This keeps
-the layering rule of
+<span class="mark">src/connectors/\<source\>/</span>
+<span class="mark">runtime/</span> , scoped to that connector and never
+referencing Databricks resources. This keeps the layering rule of
 <a href="#sec:impl-layering-rule" data-reference-type="autoref"
 data-reference="sec:impl-layering-rule">[sec:impl-layering-rule]</a>
 clean: per connector setup code has no upward or sideways dependencies.
@@ -2216,8 +2211,8 @@ silver tables live in <span class="mark">bronze\_\<source\></span> and
 <span class="mark">silver\_\<source\></span> schemas. Cross source
 silver and gold tables live in unqualified
 <span class="mark">silver</span> and <span class="mark">gold</span>
-schemas whose names encode the analytic rather than the source. Pipeline
-names mirror their source module (
+schemas whose names encode the analytic, not the source. Pipeline names
+mirror their source module (
 <span class="mark">ingest\_\<source\></span> ,
 <span class="mark">transform\_\<source\>\_silver</span> ). Column names
 use <span class="mark">snake_case</span> throughout. These conventions
@@ -2252,11 +2247,11 @@ resources they operate on, so scheduling promotes through the deployment
 path of <a href="#sec:deployment-strategy" data-reference-type="autoref"
 data-reference="sec:deployment-strategy">[sec:deployment-strategy]</a>.
 
-The framework assigns one job per connector with two sequential tasks:
-ingest into bronze, then transform to silver. This gives each connector
-an independent failure domain. Gold layer analytics run as separate jobs
-that list their upstream connector jobs as dependencies, so a gold job
-starts only after the required silver data is fresh.
+One job per connector handles two sequential tasks: ingest into bronze,
+then transform to silver. This gives each connector an independent
+failure domain. Gold layer analytics run as separate jobs that list
+their upstream connector jobs as dependencies, so a gold job starts only
+after the required silver data is fresh.
 
 Source characteristics drive frequency: high change sources
 (<span acronym-label="scm" acronym-form="singular+short">scm</span>,
@@ -2383,7 +2378,7 @@ state, schema mapping) the developer must write versus delegate.
     logic. The library is typed against the source object model, so
     upstream <span acronym-label="api"
     acronym-form="singular+short">api</span> changes appear as library
-    upgrades rather than silent breakage in hand written code.
+    upgrades, not silent breakage in hand written code.
 
 3.  **<span acronym-label="rest"
     acronym-form="singular+short">rest</span> <span acronym-label="api"
@@ -2660,8 +2655,8 @@ Expectations are declared alongside the transformation and checked at
 runtime. Examples: severity must be one of four standard values, status
 must be one of five standard states, repository foreign keys must
 reference an existing silver entity, and timestamps must fall within a
-plausible range. Violating records are quarantined rather than
-propagated, consistent with the quarantine pattern at ingestion.
+plausible range. Violating records are quarantined, not propagated,
+consistent with the quarantine pattern at ingestion.
 
 ##### Deduplication application
 
@@ -2681,7 +2676,7 @@ line number divergence is handled at Gold via
 Findings are linked to business applications through the
 <span class="mark">app_repo_mapping</span> relationship table. Because
 the mapping is many to many, findings inherit application context
-through a join rather than a direct foreign key, which enables the per
+through a join instead of a direct foreign key, which enables the per
 application aggregations in
 <a href="#sec:aggregation-model" data-reference-type="autoref"
 data-reference="sec:aggregation-model">[sec:aggregation-model]</a>. The
@@ -2928,8 +2923,8 @@ latency). New analytics do not merge until it passes.
 
 ### Extension Blueprint and AI Assistance
 
-Each artifact specified in this chapter is a template rather than
-unrestricted, free-form code. This covers the connector files
+Each artifact specified in this chapter is a template, not unrestricted,
+free-form code. This covers the connector files
 (<a href="#sec:connector-framework" data-reference-type="autoref"
 data-reference="sec:connector-framework">[sec:connector-framework]</a>),
 the analytics jobs
@@ -3041,7 +3036,7 @@ Lakeflow Connect and GitHub on PyGitHub .
 
 ### Methodology
 
-The implementation follows the same five steps for every source in
+The implementation follows the procedure below for every source in
 <a href="#sec:selected-sources" data-reference-type="autoref"
 data-reference="sec:selected-sources">[sec:selected-sources]</a>:
 
@@ -3114,11 +3109,11 @@ data-reference="sec:selected-sources">[sec:selected-sources]</a>:
     a remote workspace, so the test runtime matches the production
     runtime. Tests live under
     <span class="mark">src/connectors/\<source\>/tests/</span> and are
-    anchored to requirement IDs through
+    linked to requirement IDs through
     <span class="mark">@pytest.mark.requirement</span> markers.
 
-5.  **Run the skill chain pass for the source.** A chain of four Claude
-    Code skills (analyze-source, provision-source, generate-connector,
+5.  **Run the skill chain pass for the source.** The Claude Code skill
+    chain (analyze-source, provision-source, generate-connector,
     validate-implementation) executes against the source and writes
     evidence rows to the operator docs site: an Implementation log entry
     per pass and a Validation table keyed by requirement IDs. Each skill
@@ -3233,7 +3228,8 @@ appsec-mvp/
 ```
 
 The bundle resources for each source are colocated:
-<span class="mark">src/connectors/\<source\>/resources/</span> contains
+<span class="mark">src/connectors/\<source\>/</span>
+<span class="mark">resources/</span> contains
 <span class="mark">schemas.yml</span> and either
 <span class="mark">job.yml</span> (for <span acronym-label="sdk"
 acronym-form="singular+short">sdk</span> and
@@ -3242,11 +3238,12 @@ connectors) or <span class="mark">pipeline.yml</span> plus
 <span class="mark">connection.yml</span> for Lakeflow Connect
 connectors, with <span class="mark">job.yml</span> alongside for the
 downstream transform task. The bundle root includes everything via the
-glob
-<span class="mark">src/{platform,connectors/\*,analytics}/resources/\*.yml</span>
-. Schemas, volumes, and secret loading scripts move with the connector
-folder, so installing or removing a connector does not touch shared
-files.
+glob <span class="mark">src/{platform,</span>
+<span class="mark">connectors/\*,</span>
+<span class="mark">analytics}/</span>
+<span class="mark">resources/\*.yml</span> . Schemas, volumes, and
+secret loading scripts move with the connector folder, so installing or
+removing a connector does not touch shared files.
 
 ### Ingestion Category Assignment
 
@@ -3396,8 +3393,8 @@ over bronze records.
 The ServiceNow connector performs no live Python ingestion. The
 <span class="mark">ingest.py</span> module carries a module docstring
 pointing at the bundle fragment under
-<span class="mark">src/connectors/servicenow/resources/pipeline.yml</span>
-(reproduced in
+<span class="mark">src/connectors/servicenow/</span>
+<span class="mark">resources/pipeline.yml</span> (reproduced in
 <a href="#lst:servicenow-pipeline" data-reference-type="autoref"
 data-reference="lst:servicenow-pipeline">[lst:servicenow-pipeline]</a>)
 and a thin framework contract wrapper (
@@ -3461,14 +3458,15 @@ The GitHub connector uses PyGitHub. The
 <span class="mark">ingest.py</span> module exposes three names: a
 <span class="mark">build_github_client</span> factory, an
 <span class="mark">ingest_contract</span> framework wrapper that
-demonstrates the documented traversal (
-<span class="mark">client.get_organization(org).get_repos()</span>
-returning a <span class="mark">PaginatedList</span> of
-<span class="mark">Repository</span> instances, with
-<span class="mark">repo.get_pulls(state, since=hwm_value)</span> and
-<span class="mark">repo.get_codescan_alerts()</span> walking the finding
-streams), and a <span class="mark">verify_webhook_signature</span> HMAC
-helper that handles webhook receipt outside SDK territory.
+demonstrates the documented traversal, and a
+<span class="mark">verify_webhook_signature</span> HMAC helper that
+handles webhook receipt outside SDK territory. The traversal calls
+<span class="mark">client.get_organization(org).get_repos()</span> and
+receives a <span class="mark">PaginatedList</span> of
+<span class="mark">Repository</span> instances. Each repository then
+exposes <span class="mark">repo.get_pulls(state, since=hwm_value)</span>
+and <span class="mark">repo.get_codescan_alerts()</span> for walking the
+finding streams.
 <a href="#lst:github-ingest" data-reference-type="autoref"
 data-reference="lst:github-ingest">[lst:github-ingest]</a> reproduces
 the client factory as the representative fragment.
@@ -3487,23 +3485,22 @@ def build_github_client(token: str) -> Github:
     return Github(auth=auth, retry=retry, per_page=100)
 ```
 
-Three properties of this module are worth noting. First, authentication,
-pagination, and retry are delegated to the client library.
-<span class="mark">GithubRetry</span> is the
-<span class="mark">urllib3.Retry</span> subclass shipped by PyGitHub. It
-recognizes GitHub’s secondary rate limit signal, which arrives as
+PyGitHub absorbs the cross cutting concerns of authentication,
+pagination, and retry. <span class="mark">GithubRetry</span> , a
+<span class="mark">urllib3.Retry</span> subclass shipped with the
+library, recognizes GitHub’s secondary rate limit signal that arrives as
 <span acronym-label="http" acronym-form="singular+short">http</span> 403
-with a <span class="mark">Retry-After</span> header, and which a plain
+with a <span class="mark">Retry-After</span> header. A plain
 <span class="mark">Retry(status_forcelist=\[429, 5xx\])</span> does not
-cover. Second, the incremental state contract from the framework
+cover that path. The incremental state contract from the framework
 (REQ-ING-HWM) maps onto a built in PyGitHub mechanism: resource
 accessors such as
 <span class="mark">Repository.get_pulls(state="closed",
 since=hwm_value)</span> accept a <span class="mark">since</span>
 parameter, so high water mark filtering pushes down to the
 <span acronym-label="api" acronym-form="singular+short">api</span> call
-rather than running client side. Third, the page size is set to
-PyGitHub’s documented maximum of 100 to minimize round trips.
+instead of running client side. The page size is set to PyGitHub’s
+documented maximum of 100 to minimize round trips.
 
 The tests under <span class="mark">src/connectors/github/tests/</span>
 fake PyGitHub at the object graph level rather than at the
@@ -3543,17 +3540,17 @@ or N/A per cell. The ten requirement identifiers (
 <span class="mark">REQ-TRF-SEV</span> ,
 <span class="mark">REQ-TRF-STS</span> ,
 <span class="mark">REQ-TRF-TS</span> , <span class="mark">REQ-DQ</span>
-, <span class="mark">REQ-DEDUP</span> ) anchor the matrix and form the
-trail of evidence behind the <span acronym-label="ai"
+, <span class="mark">REQ-DEDUP</span> ) structure the matrix and form
+the trail of evidence behind the <span acronym-label="ai"
 acronym-form="singular+short">ai</span> claim defended in
 <a href="#sec:ai-eval" data-reference-type="autoref"
 data-reference="sec:ai-eval">[sec:ai-eval]</a>.
 
 At commit <span class="mark">a8165ad</span> the suite holds 29 test
-files and 288 test functions across
+files and 288 test functions, running under the layered strategy of
+step 4. The tests live under
 <span class="mark">src/connectors/\<source\>/tests/</span> and
-<span class="mark">src/platform/tests/</span> , running under the
-layered strategy of step 4.
+<span class="mark">src/platform/tests/</span> .
 
 ### Discussion
 
@@ -3572,12 +3569,9 @@ acronym-form="singular+short">sdk</span> cases produce visibly different
 layouts: ServiceNow has no Python ingestion file of substance, while
 GitHub has a small flat <span class="mark">ingest.py</span> composed of
 <span acronym-label="sdk" acronym-form="singular+short">sdk</span>
-calls. Both preserve the module layout prescribed by the framework. The
-trade is explicit. Lakeflow Connect absorbs ingestion into the platform
-at the cost of platform lock in. The <span acronym-label="sdk"
-acronym-form="singular+short">sdk</span> category keeps ingestion
-visible in Python at the cost of maintaining client knowledge per
-source.
+calls. Both preserve the module layout prescribed by the framework, with
+platform lock in on one side and per source client knowledge on the
+other.
 
 #### Declarative mapping
 
@@ -3598,25 +3592,26 @@ data-reference="sec:future-work">[sec:future-work]</a> thread.
 #### Iteration Summary
 
 This subsection collects iterations caught by review. Each is classified
-against the rubric formalized in
+against the acceptance criterion defined in
 <a href="#sec:ai-eval" data-reference-type="autoref"
 data-reference="sec:ai-eval">[sec:ai-eval]</a>: **framework gap** (a
 specification extension would have prevented the issue and would
-generalize), **source quirk** (source specific noise), or **environment
-glue** (setup or infrastructure outside framework scope). Earlier
-iterations before the structural redesign exposed three framework gaps:
-a hand written shared <span acronym-label="http"
-acronym-form="singular+short">http</span> primitive that introduced an
-unsanctioned fourth ingestion category, a missing boundary validator on
-incremental state inputs, and a misconfigured retry policy on the GitHub
-client. The redesign subsumed all three by enforcing the layering rule
-of <a href="#sec:impl-layering-rule" data-reference-type="autoref"
+generalize), **source specific issue** (not generalizable beyond one
+source), or **environment setup** (setup or infrastructure outside
+framework scope). Earlier iterations before the structural redesign
+exposed three framework gaps: a hand written shared
+<span acronym-label="http" acronym-form="singular+short">http</span>
+primitive that introduced an unsanctioned fourth ingestion category, a
+missing boundary validator on incremental state inputs, and a
+misconfigured retry policy on the GitHub client. The redesign closed all
+three by enforcing the layering rule of
+<a href="#sec:impl-layering-rule" data-reference-type="autoref"
 data-reference="sec:impl-layering-rule">[sec:impl-layering-rule]</a> and
-by anchoring the connector contract in the colocated test suite. The
+by binding the connector contract to the colocated test suite. The
 findings below are from the reviewer cycle after the redesign.
 
 - **Layering boundary that the redesign closed.** The layout before the
-  redesign mingled top level <span class="mark">tests/</span> ,
+  redesign mixed top level <span class="mark">tests/</span> ,
   <span class="mark">config/</span> ,
   <span class="mark">resources/</span> , <span class="mark">sql/</span>
   , and <span class="mark">infra/terraform/</span> folders, and the
@@ -3640,12 +3635,10 @@ findings below are from the reviewer cycle after the redesign.
   definitions in <span class="mark">src/platform/schemas.py</span> . The
   reviewer flagged the drift. Connector side writers for
   <span class="mark">silver.repositories</span> and
-  <span class="mark">silver.app_repo_mapping</span> remain pending and
-  are listed under open implementation items in
-  <a href="#sec:impl-results" data-reference-type="autoref"
-  data-reference="sec:impl-results">[sec:impl-results]</a>. **Framework
-  gap.** The framework should hold a single source of truth for silver
-  schemas. <a href="#sec:future-work" data-reference-type="autoref"
+  <span class="mark">silver.app_repo_mapping</span> remain pending.
+  **Framework gap.** The framework should hold a single source of truth
+  for silver schemas.
+  <a href="#sec:future-work" data-reference-type="autoref"
   data-reference="sec:future-work">[sec:future-work]</a> carries the
   consolidation as a thread.
 
@@ -3654,22 +3647,22 @@ findings below are from the reviewer cycle after the redesign.
   <span class="mark">mvp-connectors</span> . The GitHub ingest entry
   point read from a scope named <span class="mark">appsec</span> , a
   residue from an earlier prototype. The reviewer caught the mismatch
-  during the bootstrap script review. **Environment glue.** The fix
+  during the bootstrap script review. **Environment setup.** The fix
   aligned the entry point with the documented scope name.
 
 - **Worktree pollution.** Several review cycles caught files that the
   redesign deleted reappearing on disk and being staged for inadvertent
   reintroduction (likely an editor or antivirus recreating them).
   Reviewers caught the pattern before bad commits landed. **Environment
-  glue.** The pattern is not attributable to the framework.
+  setup.** The pattern is not attributable to the framework.
 
 - **Cron schedule collision between GitHub and SonarQube.** The GitHub
   and SonarQube connector jobs were originally scheduled with
   overlapping quartz cron expressions, so both jobs would dispatch on
   the same minute mark and contend for the shared cluster. The reviewer
   flagged the collision and the SonarQube schedule was offset to a non
-  aligned minute. **Source quirk.** The correction is specific to two
-  job schedules and does not generalize.
+  aligned minute. **Source specific issue.** The correction is specific
+  to two job schedules and does not generalize.
 
 - **IRSA OIDC trust policy gaps.** Migrating each connector Terraform
   runtime under
@@ -3677,7 +3670,7 @@ findings below are from the reviewer cycle after the redesign.
   incomplete trust policy details on the IAM Roles for Service Accounts
   (IRSA) bindings. The reviewer required full trust policy declarations
   and explicit operator inputs for OIDC issuer URLs. **Environment
-  glue.** The corrections concern <span acronym-label="aws"
+  setup.** The corrections concern <span acronym-label="aws"
   acronym-form="singular+short">aws</span> account setup and are
   documented per connector under the
   <span class="mark">runtime/README.md</span> file.
@@ -3685,10 +3678,10 @@ findings below are from the reviewer cycle after the redesign.
 Two of the six findings after the redesign classify as framework gaps.
 Both name a specific consolidation the framework should hold (the
 layering rule, a single source of truth for silver schemas). Three
-classify as environment glue and one as a source quirk. The reviewer
-cycle caught all six before the commits landed, which is the empirical
-evidence behind the claim that the skill chain plus reviewer pattern
-catches named defect classes.
+classify as environment setup and one as a source specific issue. The
+reviewer cycle caught all six before the commits landed, which is the
+empirical evidence behind the claim that the skill chain plus reviewer
+pattern catches named defect classes.
 <a href="#sec:ai-eval" data-reference-type="autoref"
 data-reference="sec:ai-eval">[sec:ai-eval]</a> lifts these findings to a
 defended claim about where the framework holds and where it admits
@@ -3705,7 +3698,7 @@ for an application security data platform, motivated and grounded in
 <a href="#ch:analysis" data-reference-type="autoref"
 data-reference="ch:analysis">[ch:analysis]</a>. The specification text
 was published on the documentation site and attached to the thesis
-rather than placed in an appendix because of its length. The second is a
+instead of placed in an appendix because of its length. The second is a
 **reusable and extensible framework**
 (<a href="#ch:framework" data-reference-type="autoref"
 data-reference="ch:framework">[ch:framework]</a>) covering reference
@@ -3726,19 +3719,18 @@ instantiated in
 data-reference="ch:implementation">[ch:implementation]</a> (Peffers:
 demonstration), and evaluated through the traceability matrix and the
 <span acronym-label="ai" acronym-form="singular+short">ai</span>
-instantiability rubric in
+instantiability assessment in
 <a href="#sec:ai-eval" data-reference-type="autoref"
 data-reference="sec:ai-eval">[sec:ai-eval]</a> (Hevner: design
-evaluation and research contributions; Peffers: evaluation). Rigor is
-anchored by tests bound to requirement identifiers and by the iteration
+evaluation and research contributions; Peffers: evaluation). Rigor comes
+from tests bound to requirement identifiers and from the iteration
 summary (Hevner: research rigor and design as a search process).
 Communication runs through the thesis and the operator facing
 documentation site (Hevner: communication of research; Peffers:
 communication). Two items are partial: the <span acronym-label="ai"
-acronym-form="singular+short">ai</span> evaluation rubric was settled
-after the first reviewer cycles rather than declared in advance, and
-design alternatives are recorded only at the level of the iteration
-summary.
+acronym-form="singular+short">ai</span> evaluation criterion was settled
+after the first reviewer cycles, not declared in advance, and design
+alternatives are recorded only at the level of the iteration summary.
 
 The framework is **reusable** in the concrete sense that
 <a href="#ch:implementation" data-reference-type="autoref"
@@ -3773,8 +3765,8 @@ specification (schema pattern, connector contract from
 data-reference="sec:connector-contract">[sec:connector-contract]</a>, or
 declarative artifact) would have produced the right output on first pass
 and the extension would generalize. Corrections tracing to **source
-quirks** or **environment glue** (setup, authentication, infrastructure)
-do not count against the framework.
+specific issues** or **environment setup** (setup, authentication,
+infrastructure) do not count against the framework.
 
 #### Empirical outcome
 
@@ -3786,11 +3778,11 @@ enumerates the defects the reviewer cycle caught: a layering boundary
 (framework gap), schema drift between <span acronym-label="sql"
 acronym-form="singular+short">sql</span> <span acronym-label="ddl"
 acronym-form="singular+short">ddl</span> and PySpark types (framework
-gap), a secret scope mismatch (environment glue), worktree pollution
-(environment glue), a cron schedule collision (source quirk), and IRSA
-OIDC trust policy gaps (environment glue). Two of six classify as
-framework gaps. Evidence lives in the per connector Implementation logs
-at <https://vkraus.github.io/appsec-mvp/>.
+gap), a secret scope mismatch (environment setup), worktree pollution
+(environment setup), a cron schedule collision (source specific issue),
+and IRSA OIDC trust policy gaps (environment setup). Two of six classify
+as framework gaps. Evidence lives in the per connector Implementation
+logs at <https://vkraus.github.io/appsec-mvp/>.
 
 #### Claim defended
 
@@ -3802,7 +3794,7 @@ implementation was generated end to end across nine sources by the four
 skill chain with reviewer subagent cycles catching defects. The platform
 layer the connectors run against and the analytics layer they feed are
 deliberately hand written: the platform is the singleton contract the
-skills depend on by name, and the analytics layer is the bespoke
+skills depend on by name, and the analytics layer is the specific
 evidence the thesis presents. The contract, mapping, and module layout
 reduce new connector work to a five step procedure that converges with
 bounded supervision. It is not yet <span acronym-label="ai"
@@ -3810,11 +3802,12 @@ acronym-form="singular+short">ai</span> **autonomous**: every connector
 still required reviewer cycles, and the schema drift gap plus the open
 items below remain. The empirical evidence above was produced by a
 single operator (the author) acting as both implementer and reviewer of
-the rubric, without inter rater reliability or an independent grader.
-Closing the open items, refining the skills until invocations are self
-sustaining, and replicating the evaluation under a controlled study with
-multiple operators would measure the distance from instantiable to
-autonomous. That measurement is the subject of Future Work.
+the evaluation, without inter rater reliability or an independent
+grader. Closing the open items, refining the skills until invocations
+are self sustaining, and replicating the evaluation under a controlled
+study with multiple operators would measure the distance from
+instantiable to autonomous. That measurement is the subject of Future
+Work.
 
 ### Limitations
 
@@ -3837,8 +3830,8 @@ live tenant. The connector contract in
 data-reference="sec:connector-framework">[sec:connector-framework]</a>
 is written to be cloud and platform agnostic in principle, but it has
 not been ported to Snowflake, Microsoft Fabric, or an on premises
-platform, so the portability claim rests on contract design rather than
-a second demonstrated implementation.
+platform, so the portability claim rests on contract design alone, with
+no second demonstrated implementation.
 
 **Reproducibility** requires a Databricks workspace with Unity Catalog,
 an <span acronym-label="aws" acronym-form="singular+short">aws</span>
@@ -3889,7 +3882,7 @@ bearer token, <span acronym-label="owasp"
 acronym-form="singular+short">owasp</span> <span acronym-label="zap"
 acronym-form="singular+short">zap</span> follows an artifact pattern,
 and the two file based sources (Semgrep, TruffleHog) deliver via S3
-rather than an interactive <span acronym-label="api"
+instead of an interactive <span acronym-label="api"
 acronym-form="singular+short">api</span>. Source categories not
 demonstrated include SOAP, gRPC, syslog, Kafka event streams, binary
 telemetry, and push only webhook native sources. The contract is written
@@ -3917,16 +3910,6 @@ builds the silver DataFrame field by field in
 <span class="mark">transform.py</span> . Completing the applicator would
 make adding a source a configuration edit rather than a code edit.
 
-**Populating <span class="mark">silver.repositories</span> and
-<span class="mark">silver.app_repo_mapping</span> .** The
-<span acronym-label="ddl" acronym-form="singular+short">ddl</span> is in
-place and the layering rule reserves the <span acronym-label="scm"
-acronym-form="singular+short">scm</span> first ordering, but the writer
-code for each <span acronym-label="scm"
-acronym-form="singular+short">scm</span> and <span acronym-label="cmdb"
-acronym-form="singular+short">cmdb</span> connector is pending. Until
-that lands, the gold layer cannot join scanner findings to repositories.
-
 **Realizing the remaining prescribed silver tables.** The framework
 prescribes 15 silver tables
 (<a href="#sec:entity-model" data-reference-type="autoref"
@@ -3948,8 +3931,7 @@ add the remaining entity tables ( <span class="mark">teams</span> ,
 <span class="mark">kev_entries</span> ), and the remaining relationship
 tables ( <span class="mark">finding_cve_mapping</span> ,
 <span class="mark">dedup_links</span> ). Adding each is a connector
-level extension under the same schema patterns rather than a framework
-change.
+level extension under the same schema patterns, not a framework change.
 
 **Finishing job orchestration and bootstrap hardening.** The GitLab
 connector ships placeholder <span class="mark">ingest_entry.py</span>
@@ -3993,17 +3975,18 @@ drafting period of the thesis.
 
 ### Text Editing
 
+I did not rely on <span acronym-label="ai"
+acronym-form="singular+short">ai</span> assistants to autonomously
+generate thesis text. I manually wrote all new text material in Overleaf
+editor, and only afterward revised it with <span acronym-label="ai"
+acronym-form="singular+short">ai</span> support.
+
 <span acronym-label="ai" acronym-form="singular+short">ai</span>
 assistance feature in Overleaf online editor was used for grammar
 checking, style refinement, synonym replacement, sentence rephrasing,
-and other editing of the content I originally authored. I relied on the
-assistant throughout my drafts to identify errors, tighten phrasing, and
-highlight inconsistencies. I accepted, rejected, or revised the
-suggestions. **I did not rely on any <span acronym-label="ai"
-acronym-form="singular+short">ai</span> assistant to autonomously
-generate thesis content. I wrote all new text material in the Overleaf
-editor, and only afterward revised it with <span acronym-label="ai"
-acronym-form="singular+short">ai</span> support.**
+and other editing of the content I authored. I relied on the assistant
+throughout my drafts to identify errors, tighten phrasing, and highlight
+inconsistencies. I accepted, rejected, or revised the suggestions.
 
 Several review cycles were carried out across the entire thesis using
 the Claude Code tool with Claude Opus models to condense it to its
@@ -4025,7 +4008,7 @@ data-reference="sec:data-entities">[sec:data-entities]</a>) were also
 authored by me. Literature selection is mine, Claude Code was used to
 generate most bibliography entries in LaTeX format. Several entries
 point at vendor product pages and white papers (used as primary sources
-for product capabilities and feature claims) rather than peer reviewed
+for product capabilities and feature claims) instead of peer reviewed
 literature. These are flagged inline with the specific claim each one
 supports.
 
