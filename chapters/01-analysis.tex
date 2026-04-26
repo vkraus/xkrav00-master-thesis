@@ -104,7 +104,7 @@ Integration is bidirectional: the framework reads remediation status and may cre
 \section{Static Application Security}
 \label{sec:static-appsec}
 
-Application security encompasses practices and tools for identifying vulnerabilities throughout the software lifecycle~\cite{Anderson2020, Stallings2024}. \textcite{McGraw2006} advocated for security touchpoints spanning development. The DevSecOps paradigm~\cite{Mack2023, Kim2021} realizes this by embedding security testing into \gls{cicd} pipelines. \Gls{sast} examines source code, \gls{sca} checks third party dependencies, secret scanners flag leaked credentials, and \gls{dast} probes running applications. These tools produce large volumes of data in different \glspl{api}, formats, and severity models. The \gls{owasp} Top~10 classifies common web application risks~\cite{OWASP2021} but does not define a data interchange standard.
+Application security covers practices and tools for identifying vulnerabilities throughout the software lifecycle~\cite{Anderson2020, Stallings2024}. \textcite{McGraw2006} advocated for security touchpoints spanning development. The DevSecOps approach~\cite{Mack2023, Kim2021} realizes this by embedding security testing into \gls{cicd} pipelines. \Gls{sast} examines source code, \gls{sca} checks third party dependencies, secret scanners flag leaked credentials, and \gls{dast} probes running applications. These tools produce large volumes of data in different \glspl{api}, formats, and severity models. The \gls{owasp} Top~10 classifies common web application risks~\cite{OWASP2021} but does not define a data interchange standard.
 
 Several cross cutting standards bring partial consistency. The \gls{cve} system assigns unique identifiers to known vulnerabilities~\cite{MITRE2024}. \Gls{cwe} classifies weakness types~\cite{CWE2024}. \Gls{cvss} scores attack vector, complexity, and impact on a 0--10 scale~\cite{FIRST2019}. \Gls{epss} adds a predictive signal~\cite{Jacobs2020}: the \gls{ml} computed probability that a vulnerability will be exploited within 30~days. \Gls{cisa} maintains the \gls{kev} catalog~\cite{CISAKEV2024}, which adds a third signal: confirmed active exploitation from real world incidents.
 
@@ -153,7 +153,7 @@ Secret detection tools scan version control history for credentials, \gls{api} k
 \section{Dynamic Application Security Testing}
 \label{sec:dynamic-appsec}
 
-\Gls{dast} tests running applications by sending crafted \gls{http} requests and analyzing responses for vulnerability indicators~\cite{Stuttard2011}. It requires a deployed application and detects vulnerabilities that manifest only at runtime, such as authentication bypass, server misconfiguration, and injection flaws. This section covers active scanning. \autoref{sec:runtime-security} covers passive telemetry.
+\Gls{dast} tests running applications by sending crafted \gls{http} requests and analyzing responses for vulnerability indicators~\cite{Stuttard2011}. It requires a deployed application and detects vulnerabilities that appear only at runtime, such as authentication bypass, server misconfiguration, and injection flaws. This section covers active scanning. \autoref{sec:runtime-security} covers passive telemetry.
 
 The representative tools are \gls{owasp} \gls{zap} (open source) and Burp Suite Enterprise, both exposing a \gls{rest} \gls{api} for scan management and alert retrieval. Findings include the target \gls{url}, affected \gls{http} parameter, vulnerability type mapped to \gls{cwe}~\cite{CWE2024}, exploitation evidence, and confidence rating. The core integration challenge is that \gls{dast} findings are \gls{url} based, not code based. Mapping them to source repositories requires deployment metadata or inventory data from \autoref{sec:app-inventory}. Without that link, \gls{dast} findings can be attributed to applications but not to teams or code locations.
 
@@ -164,7 +164,7 @@ The representative tools are \gls{owasp} \gls{zap} (open source) and Burp Suite 
 \section{Runtime Security}
 \label{sec:runtime-security}
 
-Runtime security covers passive telemetry from production workloads, sitting alongside the active scanning in \autoref{sec:dynamic-appsec} and completing the three detection tiers the framework uses: static, dynamic, and runtime. The representative tool in this tier is the \gls{waf}. It does not execute scans. It inspects live \gls{http} traffic and emits events when rules fire, marking exploitation attempts against a workload or endpoint and linking to applications through deployment metadata rather than source code coordinates. Broader runtime operations such as \gls{siem} driven incident response and general log analytics are adjacent but out of scope. The framework treats runtime security as one input tier among three, correlated with static and dynamic findings through the shared application inventory.
+Runtime security covers passive telemetry from production workloads, sitting alongside the active scanning in \autoref{sec:dynamic-appsec} and completing the three detection tiers the framework uses: static, dynamic, and runtime. The representative tool in this tier is the \gls{waf}. It does not execute scans. It inspects live \gls{http} traffic and emits events when rules fire, marking exploitation attempts against a workload or endpoint and linking to applications through deployment metadata instead of source code coordinates. Broader runtime operations such as \gls{siem} driven incident response and general log analytics are adjacent but out of scope. The framework treats runtime security as one input tier among three, correlated with static and dynamic findings through the shared application inventory.
 
 %%% 1.5.1 %%%
 
@@ -183,7 +183,7 @@ These platforms bundle \gls{ddos} protection alongside \gls{waf} capabilities. \
 \section{Source Integration Summary}
 \label{sec:source-integration-summary}
 
-The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-characteristics/}{source characteristics reference page} tabulates integration characteristics across the AppSec source landscape surveyed for the thesis.
+The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-characteristics/}{source characteristics reference page} tabulates integration characteristics across the AppSec sources surveyed for the thesis.
 
 Several patterns emerge. \gls{rest} \glspl{api} with \gls{json} responses are dominant, but \gls{xml}, GraphQL, \gls{cli} output parsing, and manual uploads are all necessary. Standardization varies: \gls{sca} benefits from the \gls{cve}/\gls{nvd} ecosystem, \gls{sast} is partially standardized through \gls{sarif}, and secret scanning has no standard format. Update frequencies range from continuous dependency monitoring to periodic penetration tests. These characteristics define what the ingestion layer in \autoref{ch:framework} must accommodate.
 
@@ -339,7 +339,7 @@ These span the \gls{olap} and \gls{oltp} requirements from \autoref{sec:data-arc
 \section{Related Work and Gap Analysis}
 \label{sec:related-work}
 
-No standard approach exists for consolidating security tool output into a unified data platform. Organizations face a fragmented landscape of partial solutions.
+No standard approach exists for consolidating security tool output into a unified data platform. Organizations face a fragmented set of partial solutions.
 
 %%% 1.8.1 %%%
 
@@ -349,7 +349,7 @@ No standard approach exists for consolidating security tool output into a unifie
 
 Platform native features cover only their own ecosystem. GitHub Advanced Security provides code scanning via CodeQL, secret scanning, and dependency review~\cite{GitHubGHAS2025}. GitLab bundles \gls{sast}, \gls{dast}, dependency scanning, container scanning, and a security dashboard~\cite{GitLabSecurity2025}. Organizations using multiple \gls{scm} platforms or third party tools cannot consolidate through them.
 
-DefectDojo~\cite{DefectDojo2024} is the most prominent open source alternative, supporting imports from over 150 tools through format specific parsers. It was designed as a vulnerability management interface rather than a data platform. Its PostgreSQL backend limits enterprise scale analytics, and advanced \gls{api} connectors are commercial only. \Gls{ocsf}~\cite{OCSF2024} standardizes security event schemas for \gls{siem} and \gls{soar} but does not model application level entities such as repositories, applications, or teams.
+DefectDojo~\cite{DefectDojo2024} is the most prominent open source alternative, supporting imports from over 150 tools through format specific parsers. It was designed as a vulnerability management interface, not a data platform. Its PostgreSQL backend limits enterprise scale analytics, and advanced \gls{api} connectors are commercial only. \Gls{ocsf}~\cite{OCSF2024} standardizes security event schemas for \gls{siem} and \gls{soar} but does not model application level entities such as repositories, applications, or teams.
 
 Many enterprises build ad hoc integrations: custom scripts, \gls{etl} pipelines, and dashboards from manual exports. These lack schema governance, break on \gls{api} changes, and persist as institutional knowledge in unmaintained scripts.
 
@@ -372,7 +372,7 @@ Lakewatch focuses on runtime security operations: threat detection, incident res
 \centering
 \caption{Comparison of Existing Approaches}
 \label{tab:related-work-comparison}
-\begin{tabularx}{\textwidth}{X c c c c c}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X c c c c c}
 \toprule
 \textbf{Criterion} & \textbf{ASPM} & \textbf{Platform native} & \textbf{DefectDojo} & \textbf{Lakewatch} & \textbf{This thesis} \\
 \midrule
@@ -389,7 +389,7 @@ Enterprise scalability   & Yes     & Partial & --      & Yes     & Partial \\
 \par\footnotesize \textit{Note.} Yes indicates full support, Partial indicates acknowledged but not demonstrated, -- indicates out of scope or not addressed. Source: author synthesis of cited products' public documentation, accessed 2026-04.
 \end{table}
 
-No existing approach satisfies all criteria. Commercial \gls{aspm} is proprietary, platform native aggregations are ecosystem locked, DefectDojo lacks the data architecture for enterprise scale analytics, and Lakewatch addresses runtime operations rather than application security posture. The present work is itself partial on two criteria: the vendor agnostic claim holds at framework level but the reference implementation runs on Databricks alone, and lakehouse based enterprise scalability is supported by design but not empirically validated here (both noted in the Limitations section of the Conclusion). Academic work on application security consolidation as a data engineering problem is limited, focusing on detection techniques rather than cross tool integration at scale.
+No existing approach satisfies all criteria. Commercial \gls{aspm} is proprietary, platform native aggregations are ecosystem locked, DefectDojo lacks the data architecture for enterprise scale analytics, and Lakewatch addresses runtime operations rather than application security posture. The present work is itself partial on two criteria: the vendor agnostic claim holds at framework level but the reference implementation runs on Databricks alone, and lakehouse based enterprise scalability is supported by design but not empirically validated here (both noted in the Limitations section of the Conclusion). Academic work on application security consolidation as a data engineering problem is limited, focusing on detection techniques instead of cross tool integration at scale.
 
 %%%%%%%%%%%
 %%% 1.9 %%%
@@ -398,7 +398,7 @@ No existing approach satisfies all criteria. Commercial \gls{aspm} is proprietar
 \section{Selected Sources}
 \label{sec:selected-sources}
 
-The reference implementation in \autoref{ch:implementation} instantiates the framework against nine source systems chosen to cover the ingestion and integration patterns that the framework must support, while keeping the sample tractable. The selection spans all three detection tiers: static testing, dynamic testing, and runtime security.
+The reference implementation in \autoref{ch:implementation} instantiates the framework against nine source systems chosen to cover the ingestion and integration patterns that the framework must support, while keeping the sample small enough to manage. The selection spans all three detection tiers: static testing, dynamic testing, and runtime security.
 
 \subsection{Selection Criteria}
 
