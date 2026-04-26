@@ -20,18 +20,18 @@
 ]
 
 % Entity tables
-\node[primary] (teams) at (-4.2, 5.5) {teams\\[2pt]{\tiny\sffamily\mdseries id (PK)\\ natural\_key\\ valid\_from/to}};
-\node[primary] (apps) at (0, 5.5) {applications\\[2pt]{\tiny\sffamily\mdseries id (PK)\\ criticality\_tier\\ valid\_from/to}};
-\node[primary] (repos) at (4.2, 5.5) {repositories\\[2pt]{\tiny\sffamily\mdseries id (PK)\\ full\_name\\ valid\_from/to}};
+\node[secondary] (teams) at (-4.2, 5.5) {teams\\[2pt]{\tiny\sffamily\mdseries team\_id (PK)\\ natural\_key\\ valid\_from/to}};
+\node[primary] (apps) at (0, 5.5) {applications\\[2pt]{\tiny\sffamily\mdseries application\_id (PK)\\ name, criticality\\ valid\_from/to}};
+\node[primary] (repos) at (4.2, 5.5) {repositories\\[2pt]{\tiny\sffamily\mdseries repository\_id (PK)\\ full\_name\\ valid\_from/to}};
 
 % Finding table (single table with category discriminator)
-\node[primary] (findings) at (-3.2, 1.2) {findings\\[2pt]{\tiny\sffamily\mdseries finding\_id (PK)\\ repository\_id (FK)\\ category, severity\\ rule\_id, cve\_id}};
+\node[primary] (findings) at (-3.2, 1.2) {findings\\[2pt]{\tiny\sffamily\mdseries finding\_id (PK)\\ repository\_id (FK)\\ category\\ severity\_canonical\\ rule\_id\_native, cve\_id}};
 
 % Reference table
 \node[secondary] (vuln) at (3.2, 1.2) {vulnerabilities\\[2pt]{\tiny\sffamily\mdseries cve\_id (PK)\\ cvss\_score\\ published\_at}};
 
 % Relationship tables
-\node[secondary] (appmap) at (-4.2, -3.0) {app\_repo\_mapping\\[2pt]{\tiny\sffamily\mdseries application\_id (FK)\\ repository\_id (FK)\\ valid\_from/to}};
+\node[primary] (appmap) at (-4.2, -3.0) {app\_repo\_mapping\\[2pt]{\tiny\sffamily\mdseries application\_id (FK)\\ repository\_id (FK)\\ link\_source}};
 \node[secondary] (cvemap) at (0, -3.0) {finding\_cve\_mapping\\[2pt]{\tiny\sffamily\mdseries finding\_id (FK)\\ cve\_id (FK)}};
 \node[secondary] (dedup) at (4.2, -3.0) {dedup\_links\\[2pt]{\tiny\sffamily\mdseries finding\_id\_a (FK)\\ finding\_id\_b (FK)\\ match\_tuple}};
 
@@ -57,10 +57,11 @@
 \draw[arr] (findings.south east) -- (cvemap.north west);
 \draw[arr] (vuln.south) -- (cvemap.north east);
 
-% Self reference on findings via dedup_links
-\draw[arr] (findings.west) to[out=180, in=170, looseness=2.2] node[lbl, left, pos=0.5] {dedup\_links} (findings.south west);
+% Self reference on findings via dedup_links: two FK arrows into the relationship table
+\draw[arr] (findings.south) to[out=-90, in=170, looseness=0.7] node[lbl, below, pos=0.6] {finding\_id\_a} (dedup.north west);
+\draw[arr] (findings.south east) to[out=-60, in=130, looseness=0.7] node[lbl, above right, pos=0.7] {finding\_id\_b} (dedup.north);
 
 \end{tikzpicture}
-\caption[Silver layer entity relationship diagram]{Silver layer entity relationship diagram. Representative subset: \textbf{8} of the \textbf{15} silver tables. Four groupings are visible through background shading: entities, findings, reference, and relationship tables. The remaining 7 tables follow the same schema patterns.}
+\caption[Silver layer entity relationship diagram]{Silver layer entity relationship diagram for the prescribed framework. Representative subset: \textbf{8} of the \textbf{15} prescribed silver tables grouped by type (entities, findings, reference, relationships). The MVP described in \autoref{ch:implementation} realizes the four table subset \{\inlinecode{applications}, \inlinecode{repositories}, \inlinecode{findings}, \inlinecode{app\_repo\_mapping}\} shown as highlighted nodes, and simplifies SCD-2 to overwrite on update. The remaining tables follow the same schema patterns and are listed as Future Work.}
 \label{fig:silver-erd}
 \end{figure}

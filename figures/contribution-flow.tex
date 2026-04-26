@@ -23,7 +23,7 @@
 \node[chapterbox, below=0.5cm of analysis] (framework) {\textbf{Chapter~2} \\ Framework \\ schema patterns, \\ connector contract, \\ pipeline patterns};
 
 % Center: Appendix A (spec + skills) — auto-sized to fit content
-\node[specbox, right=3.4cm of $(analysis.east)!0.5!(framework.east)$] (spec) {\textbf{Documentation site} \\ Requirements \\ Specification, \\ canonical mapping, \\ AI agent skills, \\ per-source reference, \\ traceability matrix};
+\node[specbox, right=3.4cm of $(analysis.east)!0.5!(framework.east)$] (spec) {\textbf{Documentation site} \\ Requirements \\ Specification, \\ data mapping, \\ AI agent skills, \\ reference per source, \\ traceability matrix};
 
 % Right: Chapter 3 — extra breathing room for the "skills consumed by" label
 \node[chapterbox, right=3.6cm of spec] (impl) {\textbf{Chapter~3} \\ Implementation \\ follows skills to build product \\ and reports results};
@@ -41,7 +41,7 @@
 
 % Feedback arrow: wider bezier sweep so the wrapped label has clear vertical room
 \draw[->, thick, dashed] (impl.south) .. controls +(down:2.0cm) and +(down:2.0cm) ..
-    node[edgelabel, below, pos=0.5, text width=3.2cm] {results populate\\per-source reports} (spec.south);
+    node[edgelabel, below, pos=0.5, text width=3.2cm] {results populate\\reports per source} (spec.south);
 
 \end{tikzpicture}%
 }
