@@ -32,7 +32,7 @@
 
 % Relationship tables
 \node[primary] (appmap) at (-4.2, -3.0) {app\_repo\_mapping\\[2pt]{\tiny\sffamily\mdseries application\_id (FK)\\ repository\_id (FK)\\ link\_source}};
-\node[secondary] (cvemap) at (0, -3.0) {finding\_cve\_mapping\\[2pt]{\tiny\sffamily\mdseries finding\_id (FK)\\ cve\_id (FK)}};
+\node[secondary, text width=2.8cm] (cvemap) at (0, -3.0) {finding\_cve\_mapping\\[2pt]{\tiny\sffamily\mdseries finding\_id (FK)\\ cve\_id (FK)}};
 \node[secondary] (dedup) at (4.2, -3.0) {dedup\_links\\[2pt]{\tiny\sffamily\mdseries finding\_id\_a (FK)\\ finding\_id\_b (FK)\\ match\_tuple}};
 
 % Band backgrounds drawn behind nodes
@@ -62,6 +62,6 @@
 \draw[arr] (findings.south east) to[out=-60, in=130, looseness=0.7] node[lbl, above right, pos=0.7] {finding\_id\_b} (dedup.north);
 
 \end{tikzpicture}
-\caption[Silver layer entity relationship diagram]{Silver layer entity relationship diagram for the prescribed framework. Representative subset: \textbf{8} of the \textbf{15} prescribed silver tables grouped by type (entities, findings, reference, relationships). The MVP described in \autoref{ch:implementation} realizes the four table subset \{\inlinecode{applications}, \inlinecode{repositories}, \inlinecode{findings}, \inlinecode{app\_repo\_mapping}\} shown as highlighted nodes, and simplifies SCD-2 to overwrite on update. The remaining tables follow the same schema patterns and are listed as Future Work.}
+\caption[Silver layer entity relationship diagram]{Silver layer entity relationship diagram for the prescribed framework. Representative subset: \textbf{8} of the \textbf{15} prescribed silver tables grouped by type (entities, findings, reference, relationships). Highlighted nodes are the four tables realized by the MVP in \autoref{ch:implementation}, which simplifies SCD-2 to overwrite on update. The remaining tables follow the same schema patterns and are listed as Future Work.}
 \label{fig:silver-erd}
 \end{figure}
