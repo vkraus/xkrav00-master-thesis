@@ -38,7 +38,7 @@ category = "sast"\\
 severity\_canonical = "critical"\\
 status\_canonical = "open"\\
 rule\_id\_native = "java:S2259"\\
-trigger\_context = "code"\\
+trigger\_context = "periodic"\\
 file\_path = "src/Foo.java"\\
 start\_line = 42%
 };
@@ -48,7 +48,7 @@ start\_line = 42%
 application\_id = 47\\
 period\_start = 2026-04-18\\
 critical\_count += 1\\
-weighted\_risk\_score += w(CRITICAL) * c(critical\_tier)%
+weighted\_risk\_score += w(CRITICAL) * c(criticality)%
 };
 
 \draw[arr] (api.south) -- node[arrlbl, right, xshift=3pt]

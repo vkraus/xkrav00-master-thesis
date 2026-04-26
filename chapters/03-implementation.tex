@@ -1,9 +1,9 @@
 \chapter{MVP Implementation}
 \label{ch:implementation}
 
-This chapter reports the reference implementation of the framework defined in \autoref{ch:framework}. The deliverable is a Databricks Asset Bundle~\parencite{DatabricksDAB2025} that instantiates the three ingestion categories against the nine sources selected in \autoref{sec:selected-sources}. It is a minimum viable product, not a production ready integration of every security tool an enterprise might deploy. The nine sources cover the ingestion and integration patterns the framework must support: two \gls{scm} platforms, four scanners across static and dynamic testing, a \gls{cmdb}, a secrets tool, and a runtime security source. Onboarding a tenth source does not require a framework change. It repeats the procedure in \autoref{sec:impl-methodology} and lands a new \inlinecode{src/connectors/<source>/} folder.
+This chapter reports the reference implementation of the framework defined in \autoref{ch:framework}. The deliverable is a Databricks Asset Bundle~\parencite{DatabricksDAB2025} that instantiates the three ingestion categories plus the artifact path carve out against the nine sources selected in \autoref{sec:selected-sources}: two \gls{scm} platforms, four scanners across static and dynamic testing, a \gls{cmdb}, a secrets tool, and a runtime security source. It is a minimum viable product. Open items are listed in \autoref{sec:impl-results}.
 
-The contribution is twofold. First, the contract of three categories holds across the nine sources and the resulting code fits one small, repeating module layout. Second, the connectors were demonstrably generated end to end against the nine sources via a chain of three skills, with reviewer subagent cycles catching named defect classes (see \autoref{sec:iteration-summary} and \autoref{sec:ai-eval}). \autoref{sec:impl-project-structure} reports the realized project layout. \autoref{sec:ingestion-category-assignment} resolves each source to its category. \autoref{sec:impl-representative-connectors} shows the two ends of the category range in concrete code: ServiceNow on Lakeflow Connect (declarative) and GitHub on PyGitHub~\parencite{PyGithubDocs2025} (\gls{sdk}).
+The contribution is twofold. The contract of three categories holds across all nine sources, and the resulting code fits one small repeating module layout. The chain of four skills ran end to end against every source, with reviewer subagent cycles catching named defect classes (\autoref{sec:iteration-summary}, \autoref{sec:ai-eval}). All implementation artifacts under \inlinecode{src/connectors/<source>/} are output of the chain for all nine sources: the eight-file core (configuration, ingest, transform, mapping, severity, status, bundle resources, tests), the source-side runtime under \inlinecode{runtime/}, the Databricks-side runtime layout (secrets loader, install orchestrator, notebook entry wrappers, \gls{sql} bronze envelopes, multi-resource bundle fragments), and the connector page runbook sections. \autoref{sec:impl-representative-connectors} shows two ends of the category range in concrete code: ServiceNow on Lakeflow Connect and GitHub on PyGitHub~\parencite{PyGithubDocs2025}.
 
 \section{Methodology}
 \label{sec:impl-methodology}
@@ -15,10 +15,10 @@ The implementation follows the same five steps for every source in \autoref{sec:
     \item \textbf{Instantiate the module layout for the connector.} Every connector carries the same files under \inlinecode{src/connectors/<source>/}: \inlinecode{ingest.py}, \inlinecode{transform.py}, \inlinecode{mapping.yml}, \inlinecode{config.yml}, \inlinecode{severity.yml}, and \inlinecode{status.yml}. Bundle resources, tests, and the secret loading script are colocated with the connector code. For Lakeflow Connect sources, \inlinecode{ingest.py} is reduced to a module docstring and ingestion is declared in the bundle fragment as a \inlinecode{pipelines} resource with an \inlinecode{ingestion\_definition}.
     \item \textbf{Apply the mapping declaratively.} The \inlinecode{mapping.yml} file for the connector encodes the column expressions from bronze to silver given by the \href{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/}{published mapping requirements}. Severity and status lookups live in the connector folder as \inlinecode{severity.yml} and \inlinecode{status.yml}. \inlinecode{src/platform/silver.py} provides severity rank and status bucket normalization helpers and deduplication utilities shared across connectors. The \inlinecode{transform.py} module builds the silver DataFrame field by field, calling the shared helpers. The current \gls{mvp} builds the DataFrame in Python rather than applying the YAML declaratively. \autoref{sec:future-work} carries the declarative applicator as a thread.
     \item \textbf{Test in the layered strategy from \autoref{sec:connector-testing}.} Tests divide along the signature of the code they exercise. Row level logic in pure Python (parser logic, mapping application, \gls{hwm} state, dedup key construction) runs locally against \inlinecode{list[dict]} fixtures with no \inlinecode{SparkSession}. DataFrame logic (transformations, envelope stamping, schema enforcement) runs through a session scoped Databricks Connect fixture that attaches to a remote workspace, so the test runtime matches the production runtime. Tests live under \inlinecode{src/connectors/<source>/tests/} and are anchored to requirement IDs through \inlinecode{@pytest.mark.requirement} markers.
-    \item \textbf{Run the skill chain pass for the source.} A chain of three Claude Code skills (analyze-source, generate-connector, validate-implementation) executes against the source and writes evidence rows to the operator docs site: a Generation log entry per pass and a Validation table keyed by requirement IDs. Each skill pass is then reviewed by a separate subagent (one for spec compliance, one for code quality), whose findings are folded back as follow up commits before the next source moves forward. \autoref{sec:iteration-summary} records the defect classes the reviewer cycle caught.
+    \item \textbf{Run the skill chain pass for the source.} A chain of four Claude Code skills (analyze-source, provision-source, generate-connector, validate-implementation) executes against the source and writes evidence rows to the operator docs site: an Implementation log entry per pass and a Validation table keyed by requirement IDs. Each skill pass is then reviewed by a separate subagent (one for spec compliance, one for code quality), whose findings are folded back as follow up commits before the next source moves forward. \autoref{sec:iteration-summary} records the defect classes the reviewer cycle caught.
 \end{enumerate}
 
-Step~1 has a deterministic answer for every source in the sample. Step~2 has an invariant layout across categories. That invariance is what makes the framework instantiable by an \gls{ai} pipeline. A generator that emits the layout for a new source does not need to branch on category beyond what \inlinecode{ingest.py} contains and which bundle resource kind the source requires. Step~5 makes that generation procedure auditable: the operator docs site at \url{https://vkraus.github.io/appsec-mvp/} carries the per source Generation log and Validation table as the trail of evidence.
+Step~1 has a deterministic answer for every source in the sample. Step~2 has an invariant layout across categories. That invariance is what makes the framework instantiable by an \gls{ai} pipeline. A generator that emits the layout for a new source does not need to branch on category beyond what \inlinecode{ingest.py} contains and which bundle resource kind the source requires. Step~5 makes that generation procedure auditable: the operator docs site at \url{https://vkraus.github.io/appsec-mvp/} carries the per source Implementation log and Validation table as the trail of evidence.
 
 \section{Project Structure}
 \label{sec:impl-project-structure}
@@ -33,35 +33,35 @@ The reference implementation is distributed across two repositories that separat
 \subsection{Layering rule}
 \label{sec:impl-layering-rule}
 
-The repository is organized into three install layers with no upward or sideways dependencies in setup code: platform, then connectors, then analytics. The platform layer must not pre-declare resources for any specific connector. No source schemas, volumes, connections, or secrets live in \inlinecode{src/platform/resources/}. Each connector owns its own bronze and silver schemas, secret loading script, and bundle resources. The analytics layer reads only the connector agnostic silver tables (\inlinecode{silver.findings}, \inlinecode{silver.repositories}, \inlinecode{silver.app\_repo}, \inlinecode{silver.hwm}). The one ordering constraint is data level, not setup code level. An \gls{scm} connector (GitHub or GitLab) must run first at job time because non \gls{scm} connectors map findings onto repository entities populated by \gls{scm}. The bundle deploys all declared resources regardless of install order.
+The repository is organized into three install layers with no upward or sideways dependencies in setup code: platform, then connectors, then analytics. The platform layer must not pre-declare resources for any specific connector. No source schemas, volumes, connections, or secrets live in \inlinecode{src/platform/resources/}. Each connector owns its own bronze and silver schemas, secret loading script, and bundle resources. The analytics layer reads only the connector agnostic silver tables (\inlinecode{silver.findings}, \inlinecode{silver.repositories}, \inlinecode{silver.app\_repo\_mapping}, \inlinecode{silver.hwm}). The one ordering constraint is data level, not setup code level. An \gls{scm} connector (GitHub or GitLab) must run first at job time because non \gls{scm} connectors map findings onto repository entities populated by \gls{scm}. The bundle deploys all declared resources regardless of install order.
 
 \subsection{Component colocation}
 
 Inside the \inlinecode{appsec-mvp} repository, every component (the platform, each connector, the analytics layer) owns its code, its tests, its bundle resources, its scripts, and (for connectors that bring up source systems) an optional Terraform runtime. Adding a new source is one new folder under \inlinecode{src/connectors/}. There are no top level \inlinecode{tests/}, \inlinecode{config/}, \inlinecode{resources/}, \inlinecode{sql/}, or \inlinecode{infra/terraform/} directories. \autoref{lst:mvp-tree} shows the realized layout with one connector of each category expanded.
 
-\begin{lstlisting}[caption={[Realized MVP project layout]Realized MVP project layout. One connector of each category is expanded; the others follow the same layout.},label={lst:mvp-tree}]
+\begin{lstlisting}[caption={[Realized MVP project layout]Realized MVP project layout. One connector of each category is expanded. The others follow the same layout.},label={lst:mvp-tree}]
 appsec-mvp/
 |-- databricks.yml                       # bundle root: targets, variables
 |-- pyproject.toml                       # Python package metadata
 |-- mkdocs/                              # operator docs site source
 |-- examples/end-to-end-demo/            # demo across scanners
 |-- src/
-|   |-- platform/                        # framework primitives (runtime-shared)
+|   |-- platform/                        # framework primitives (shared at runtime)
 |   |   |-- silver.py                    # severity/status normalization + dedup
-|   |   |-- hwm.py, schemas.py, ...      # high-water-mark, StructTypes, helpers
+|   |   |-- hwm.py, schemas.py, ...      # HWM state, StructTypes, helpers
 |   |   |-- resources/{platform,bootstrap-job}.yml
 |   |   |-- scripts/bootstrap.sh         # one time bootstrap after deploy
 |   |   |-- sql/silver_tables.sql        # standard silver DDL
 |   |   \-- tests/                       # unit tests for the primitives
 |   |-- connectors/
 |   |   |-- servicenow/                  # category: Lakeflow Connect
-|   |   |   |-- ingest.py                # docstring only; pipeline is declared
+|   |   |   |-- ingest.py                # contract wrapper; pipeline declared in bundle
 |   |   |   |-- transform.py
 |   |   |   |-- mapping.yml, config.yml
 |   |   |   |-- severity.yml, status.yml
-|   |   |   |-- resources/{schemas,connection,pipeline}.yml
+|   |   |   |-- resources/{schemas,connection,pipeline,job}.yml
 |   |   |   |-- scripts/load-secrets.sh
-|   |   |   |-- runtime/                 # optional Terraform for source bring-up
+|   |   |   |-- runtime/                 # Terraform for the source system or its supporting cloud (all 9)
 |   |   |   \-- tests/
 |   |   |-- github/                      # category: SDK (PyGitHub)
 |   |   |   |-- ingest.py, transform.py
@@ -72,39 +72,37 @@ appsec-mvp/
 |   |   |   |-- runtime/
 |   |   |   \-- tests/
 |   |   \-- (gitlab, sonarqube, semgrep, owasp_zap, dependency_track,
-|   |       trufflehog, aws_waf): same layout, varying depth
-|   \-- analytics/                       # gold-layer SQL + jobs
+|   |       trufflehog, aws_waf): same layout, each with its own runtime/
+|   \-- analytics/                       # gold layer SQL + jobs
 |       |-- resources/{schemas,job}.yml
 |       \-- sql/, tests/
 \end{lstlisting}
 
-The bundle resources for each source are colocated: \inlinecode{src/connectors/<source>/resources/} contains \inlinecode{schemas.yml} and either \inlinecode{job.yml} (for \gls{sdk} and \gls{dltool} connectors) or \inlinecode{pipeline.yml} plus \inlinecode{connection.yml} (for Lakeflow Connect connectors). The bundle root includes everything via the glob \inlinecode{src/\{platform,connectors/*,analytics\}/resources/*.yml}. Schemas, volumes, and secret loading scripts move with the connector folder, so installing or removing a connector does not touch shared files.
+The bundle resources for each source are colocated: \inlinecode{src/connectors/<source>/resources/} contains \inlinecode{schemas.yml} and either \inlinecode{job.yml} (for \gls{sdk} and \gls{dltool} connectors) or \inlinecode{pipeline.yml} plus \inlinecode{connection.yml} for Lakeflow Connect connectors, with \inlinecode{job.yml} alongside for the downstream transform task. The bundle root includes everything via the glob \inlinecode{src/\{platform,connectors/*,analytics\}/resources/*.yml}. Schemas, volumes, and secret loading scripts move with the connector folder, so installing or removing a connector does not touch shared files.
 
 \section{Ingestion Category Assignment}
 \label{sec:ingestion-category-assignment}
 
-Each source is resolved to one of the three ingestion categories defined in \autoref{sec:connector-abstraction} before its connector module is written. The evaluation order is fixed (Lakeflow Connect, then \gls{sdk}, then \gls{dltool}). Each entry below restates the functional requirements drawn from \autoref{sec:cross-source-synthesis} and the source specific reference page, assesses the three categories against them, and records the selected category together with the library or mechanism that instantiates it. \Gls{cli} only tools fall outside the axis of three categories and follow the \gls{cicd} step artifact pattern described in \autoref{sec:ingestion-patterns}. The outcomes feed directly into \autoref{sec:impl-results} and determine the bundle resource kind (\inlinecode{jobs} or \inlinecode{pipelines}) used for each source.
+Each source is resolved to one of the three ingestion categories defined in \autoref{sec:connector-abstraction} before its connector module is written. The evaluation order is Lakeflow Connect, then \gls{sdk}, then \gls{dltool}. \Gls{cli} only tools fall outside the three categories and follow the \gls{cicd} step artifact pattern (\autoref{sec:ingestion-patterns}). The full per source functional requirements live on the operator docs site, and the resolutions below cite the deciding factor only.
 
 \begin{itemize}
-    \item \textbf{ServiceNow.} Category: Lakeflow Connect. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/cmdb/servicenow/}{ServiceNow reference}): periodic pull from the Table \gls{api} and \gls{cmdb} Instance \gls{api} with offset pagination, \inlinecode{sys\_updated\_on} as the high water mark, OAuth~2.0 or basic authentication, no webhook. ServiceNow is a source supported natively by Lakeflow Connect, covering authentication, pagination, incremental state, and schema inference through platform configuration. Lakeflow Connect meets every requirement. The \inlinecode{ingest.py} for the connector is left empty. Ingestion is declared in the bundle fragment under \inlinecode{resources/}.
+    \item \textbf{ServiceNow}: Lakeflow Connect. Supported natively by the platform~\href{https://vkraus.github.io/appsec-mvp/connectors/cmdb/servicenow/}{(reference)}, so \inlinecode{ingest.py} carries only the contract wrapper and the bundle fragment declares the pipeline.
 
-    \item \textbf{GitHub.} Category: \gls{sdk} via PyGitHub. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/scm/github/}{GitHub reference}): \gls{rest} plus GraphQL access to repositories, commits, pull requests, branch protection, code scanning alerts, secret scanning alerts, and Dependabot alerts. Cursor pagination on \gls{rest} via \inlinecode{Link} headers and \inlinecode{pageInfo} cursors on GraphQL. \Gls{pat} or GitHub App installation tokens. Primary rate limits of 5\,000 requests per hour (\gls{pat}) or 15\,000 for Enterprise GitHub Apps. Webhook preferred per \autoref{sec:ingestion-patterns}. Lakeflow Connect does not support GitHub at \gls{mvp} time. PyGitHub is the widely adopted community Python \gls{sdk}. It covers every \gls{rest} endpoint the framework needs, handles \inlinecode{Link} header pagination, and exposes rate limit status as first class attributes. The \gls{sdk} category wins: \inlinecode{ingest.py} calls PyGitHub's \inlinecode{Repository}, \inlinecode{PullRequest}, and \inlinecode{CodeScanningAlert} accessors directly.
+    \item \textbf{GitHub}: \gls{sdk} via PyGitHub. Lakeflow Connect does not support it at \gls{mvp} time, and PyGitHub covers the required endpoints, handles \inlinecode{Link} header pagination, and exposes rate limit status~\href{https://vkraus.github.io/appsec-mvp/connectors/scm/github/}{(reference)}.
 
-    \item \textbf{GitLab.} Category: \gls{sdk} via python-gitlab~\parencite{PythonGitlabDocs2025}. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/scm/gitlab/}{GitLab reference}): \gls{rest} access to projects, merge requests, pipelines, and vulnerability findings (Ultimate tier) or pipeline artifact parsing (non-Ultimate). Keyset pagination on \gls{rest}, \inlinecode{pageInfo} on GraphQL. \Gls{pat} or OAuth. Webhook coverage. No Lakeflow Connect support. \inlinecode{python-gitlab} is the project recognized Python client, covers the required endpoints, and handles keyset pagination transparently. Category selection parallels GitHub.
+    \item \textbf{GitLab}: \gls{sdk} via python-gitlab~\parencite{PythonGitlabDocs2025}. No Lakeflow Connect support, and the official client handles keyset pagination transparently~\href{https://vkraus.github.io/appsec-mvp/connectors/scm/gitlab/}{(reference)}.
 
-    \item \textbf{SonarQube}~\parencite{SonarQube2024}. Category: \gls{dltool}. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/sast/sonarqube/}{SonarQube reference}): \gls{rest} Web \gls{api} (\inlinecode{api/issues/search}, \inlinecode{api/hotspots/search}, \inlinecode{api/projects/search}). Offset pagination via \inlinecode{p} and \inlinecode{ps} parameters. \inlinecode{updateDate} high water mark. Token based authentication via \gls{http} Basic. \Gls{json} responses. No Lakeflow Connect integration. SonarSource does not publish and maintain an official Python \gls{sdk}, and surveyed community clients are unmaintained at the Web \gls{api} version the \gls{lts} server ships. \gls{dltool}'s \inlinecode{rest\_api} source template covers all requirements declaratively. \inlinecode{ingest.py} composes a \gls{dltool} pipeline.
+    \item \textbf{SonarQube}~\parencite{SonarQube2024}: \gls{dltool}. No first party Python \gls{sdk}, and the \inlinecode{rest\_api} source template that ships with \gls{dltool} covers all requirements declaratively against the Web \gls{api}~\href{https://vkraus.github.io/appsec-mvp/connectors/sast/sonarqube/}{(reference)}.
 
-    \item \textbf{Semgrep (Docker).} Category: artifact path, not an \gls{http} category. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/sast/semgrep/}{Semgrep reference}, \gls{cli} variant): produce a \gls{json} report per commit from a \gls{cicd} step. The report file is the authoritative interface. The source has no \gls{http} \gls{api} in this deployment. The framework handles this through the \gls{cicd} step pattern (\autoref{sec:ingestion-patterns}): the \gls{cicd} step runs \inlinecode{semgrep --json} and \inlinecode{databricks fs cp} to a Unity Catalog Volume. The \inlinecode{transform.py} for the connector reads the Volume directly. \inlinecode{ingest.py} is empty.
+    \item \textbf{Semgrep}: artifact path. The free \gls{cli} writes a \gls{json} report per commit from a \gls{cicd} step, and \inlinecode{ingest.py} reads from \inlinecode{periodic/semgrep/} and \inlinecode{cicd/semgrep/} prefixes~\href{https://vkraus.github.io/appsec-mvp/connectors/sast/semgrep/}{(reference)}.
 
-    \item \textbf{Semgrep (Cloud).} Category: \gls{dltool}. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/sast/semgrep/}{Semgrep reference}, Cloud Platform variant): \gls{rest} access to findings with cursor pagination, \inlinecode{since\_date}/\inlinecode{updated\_at} high water mark, bearer token authentication. No Lakeflow Connect integration, no official Python \gls{sdk}. \gls{dltool}'s \inlinecode{rest\_api} source covers the cursor pagination and incremental loading contract.
+    \item \textbf{Dependency-Track}~\parencite{DependencyTrack2024}: \gls{dltool}. No first party Python \gls{sdk}, and the published OpenAPI document configures \gls{dltool} directly~\href{https://vkraus.github.io/appsec-mvp/connectors/sca/dependency-track/}{(reference)}.
 
-    \item \textbf{Dependency-Track}~\parencite{DependencyTrack2024}. Category: \gls{dltool}. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/sca/dependency-track/}{Dependency-Track reference}): \gls{rest} access to projects, components, findings, and vulnerabilities. Offset pagination. \inlinecode{lastOccurrence} high water mark. API key header authentication. OpenAPI specification published by the project. No Lakeflow Connect integration. The project does not ship a first party Python \gls{sdk}. Community \gls{sdk} coverage is thin and partial for the finding retrieval endpoints the framework requires. The OpenAPI document informs the \gls{dltool} source configuration directly.
+    \item \textbf{TruffleHog}~\parencite{TruffleHog2024}: artifact path. \Gls{cli} tool with no server \gls{api}, same pattern as Semgrep~\href{https://vkraus.github.io/appsec-mvp/connectors/secrets/trufflehog/}{(reference)}.
 
-    \item \textbf{TruffleHog}~\parencite{TruffleHog2024}. Category: artifact path, not an \gls{http} category. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/secrets/trufflehog/}{TruffleHog reference}): \gls{cli} tool with no server \gls{api}. Emits line delimited \gls{json} on stdout with per finding \inlinecode{Verified} status and commit \gls{sha}. Identical to Semgrep (Docker) in ingestion pattern. The \gls{cicd} step redirects \inlinecode{trufflehog filesystem --json} to a file and uploads it to the Unity Catalog Volume. The \inlinecode{transform.py} for the connector reads and normalizes it.
+    \item \textbf{\gls{owasp} \gls{zap}}: artifact path. \inlinecode{ingest.py} supports two trigger contexts (on demand against the daemon, and reads of \gls{cicd} step artifacts) and dispatches both into the same bronze table~\href{https://vkraus.github.io/appsec-mvp/connectors/dast/owasp-zap/}{(reference)}.
 
-    \item \textbf{OWASP ZAP.} Category: artifact path, not an \gls{http} category. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/dast/owasp-zap/}{OWASP ZAP reference}): orchestrate scans against target \glspl{url} and emit a \gls{json} report per scan run. In the \gls{mvp}, scans are executed in a \gls{cicd} step that runs the official ZAP image against the target environment and uploads the resulting report to a Unity Catalog Volume via \inlinecode{databricks fs cp}. The \inlinecode{transform.py} for the connector reads the Volume directly. \inlinecode{ingest.py} is empty.
-
-    \item \textbf{AWS WAF.} Category: \gls{sdk} via boto3~\parencite{Boto32025}. Functional requirements (\href{https://vkraus.github.io/appsec-mvp/connectors/waf/aws-waf/}{AWS WAF reference}): \inlinecode{GetSampledRequests} for matched request samples over a time window. \gls{iam} signed \gls{api} calls. \gls{arn} and tag resource identification. Event window high water mark. No Lakeflow Connect integration. \inlinecode{boto3} is the AWS maintained \gls{sdk} covering every WAF \gls{api} operation, handling \gls{iam} signature construction and pagination. \inlinecode{ingest.py} calls \inlinecode{boto3.client("wafv2").get\_sampled\_requests} directly.
+    \item \textbf{\gls{aws} \gls{waf}}: \gls{sdk} via boto3~\parencite{Boto32025}. The connector ships two ingestion modes selected by \inlinecode{config.yml::ingestion\_mode}. The preferred mode reads full request logs delivered by Kinesis Data Firehose to an S3 prefix through an autoloader read. The fallback mode calls \inlinecode{boto3.client("wafv2").get\_sampled\_requests} with \gls{iam} signed credentials and preserves the per record \inlinecode{Weight} field~\href{https://vkraus.github.io/appsec-mvp/connectors/waf/aws-waf/}{(reference)}.
 \end{itemize}
 
 \autoref{tab:ingestion-category-assignment} collects the nine assignments alongside the key functional requirement that drove each choice.
@@ -119,30 +117,29 @@ Each source is resolved to one of the three ingestion categories defined in \aut
 \textbf{Source} & \textbf{Category} & \textbf{Binding} & \textbf{Decisive requirement} \\
 \midrule
 ServiceNow       & Lakeflow Connect   & platform managed        & First party LFC supported source. Full contract met declaratively. \\
-GitHub           & SDK                & PyGitHub                & Mature Python \gls{sdk} covers \gls{rest} endpoints, \inlinecode{Link} header pagination, and rate limit state. \\
-GitLab           & SDK                & python-gitlab           & Project recognized Python client covers \gls{rest} with keyset pagination. \\
+GitHub & \gls{sdk} & PyGitHub & Mature Python \gls{sdk} covers \gls{rest} endpoints, \inlinecode{Link} header pagination, and rate limit state. \\
+GitLab & \gls{sdk} & python-gitlab & Project recognized Python client covers \gls{rest} with keyset pagination. \\
 SonarQube        & dltool             & \inlinecode{rest\_api} source     & No maintained Python \gls{sdk}. \gls{rest} only access with offset pagination and \inlinecode{updateDate} high water mark. \\
-Semgrep (Docker) & Artifact path      & CI to Volume            & \Gls{cli} tool with no \gls{http} \gls{api}. Ingestion via \gls{cicd} step pattern. \\
-Semgrep (Cloud)  & dltool             & \inlinecode{rest\_api} source     & No Python \gls{sdk}. Cursor paginated \gls{rest} \gls{api} with \inlinecode{since\_date} high water mark. \\
+Semgrep & Artifact path & \gls{cicd} to Volume & \Gls{cli} tool with no \gls{http} \gls{api}. Ingestion via \gls{cicd} step pattern. \\
 Dependency-Track & dltool             & OpenAPI driven          & No first party \gls{sdk}. \gls{rest} with offset pagination and \inlinecode{lastOccurrence} high water mark. \\
-TruffleHog       & Artifact path      & CI to Volume            & \Gls{cli} tool with no server \gls{api}. Ingestion via \gls{cicd} step pattern. \\
-OWASP ZAP        & Artifact path      & CI to Volume            & Scan report \gls{json} produced in \gls{cicd} and uploaded to Unity Catalog Volume. \\
-AWS WAF          & SDK                & boto3                   & AWS maintained \gls{sdk} covers \inlinecode{GetSampledRequests} and \gls{iam} signing. \\
+TruffleHog & Artifact path & \gls{cicd} to Volume & \Gls{cli} tool with no server \gls{api}. Ingestion via \gls{cicd} step pattern. \\
+\gls{owasp} \gls{zap} & Artifact path & \gls{cicd} to Volume & Scan report \gls{json} produced in \gls{cicd} and uploaded to Unity Catalog Volume. \\
+\gls{aws} \gls{waf} & \gls{sdk} & boto3 & Two modes: log stream from Kinesis Data Firehose to S3 (preferred), boto3 \inlinecode{GetSampledRequests} (fallback). \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Across the nine sources, one resolves to Lakeflow Connect (ServiceNow), three to an \gls{sdk} (GitHub, GitLab, AWS WAF), three to \gls{dltool} (SonarQube, Semgrep Cloud, Dependency-Track), and three to the artifact path of \autoref{sec:ingestion-patterns} (Semgrep Docker, TruffleHog, OWASP ZAP). Semgrep contributes two instantiations (Docker \gls{cli} in \gls{cicd} and the Cloud \gls{api}), which is why the nine selected sources resolve to ten ingestion category rows.
+Across the nine sources, one resolves to Lakeflow Connect (ServiceNow), three to an \gls{sdk} (GitHub, GitLab, \gls{aws} \gls{waf}), two to \gls{dltool} (SonarQube, Dependency-Track), and three to the artifact path of \autoref{sec:ingestion-patterns} (Semgrep, TruffleHog, \gls{owasp} \gls{zap}).
 
 \section{Representative Connectors}
 \label{sec:impl-representative-connectors}
 
-This section shows the realized structure of a connector at each end of the category range. ServiceNow represents the Lakeflow Connect case, in which \inlinecode{ingest.py} is empty and the bundle fragment carries the ingestion specification. GitHub represents the \gls{sdk} case, in which \inlinecode{ingest.py} composes client calls into iterators over bronze records.
+This section shows the realized structure of a connector at each end of the category range. ServiceNow represents the Lakeflow Connect case, in which \inlinecode{ingest.py} reduces to a thin contract wrapper and the bundle fragment carries the ingestion specification. GitHub represents the \gls{sdk} case, in which \inlinecode{ingest.py} composes client calls into iterators over bronze records.
 
 \subsection{ServiceNow: Lakeflow Connect Pipeline}
 \label{sec:impl-servicenow-connector}
 
-The ServiceNow connector has no Python ingestion code. The \inlinecode{ingest.py} module carries only a docstring that points at the bundle fragment under \inlinecode{src/connectors/servicenow/resources/pipeline.yml}, reproduced in \autoref{lst:servicenow-pipeline}. Authentication is carried by a Databricks Connection declared in the same folder under \inlinecode{resources/connection.yml} and referenced by name. The \inlinecode{objects} block enumerates the two \gls{cmdb} tables the silver layer consumes and their destination tables in bronze. Schedule and target catalog come from bundle variables so the same fragment can promote across dev, staging, and prod.
+The ServiceNow connector performs no live Python ingestion. The \inlinecode{ingest.py} module carries a module docstring pointing at the bundle fragment under \inlinecode{src/connectors/servicenow/resources/pipeline.yml} (reproduced in \autoref{lst:servicenow-pipeline}) and a thin framework contract wrapper (\inlinecode{ingest\_contract}) that validates the credential set so a misconfigured bundle job fails fast. Lakeflow Connect performs the actual \gls{http} ingestion against ServiceNow. Authentication is carried by a Databricks Connection declared in the same folder under \inlinecode{resources/connection.yml} and referenced by name. The \inlinecode{objects} block enumerates the two \gls{cmdb} tables the silver layer consumes and their destination tables in bronze. Schedule and target catalog come from bundle variables so the same fragment can promote across dev, staging, and prod.
 
 \begin{lstlisting}[language=yaml,caption={[ServiceNow pipeline bundle fragment]\texttt{src/connectors/servicenow/resources/pipeline.yml}},label={lst:servicenow-pipeline}]
 resources:
@@ -156,14 +153,14 @@ resources:
         quartz_cron_expression: "0 0 * * * ?"
         timezone_id: UTC
       ingestion_definition:
-        connection_name: ${var.servicenow_connection}
+        connection_name: servicenow
         objects:
           - table:
               source_schema: default
               source_table: cmdb_ci_business_app
               destination_catalog: ${var.catalog}
               destination_schema: bronze_servicenow
-              destination_table: business_apps
+              destination_table: business_applications
           - table:
               source_schema: default
               source_table: cmdb_rel_ci
@@ -172,72 +169,69 @@ resources:
               destination_table: app_cis
 \end{lstlisting}
 
-The framework prescribed connector layout is preserved. \inlinecode{mapping.yml}, \inlinecode{config.yml}, \inlinecode{severity.yml}, \inlinecode{status.yml}, and \inlinecode{transform.py} continue to govern the transformation from bronze to silver. Only \inlinecode{ingest.py} changes form, from a Python module to a declaration embedded in the bundle. That is the trade the Lakeflow Connect category offers. No pagination, authentication, or retry code written by hand, at the cost of binding the connector to a platform maintained capability.
+The framework prescribed connector layout is preserved. \inlinecode{mapping.yml}, \inlinecode{config.yml}, \inlinecode{severity.yml}, \inlinecode{status.yml}, and \inlinecode{transform.py} continue to govern the transformation from bronze to silver. Only \inlinecode{ingest.py} changes form, from a Python module to a declaration embedded in the bundle. That is the trade the Lakeflow Connect category offers: no pagination, authentication, or retry code written by hand, in exchange for binding the connector to a platform maintained capability.
 
 \subsection{GitHub: PyGitHub SDK Module}
 \label{sec:impl-github-connector}
 
-The GitHub connector uses PyGitHub. The \inlinecode{ingest.py} module exposes four names: a \inlinecode{github\_client} factory and three iterator functions for organization repositories, repository commits, and repository pull requests. \autoref{lst:github-ingest} reproduces the iterator for repository commits as the representative case.
+The GitHub connector uses PyGitHub. The \inlinecode{ingest.py} module exposes three names: a \inlinecode{build\_github\_client} factory, an \inlinecode{ingest\_contract} framework wrapper that demonstrates the documented traversal (\inlinecode{client.get\_organization(org).get\_repos()} returning a \inlinecode{PaginatedList} of \inlinecode{Repository} instances, with \inlinecode{repo.get\_pulls(state, since=hwm\_value)} and \inlinecode{repo.get\_codescan\_alerts()} walking the finding streams), and a \inlinecode{verify\_webhook\_signature} HMAC helper that handles webhook receipt outside SDK territory. \autoref{lst:github-ingest} reproduces the client factory as the representative fragment.
 
-\begin{lstlisting}[language=Python,caption={[GitHub connector commit iterator]\texttt{src/connectors/github/ingest.py} (one iterator shown)},label={lst:github-ingest}]
+\begin{lstlisting}[language=Python,caption={[GitHub connector client factory]\texttt{src/connectors/github/ingest.py} (client factory shown)},label={lst:github-ingest}]
 from github import Auth, Github, GithubRetry
 
 
-def github_client(token: str) -> Github:
-    return Github(auth=Auth.Token(token), retry=GithubRetry(total=5))
-
-
-def fetch_repo_commits(gh: Github, repo: str, since: str):
-    since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
-    if since_dt.tzinfo is None:
-        raise ValueError(f"`since` must be timezone-aware: {since!r}")
-    for commit in gh.get_repo(repo).get_commits(since=since_dt):
-        yield commit.raw_data
+def build_github_client(token: str) -> Github:
+    """Authenticated Github client with retry tuned for
+    secondary rate limits."""
+    auth = Auth.Token(token)
+    retry = GithubRetry(
+        total=10, backoff_factor=2.0, secondary_rate_wait=60
+    )
+    return Github(auth=auth, retry=retry, per_page=100)
 \end{lstlisting}
 
-Three properties of this module are worth noting. First, authentication, pagination, and retry are delegated to the client library. \inlinecode{GithubRetry} is the \inlinecode{urllib3.Retry} subclass shipped by PyGitHub. It recognizes GitHub's secondary rate limit signal, which arrives as \gls{http}~403 with a \inlinecode{Retry-After} header, and which a plain \inlinecode{Retry(status\_forcelist=[429, 5xx])} does not cover. Second, the boundary validation on \inlinecode{since} rejects timezone naive input explicitly rather than letting PyGitHub silently interpret the value. Third, the iterator yields the raw \gls{json} body returned by the \gls{api} via PyGitHub's \inlinecode{raw\_data} attribute, preserving the schema on read contract for bronze.
+Three properties of this module are worth noting. First, authentication, pagination, and retry are delegated to the client library. \inlinecode{GithubRetry} is the \inlinecode{urllib3.Retry} subclass shipped by PyGitHub. It recognizes GitHub's secondary rate limit signal, which arrives as \gls{http}~403 with a \inlinecode{Retry-After} header, and which a plain \inlinecode{Retry(status\_forcelist=[429, 5xx])} does not cover. Second, the incremental state contract from the framework (REQ-ING-HWM) maps onto a built in PyGitHub mechanism: resource accessors such as \inlinecode{Repository.get\_pulls(state="closed", since=hwm\_value)} accept a \inlinecode{since} parameter, so high water mark filtering pushes down to the \gls{api} call rather than running client side. Third, the page size is set to PyGitHub's documented maximum of 100 to minimize round trips.
 
 The tests under \inlinecode{src/connectors/github/tests/} fake PyGitHub at the object graph level rather than at the \gls{http} level. A test fixture builds \inlinecode{MagicMock} instances modeled on PyGitHub's \inlinecode{Github}, \inlinecode{Organization}, \inlinecode{Repository}, and \inlinecode{PaginatedList} classes, each exposing the attributes the production code calls. The contract under test is the composition of \gls{sdk} calls in the connector, not the \gls{http} behavior of the library.
 
 \section{Aggregate Results}
 \label{sec:impl-results}
 
-Of the nine sources resolved in \autoref{sec:ingestion-category-assignment}, all nine are delivered as production ready connectors under \inlinecode{src/connectors/<source>/}. Every connector carries the full set of files (\inlinecode{ingest.py}, \inlinecode{transform.py}, \inlinecode{mapping.yml}, \inlinecode{config.yml}, \inlinecode{severity.yml}, \inlinecode{status.yml}), bundle resources, secret loading scripts, and unit tests. Five connectors (ServiceNow, GitHub, SonarQube, Semgrep, OWASP ZAP) additionally ship an optional Terraform runtime under \inlinecode{runtime/} for source system bring up. Per source evidence is documented on the operator docs site.
+All nine sources are delivered as working connectors under \inlinecode{src/connectors/<source>/} with the full file set, bundle resources, secret loading scripts, and unit tests. Each also ships a Terraform runtime under \inlinecode{runtime/} that brings up the source system or its supporting cloud infrastructure.
 
-The skill chain pass under step~5 of \autoref{sec:impl-methodology} ran end to end against all nine sources. Each source page on the operator docs site carries a Generation log with three rows (analyze, generate, validate), each row referencing the commit that produced it. Each source page also carries a Validation table keyed by requirement IDs that maps directly to \inlinecode{@pytest.mark.requirement} markers in the test suite. The cross source matrix at \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{platform/reference/catalog} aggregates the per source tables into one view. Both the per source pages and the catalog form the auditable trail of evidence behind the \gls{ai} claim defended in \autoref{sec:ai-eval}.
+Each source page on the operator docs site carries an Implementation log (four rows: analyze, provision, generate, validate, each linking to the producing commit) and a Validation table keyed by requirement IDs that map to \inlinecode{@pytest.mark.requirement} markers. The cross source matrix at \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{platform/reference/catalog} aggregates these into one (requirement $\times$ source) view with PASS or N/A per cell. The ten requirement identifiers (\inlinecode{REQ-ING-AUTH}, \inlinecode{REQ-ING-PAG}, \inlinecode{REQ-ING-RL}, \inlinecode{REQ-ING-HWM}, \inlinecode{REQ-TRF-MAP}, \inlinecode{REQ-TRF-SEV}, \inlinecode{REQ-TRF-STS}, \inlinecode{REQ-TRF-TS}, \inlinecode{REQ-DQ}, \inlinecode{REQ-DEDUP}) anchor the matrix and form the trail of evidence behind the \gls{ai} claim defended in \autoref{sec:ai-eval}.
 
-The aggregate test counts at HEAD are 184 passed, 15 skipped, 0 failed. Tests run under the layered strategy of step~4: pure Python tests run locally without a \inlinecode{SparkSession}, and DataFrame tests run through a session scoped Databricks Connect fixture against a remote workspace. The skipped tests are integration suites gated on live tenant credentials.
+At commit \inlinecode{a8165ad} the suite holds 29 test files and 288 test functions across \inlinecode{src/connectors/<source>/tests/} and \inlinecode{src/platform/tests/}, running under the layered strategy of step~4.
+
 
 \section{Discussion}
 \label{sec:impl-discussion}
 
 \subsection{Contract of three categories}
 
-Every source in the sample resolved to exactly one of Lakeflow Connect, \gls{sdk}, or \gls{dltool}, with the two \gls{cli} only tools falling into the artifact path carve out defined in \autoref{sec:ingestion-patterns}. No source required a category the framework does not admit. \autoref{sec:ingestion-category-assignment} is the operational demonstration of this. The two implemented connectors in \autoref{sec:impl-representative-connectors} show that the assignment is realizable in working code, and the nine module folders under \inlinecode{src/connectors/} confirm that the pattern repeats.
-
-The Lakeflow Connect and \gls{sdk} categories produce visibly different connector layouts. The ServiceNow connector has no Python ingestion file of substance. The GitHub connector has a small, flat \inlinecode{ingest.py} composed of \gls{sdk} calls. Both preserve the module layout prescribed by the framework. The difference lives in \inlinecode{ingest.py} content and in which kind of \gls{dab} resource (\inlinecode{pipelines} or \inlinecode{jobs}) declares the scheduling. This is the trade the framework makes explicit. The Lakeflow Connect category absorbs ingestion into the platform at the cost of platform lockin. The \gls{sdk} category keeps ingestion visible in Python at the cost of maintaining client knowledge for each source.
+Every source in the sample resolved to exactly one of Lakeflow Connect, \gls{sdk}, or \gls{dltool}, with the three artifact path sources (Semgrep, TruffleHog, OWASP ZAP) falling into the carve out (\autoref{sec:ingestion-patterns}). No source required a category the framework does not admit. The Lakeflow Connect and \gls{sdk} cases produce visibly different layouts: ServiceNow has no Python ingestion file of substance, while GitHub has a small flat \inlinecode{ingest.py} composed of \gls{sdk} calls. Both preserve the module layout prescribed by the framework. The trade is explicit. Lakeflow Connect absorbs ingestion into the platform at the cost of platform lock in. The \gls{sdk} category keeps ingestion visible in Python at the cost of maintaining client knowledge per source.
 
 \subsection{Declarative mapping}
 
-The connectors share severity and status normalization helpers in \inlinecode{src/platform/silver.py} and keep severity and status lookup tables in YAML next to the connector code (\inlinecode{severity.yml}, \inlinecode{status.yml}). The \inlinecode{transform.py} file for each source builds the silver DataFrame field by field and calls the shared helpers. Adding or remapping a field is currently a Python edit to the relevant \inlinecode{transform.py}. The \inlinecode{mapping.yml} file documents the intended derivation. Aligning the \gls{mvp} with the declarative mapping prescription of \autoref{sec:transformation-patterns} is a \autoref{sec:future-work} thread.
+Connectors share severity and status normalization helpers in \inlinecode{src/platform/silver.py} and keep lookup tables as YAML alongside the connector code. The \inlinecode{transform.py} for each source currently builds the silver DataFrame field by field calling those helpers, with \inlinecode{mapping.yml} documenting the intended derivation. Aligning the \gls{mvp} with the declarative mapping prescription of \autoref{sec:transformation-patterns} is a \autoref{sec:future-work} thread.
 
 \subsection{Iteration Summary}
 \label{sec:iteration-summary}
 
-This subsection collects implementation phase iterations that were caught by review rather than passing on the first attempt. Each is classified against the three way rubric formalized in \autoref{sec:ai-eval}. \textbf{Framework gap} means extending the framework specification would have prevented the issue and would plausibly generalize. \textbf{Source quirk} means the correction is source specific noise not attributable to the framework. \textbf{Environment glue} means the issue concerns setup, authentication, or infrastructure outside the scope of the framework. Earlier iterations under the preredesign layout (a hand written shared \gls{http} primitive that introduced an unsanctioned fourth ingestion category, a missing boundary validator on incremental state inputs, a misconfigured retry policy on the GitHub client) are subsumed: the structural redesign closed both preredesign framework gaps by enforcing the layering rule of \autoref{sec:impl-layering-rule} and by anchoring the connector contract in the colocated test suite. The findings below are the postredesign reviewer cycle.
+This subsection collects iterations caught by review. Each is classified against the rubric formalized in \autoref{sec:ai-eval}: \textbf{framework gap} (a specification extension would have prevented the issue and would generalize), \textbf{source quirk} (source specific noise), or \textbf{environment glue} (setup or infrastructure outside framework scope). Earlier iterations before the structural redesign exposed three framework gaps: a hand written shared \gls{http} primitive that introduced an unsanctioned fourth ingestion category, a missing boundary validator on incremental state inputs, and a misconfigured retry policy on the GitHub client. The redesign subsumed all three by enforcing the layering rule of \autoref{sec:impl-layering-rule} and by anchoring the connector contract in the colocated test suite. The findings below are from the reviewer cycle after the redesign.
 
 \begin{itemize}
-    \item \textbf{Layering boundary that the redesign closed.} The preredesign layout mingled top level \inlinecode{tests/}, \inlinecode{config/}, \inlinecode{resources/}, \inlinecode{sql/}, and \inlinecode{infra/terraform/} folders, and the platform layer predeclared resources for specific connectors. This permitted exactly the failure mode that the unsanctioned fourth ingestion category had exposed. The redesign moved every component to its own folder, deleted the predeclared resources from the platform layer, and stated the layering rule explicitly. \textbf{Framework gap.} The framework now states three install layers with no upward or sideways setup code dependencies, and the data level \gls{scm} first ordering is recorded separately as a job time constraint.
+    \item \textbf{Layering boundary that the redesign closed.} The layout before the redesign mingled top level \inlinecode{tests/}, \inlinecode{config/}, \inlinecode{resources/}, \inlinecode{sql/}, and \inlinecode{infra/terraform/} folders, and the platform layer predeclared resources for specific connectors. This permitted exactly the failure mode that the unsanctioned fourth ingestion category had exposed. The redesign moved every component to its own folder, deleted the predeclared resources from the platform layer, and stated the layering rule explicitly. \textbf{Framework gap.} The framework now states three install layers with no upward or sideways setup code dependencies, and the data level \gls{scm} first ordering is recorded separately as a job time constraint.
 
-    \item \textbf{Schema drift between SQL DDL and PySpark types.} Splitting the \inlinecode{sql/} tree into per layer ownership exposed inconsistencies between the \gls{ddl} for the silver tables and the \inlinecode{StructType} definitions in \inlinecode{src/platform/schemas.py}. The reviewer flagged the drift and the spec recorded connector side population of \inlinecode{silver.repositories} and \inlinecode{silver.app\_repo} as deferred work. \textbf{Framework gap.} The framework should hold a single source of truth for silver schemas. \autoref{sec:future-work} carries the consolidation as a thread.
+    \item \textbf{Schema drift between \gls{sql} \gls{ddl} and PySpark types.} Splitting the \inlinecode{sql/} tree into per layer ownership exposed inconsistencies between the \gls{ddl} for the silver tables and the \inlinecode{StructType} definitions in \inlinecode{src/platform/schemas.py}. The reviewer flagged the drift. Connector side writers for \inlinecode{silver.repositories} and \inlinecode{silver.app\_repo\_mapping} remain pending and are listed under open implementation items in \autoref{sec:impl-results}. \textbf{Framework gap.} The framework should hold a single source of truth for silver schemas. \autoref{sec:future-work} carries the consolidation as a thread.
 
     \item \textbf{Secret scope mismatch in the GitHub ingest entry.} The post deploy bootstrap script defines a secret scope named \inlinecode{mvp-connectors}. The GitHub ingest entry point read from a scope named \inlinecode{appsec}, a residue from an earlier prototype. The reviewer caught the mismatch during the bootstrap script review. \textbf{Environment glue.} The fix aligned the entry point with the documented scope name.
 
-    \item \textbf{Worktree pollution.} Several review cycles surfaced files that the redesign deleted reappearing on disk and being staged for inadvertent reintroduction (likely an editor or antivirus recreating them). Reviewers caught the pattern before bad commits landed. \textbf{Environment glue.} The pattern is not attributable to the framework.
+    \item \textbf{Worktree pollution.} Several review cycles caught files that the redesign deleted reappearing on disk and being staged for inadvertent reintroduction (likely an editor or antivirus recreating them). Reviewers caught the pattern before bad commits landed. \textbf{Environment glue.} The pattern is not attributable to the framework.
 
-    \item \textbf{Cron schedule collision between GitHub and SonarQube.} The GitHub connector job runs every fifteen minutes. The SonarQube connector was originally scheduled at \inlinecode{0 15 */3 * * ?}, which collides with the GitHub schedule at \inlinecode{00:15}, \inlinecode{03:15}, and so on. The reviewer flagged the collision and the schedule was changed to \inlinecode{0 17 */3 * * ?}. \textbf{Source quirk.} The correction is specific to two job schedules and does not generalize.
+    \item \textbf{Cron schedule collision between GitHub and SonarQube.} The GitHub and SonarQube connector jobs were originally scheduled with overlapping quartz cron expressions, so both jobs would dispatch on the same minute mark and contend for the shared cluster. The reviewer flagged the collision and the SonarQube schedule was offset to a non aligned minute. \textbf{Source quirk.} The correction is specific to two job schedules and does not generalize.
 
-    \item \textbf{IRSA OIDC trust policy gaps.} Migrating each connector Terraform runtime under \inlinecode{src/connectors/<source>/runtime/} surfaced incomplete trust policy details on the IAM Roles for Service Accounts (IRSA) bindings. The reviewer required full trust policy declarations and explicit operator inputs for OIDC issuer URLs. \textbf{Environment glue.} The corrections concern AWS account setup and are documented per connector under the \inlinecode{runtime/README.md} file.
+    \item \textbf{IRSA OIDC trust policy gaps.} Migrating each connector Terraform runtime under \inlinecode{src/connectors/<source>/runtime/} exposed incomplete trust policy details on the IAM Roles for Service Accounts (IRSA) bindings. The reviewer required full trust policy declarations and explicit operator inputs for OIDC issuer URLs. \textbf{Environment glue.} The corrections concern \gls{aws} account setup and are documented per connector under the \inlinecode{runtime/README.md} file.
 \end{itemize}
 
-Two of the six postredesign findings classify as framework gaps. Both name a specific consolidation the framework should hold (the layering rule, a single source of truth for silver schemas). Three classify as environment glue and one as a source quirk. The reviewer cycle caught all six before the commits landed, which is the empirical evidence behind the claim that the skill chain plus reviewer pattern catches named defect classes. \autoref{sec:ai-eval} lifts these findings to a defended claim about where the framework holds and where it admits further specification.
+Two of the six findings after the redesign classify as framework gaps. Both name a specific consolidation the framework should hold (the layering rule, a single source of truth for silver schemas). Three classify as environment glue and one as a source quirk. The reviewer cycle caught all six before the commits landed, which is the empirical evidence behind the claim that the skill chain plus reviewer pattern catches named defect classes. \autoref{sec:ai-eval} lifts these findings to a defended claim about where the framework holds and where it admits further specification.

@@ -31,11 +31,13 @@
 
 % Right gutter annotations
 \node[side, right=1.0cm of ing] (hwm)
-    {HWM state table\\ (\texttt{\_hwm\_value})};
+    {HWM state table\\ \texttt{silver.hwm}};
 \node[gutterlbl, right=1.0cm of silver] (scd)
-    {SCD2 on entity tables:\\ \texttt{valid\_from}/\texttt{valid\_to}};
-\node[side, right=1.0cm of agg, align=left, text width=3.2cm, minimum height=1.2cm] (dedup)
-    {\texttt{dedup\_links} + \texttt{finding\_group\_id} clustering};
+    {SCD-2 on entity tables:\\ \texttt{valid\_from}/\texttt{valid\_to}};
+\node[side, right=1.0cm of tx, align=left, text width=3.2cm, minimum height=1.2cm] (dedup)
+    {post mapping dedup pass\\ writes \texttt{silver.dedup\_links}};
+\node[side, right=1.0cm of agg, align=left, text width=3.2cm, minimum height=1.2cm] (cluster)
+    {gold \texttt{finding\_group\_id}\\ clustering};
 
 % Left gutter: quarantine tables
 \node[quar, left=1.0cm of bronze] (qb)
@@ -54,13 +56,14 @@
 % Tethers to gutter annotations
 \draw[tether] (ing.east) -- (hwm.west);
 \draw[tether] (silver.east) -- (scd.west);
-\draw[tether] (agg.east) -- (dedup.west);
+\draw[tether] (tx.east) -- (dedup.west);
+\draw[tether] (agg.east) -- (cluster.west);
 
 % Quarantine branches (red dashed arrows)
 \draw[arrq] (ing.west) -| node[rulelbl, pos=0.25, above] {invalid payload} (qb.north);
 \draw[arrq] (tx.west) -| node[rulelbl, pos=0.25, above] {validation fail} (qs.north);
 
 \end{tikzpicture}
-\caption[Data plane flow]{Data plane flow within the framework: ingestion with auditable high water mark state (right), quarantine on the Bronze side and on the Silver side for records that fail structural or required field validation (left), SCD2 tracking on entity tables, and materialization from Silver to Gold with cross tool deduplication.}
+\caption[Data plane flow]{Data plane flow within the framework: ingestion with auditable high water mark state in \texttt{silver.hwm} (right), quarantine on the Bronze side and on the Silver side for records that fail structural or required field validation (left), SCD-2 tracking on entity tables via \texttt{valid\_from}/\texttt{valid\_to}, a post mapping dedup pass that writes \texttt{silver.dedup\_links} during the transform task, and gold \texttt{finding\_group\_id} clustering at the aggregate task.}
 \label{fig:data-plane-flow}
 \end{figure}
