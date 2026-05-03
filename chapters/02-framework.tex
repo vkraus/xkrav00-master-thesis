@@ -8,11 +8,61 @@
 %%% 2.1 %%%
 %%%%%%%%%%%
 
+\section{Requirements Snapshot}
+\label{sec:req-snapshot}
+
+The complete requirements specification is published in the \gls{mvp} documentation because the \gls{api} analysis for each source, mapping derivations, runbooks, and validation logs are too long to reproduce in the thesis body. The core requirements are summarized here so the framework contribution remains assessable from the thesis itself. The snapshot is intentionally compact: it names the requirement families, the in-thesis evidence, and the implementation trace used to evaluate each family.
+
+\begin{table}[htbp]
+\centering
+\caption[Requirements snapshot]{Requirements snapshot for the application-security data integration framework.}
+\label{tab:req-snapshot}
+\small
+\begin{tabularx}{\textwidth}{l X X}
+\toprule
+\textbf{Requirement family} & \textbf{Requirement summary} & \textbf{Thesis evidence} \\
+\midrule
+Source coverage & Cover business application inventory, source repositories, static testing, software composition analysis, secrets, dynamic testing, and one runtime security source. & Source selection criteria and inventory in \autoref{sec:selected-sources}. Ingestion assignment in \autoref{sec:ingestion-category-assignment}. \\
+Source heterogeneity & Exercise \gls{rest}, GraphQL, managed connector, \gls{sdk}, \gls{dltool}, and artifact ingestion patterns, including multiple pagination and high water mark styles. & Cross source synthesis in \autoref{sec:cross-source-synthesis}. Connector categories in \autoref{sec:connector-abstraction}. \\
+Standard data model & Normalize heterogeneous records into bronze, silver, and gold layers, with a single findings fact table and relationship tables for application context and deduplication. & Medallion and schema patterns in \autoref{sec:medallion-arch} and \autoref{sec:schema-patterns}. Entity model in \autoref{sec:entity-model}. \\
+Connector contract & Standardize authentication, pagination, rate limits, high water marks, schema mapping, severity/status normalization, timestamp normalization, data quality, and deduplication. & Connector contract and testing requirements in \autoref{sec:connector-framework} and \autoref{sec:connector-testing}. REQ ID summary in \autoref{tab:connector-req-snapshot}. \\
+Serving and analytics & Provide consumption-ready Gold datasets and both analytical and operational serving paths. & Analytics and serving framework in \autoref{sec:analytics-serving}. MVP analytics evidence in \autoref{sec:impl-results}. \\
+Extensibility & Onboard a new source by resolving category, instantiating the module layout, encoding the mapping, testing, and running the skill chain with review. & Implementation methodology in \autoref{sec:impl-methodology}. AI instantiability evaluation in \autoref{sec:ai-eval}. \\
+Validation and traceability & Bind implementation tests to stable requirement identifiers and publish PASS/N/A evidence per source. & Connector REQ IDs in \autoref{tab:connector-req-snapshot}. Implementation evidence matrix in \autoref{tab:impl-evidence-levels}. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption[Connector requirement identifiers]{Connector requirement identifiers used for traceability. The full matrix for each source is published in the \gls{mvp} documentation. \autoref{sec:impl-results} reports the thesis-level evidence boundary.}
+\label{tab:connector-req-snapshot}
+\small
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{ID} & \textbf{Area} & \textbf{Requirement} \\
+\midrule
+\inlinecode{REQ-ING-AUTH} & Ingestion & Credentials resolve from the platform secret scope. Invalid credentials fail clearly. \\
+\inlinecode{REQ-ING-PAG} & Ingestion & Pagination completes without data loss or duplication across at least two pages. \\
+\inlinecode{REQ-ING-RL} & Ingestion & Rate-limit handling follows the configured retry and backoff policy. \\
+\inlinecode{REQ-ING-HWM} & Ingestion & High-water-mark resume fetches only new or changed records on the next run. \\
+\inlinecode{REQ-TRF-MAP} & Transform & Source records map to the target Silver schema with correct types, values, and null handling. \\
+\inlinecode{REQ-TRF-SEV} & Transform & Native severity values normalize to the standard severity model, including edge cases. \\
+\inlinecode{REQ-TRF-STS} & Transform & Native lifecycle states normalize to the standard status model. \\
+\inlinecode{REQ-TRF-TS} & Transform & Source timestamps normalize to UTC datetimes. \\
+\inlinecode{REQ-DQ} & Quality & Silver validation expectations distinguish valid records from quarantine candidates. \\
+\inlinecode{REQ-DEDUP} & Quality & Applicable finding categories produce deterministic deduplication keys and overlap links. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The requirement identifiers are intentionally stable across sources. A source can mark a requirement as not applicable (for example, artifact-only tools have no API pagination or rate-limit handling), but applicable requirements must be bound to tests. This is the bridge between the requirements specification contribution and the implementation evidence: the framework defines the identifiers and expected behavior, while \autoref{ch:implementation} reports how the \gls{mvp} satisfies or bounds them for each selected source.
+
 \section{Solution Architecture}
 
 This section presents the framework architecture at three levels: technology stack, component design, and data layer. The architecture addresses the requirements from domain analysis: heterogeneous source ingestion, vendor agnostic normalization, dual \gls{olap}/\gls{oltp} data serving, and extensibility for new data sources and analytics.
 
-A further design principle applies to the framework artifacts: every template defined in this chapter (schema patterns, mappings, connector contract) is declarative, not procedural, so that an \gls{ai} coding agent reading the specification has enough material to produce a candidate implementation. The published skill catalog, which sits on the external specification site and wraps these templates into executable prompts, is evaluated separately in \autoref{sec:ai-eval}.
+A further design principle applies to the framework artifacts: every template defined in this chapter (schema patterns, mappings, connector contract) is declarative, not procedural, so that an \gls{ai} coding agent reading the specification has enough material to produce a candidate implementation. The published skill catalog, which sits in the \gls{mvp} documentation and wraps these templates into executable prompts, is evaluated separately in \autoref{sec:ai-eval}.
 
 %%% 2.1.1 %%%
 
@@ -138,7 +188,7 @@ This section maps the conceptual domain model from \autoref{sec:data-entities} t
 
 \subsection{Source Synthesis}
 
-The schema patterns are derived from the \glspl{api} of the nine sources introduced in \autoref{sec:selected-sources}, not chosen in advance. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{per category capability matrix} consolidates the observations relevant to schema design at the category level. The \href{https://vkraus.github.io/appsec-mvp/connectors/}{connectors reference hub} provides facts for each source. This section maps the consolidated capabilities onto concrete Entity, Finding, and Relationship schemas.
+The schema patterns are derived from the \glspl{api} of the nine sources introduced in \autoref{sec:selected-sources}, not chosen in advance. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{capability matrix} and \href{https://vkraus.github.io/appsec-mvp/connectors/}{connector hub} provide the source facts this section maps onto concrete Entity, Finding, and Relationship schemas.
 
 %%% 2.2.2 %%%
 
@@ -163,7 +213,7 @@ Additional source native columns sit alongside the raw payload via schema on rea
 
 \subsubsection{Silver entity pattern}
 
-Entity tables store normalized dimension data. The natural key plus source system identifies a record origin, and the surrogate key provides a stable foreign key target even when source identifiers change~\parencite{Kimball2013}. The framework specifies the \gls{scd}-2 pattern (\inlinecode{valid\_from}, \inlinecode{valid\_to}) for tracking entity history~\parencite{Kimball2013, Inmon2005}. The reference implementation in \autoref{ch:implementation} simplifies to \gls{scd}-1 (overwrite on update) since the \gls{mvp} scenarios do not exercise point in time queries. The field derivation table per source is published at \url{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/\#silver-entity-mapping-requirements}.
+Entity tables store normalized dimension data. The natural key plus source system identifies a record origin, and the surrogate key provides a stable foreign key target even when source identifiers change~\parencite{Kimball2013}. The framework specifies the \gls{scd}-2 pattern (\inlinecode{valid\_from}, \inlinecode{valid\_to}) for tracking entity history~\parencite{Kimball2013, Inmon2005}. The reference implementation in \autoref{ch:implementation} simplifies to \gls{scd}-1 (overwrite on update) since the \gls{mvp} scenarios do not exercise point in time queries. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/\#silver-entity-mapping-requirements}{mapping table} is published in the \gls{mvp} documentation.
 
 The Bronze to Silver step quarantines a record when (1) the Bronze record failed \gls{json} parse at landing, (2) a required field is null (\inlinecode{natural\_key}, \inlinecode{source\_system}, \inlinecode{valid\_from}), or (3) a mandatory lookup yields no match. Optional field nulls and safe casts are accepted with a data quality warning. The same rule applies to finding tables.
 
@@ -171,7 +221,7 @@ For \gls{cmdb} entities, related tables (\inlinecode{cmdb\_rel\_ci}, group and u
 
 \subsubsection{Silver finding pattern}
 
-The single Silver Finding table \inlinecode{silver.findings} (rationale in \autoref{sec:silver-findings-design}) stores normalized fact data for every category. Each target field unions over the native fields of the finding emitting sources, with inapplicable fields stored as \inlinecode{NULL}. The \inlinecode{mapping.yml} per source (\autoref{sec:transformation-patterns}) makes each mapping explicit, including the \inlinecode{category} discriminator. Per source derivation tables are published at \url{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/\#silver-finding-mapping-requirements}.
+The single Silver Finding table \inlinecode{silver.findings} (rationale in \autoref{sec:silver-findings-design}) stores normalized fact data for every category. Each target field unions over the native fields of the finding emitting sources, with inapplicable fields stored as \inlinecode{NULL}. The \inlinecode{mapping.yml} for each source (\autoref{sec:transformation-patterns}) makes each mapping explicit, including the \inlinecode{category} discriminator. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/\#silver-finding-mapping-requirements}{mapping tables} are published in the \gls{mvp} documentation.
 
 \subsubsection{Deduplication}
 
@@ -204,14 +254,14 @@ The silver layer instantiates the schema patterns as concrete tables in four gro
 
 \subsubsection{Entity Tables}
 
-Eight entity tables hold the stable business objects: \inlinecode{applications} and \inlinecode{repositories} as the two primary tables, plus \inlinecode{teams}, \inlinecode{commits}, \inlinecode{pull\_requests}, \inlinecode{pipeline\_runs}, \inlinecode{dependencies}, and \inlinecode{branch\_policies}. All tables share the silver entity pattern columns (\inlinecode{id}, \inlinecode{natural\_key}, \inlinecode{source\_system}, \inlinecode{valid\_from}, \inlinecode{valid\_to}). Domain specific columns and source mappings are listed on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/silver-table-ownership/}{silver table ownership reference page}.
+Eight entity tables hold the stable business objects: \inlinecode{applications} and \inlinecode{repositories} as the two primary tables, plus \inlinecode{teams}, \inlinecode{commits}, \inlinecode{pull\_requests}, \inlinecode{pipeline\_runs}, \inlinecode{dependencies}, and \inlinecode{branch\_policies}. All tables share the silver entity pattern columns (\inlinecode{id}, \inlinecode{natural\_key}, \inlinecode{source\_system}, \inlinecode{valid\_from}, \inlinecode{valid\_to}). Domain specific columns and source mappings are listed on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/silver-table-ownership/}{ownership page}.
 
 \subsubsection{Finding Table}
 \label{sec:silver-findings-design}
 
 All security findings land in a single Silver table, \inlinecode{silver.findings}. A \inlinecode{category} column discriminates records as \inlinecode{sast}, \inlinecode{sca}, \inlinecode{secret}, \inlinecode{dast}, \inlinecode{waf}, \inlinecode{container}, or \inlinecode{iac}. Category specific attributes (such as \inlinecode{file\_path} and \inlinecode{cwe\_id} for \gls{sast}, or \inlinecode{cve\_id} and \inlinecode{installed\_version} for \gls{sca}) are carried as nullable columns and populated only where the category defines them. Code located findings reference their repository through \inlinecode{repository\_id}. Runtime perimeter findings (\gls{waf}) leave \inlinecode{repository\_id} null and use \inlinecode{url} as the closest location coordinate. Business application context is derived through the \inlinecode{app\_repo\_mapping} relationship table instead of being stored on the finding itself.
 
-A single table is preferred over per category tables because the silver mapping is already a union over sources~\parencite{Kimball2013}. Splitting it would force \inlinecode{UNION ALL} for cross category analytics and fragment the per category dedup routing. At the target scale, Delta Lake columnar compression makes the sparse NULLs cheap. Full column listing and rationale on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/single-silver-findings-rationale/}{single table findings rationale page}.
+A single table is preferred over per category tables because the silver mapping is already a union over sources~\parencite{Kimball2013}. Splitting it would force \inlinecode{UNION ALL} for cross category analytics and fragment the per category dedup routing. At the target scale, Delta Lake columnar compression makes the sparse NULLs cheap. Full column listing and rationale are on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/single-silver-findings-rationale/}{rationale page}.
 
 \subsubsection{Reference and Relationship Tables}
 
@@ -263,7 +313,7 @@ The project is a monorepo: \inlinecode{src/} for pipeline source code, \inlineco
 
 Each connector module under \inlinecode{src/connectors/\{source\}/} carries the same artifacts (\autoref{sec:connector-abstraction}): \inlinecode{ingest.py}, \inlinecode{transform.py}, \inlinecode{mapping.yml}, \inlinecode{config.yml}, and a colocated \inlinecode{tests/} folder. Silver to gold transformations group by analytic rather than by source because a single gold table can consume data from multiple connectors.
 
-Secrets sit in the platform secret scope and are referenced by name. Nonsensitive settings (severity, status lookups) sit colocated with the connector code as YAML. Tuning these values is a configuration change, not a code change. Full layout with a worked example on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/project-layout/}{project layout reference page}.
+Secrets sit in the platform secret scope and are referenced by name. Nonsensitive settings (severity, status lookups) sit colocated with the connector code as YAML. Tuning these values is a configuration change, not a code change. Full layout with a worked example is on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/project-layout/}{layout page}.
 
 %%% 2.3.3 %%%
 
@@ -288,7 +338,7 @@ Monitoring handles whether pipelines are working over time. The platform provide
 
 Deployment level verification covers the environment and codebase. Component level patterns live in \autoref{sec:connector-testing} and \autoref{sec:analytics-testing}. The \gls{cicd} pipeline enforces linting, formatting, and unit tests over isolated helpers (severity lookups, timestamp parsers, schema mapping). After deployment, smoke tests confirm Unity Catalog objects, compute resources, secret scopes, and \gls{ldp} pipelines exist with the expected configuration.
 
-Tests are linked to requirement identifiers via pytest markers (\inlinecode{@pytest.mark.requirement("REQ-TRF-SEV")}) drawn from the \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{requirement catalog}. A traceability matrix generated from test results is published at \url{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/\#per-source-traceability-matrix} and applies uniformly across environment, connector, and analytics testing.
+Tests are linked to requirement identifiers via pytest markers (\inlinecode{@pytest.mark.requirement("REQ-TRF-SEV")}) drawn from the \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{requirement catalog}. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/\#per-source-traceability-matrix}{traceability matrix} applies uniformly across environment, connector, and analytics testing.
 
 %%%%%%%%%%%
 %%% 2.4 %%%
@@ -374,9 +424,9 @@ Every bronze table follows the same structure extending the schema pattern from 
 
 \subsubsection{Connector job template}
 
-Every connector instantiates the same Lakeflow Job layout (\autoref{sec:orchestration}): a two task \gls{dag} where ingest produces bronze and transform consumes it to produce silver, with the transform task declaring a hard dependency on the ingest task. Retry configuration is identical across connectors (three attempts, capped exponential backoff). The bundle fragment exposes a fixed set of parameters (source name, target catalog, high water mark reset flag, cron expression). Full fragment on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/connector-job-template/}{connector job template reference page}.
+Every connector instantiates the same Lakeflow Job layout (\autoref{sec:orchestration}): a two task \gls{dag} where ingest produces bronze and transform consumes it to produce silver, with the transform task declaring a hard dependency on the ingest task. Retry configuration is identical across connectors (three attempts, capped exponential backoff). The bundle fragment exposes a fixed set of parameters (source name, target catalog, high water mark reset flag, cron expression). The full fragment is on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/connector-job-template/}{job template}.
 
-The common landing pattern and bronze table template apply uniformly across categories. Per source parameters live in \inlinecode{src/connectors/\{source\}/config.yml}. Category specific notes (incremental strategy preference for \gls{scm}, scanner deployment styles, \gls{cmdb} relationship traversal) are on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{per category capability matrix}.
+The common landing pattern and bronze table template apply uniformly across categories. Parameters for each source live in \inlinecode{src/connectors/\{source\}/config.yml}. Category specific notes (incremental strategy preference for \gls{scm}, scanner deployment styles, \gls{cmdb} relationship traversal) are on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{capability matrix}.
 
 %%% 2.4.3 %%%
 
@@ -387,7 +437,7 @@ Transformations move data from bronze to the silver entity and finding tables fr
 
 \subsubsection{Schema mapping}
 
-Each connector has a schema mapping that extracts typed columns from the bronze raw payload, applies type casts, and assigns the surrogate key. Mappings are declared as column expressions in the \gls{ldp} pipeline. The \inlinecode{mapping.yml} for every connector has the same structure: a target table declaration and column blocks naming the target column, the \gls{json} path into \inlinecode{\_raw\_payload}, and the cast. Severity and status lookups live separately as key value maps. A worked example (SonarQube) is at \url{https://vkraus.github.io/appsec-mvp/connectors/sast/sonarqube/\#mapping-example}.
+Each connector has a schema mapping that extracts typed columns from the bronze raw payload, applies type casts, and assigns the surrogate key. Mappings are declared as column expressions in the \gls{ldp} pipeline. The \inlinecode{mapping.yml} for every connector has the same structure: a target table declaration and column blocks naming the target column, the \gls{json} path into \inlinecode{\_raw\_payload}, and the cast. Severity and status lookups live separately as key value maps. The \href{https://vkraus.github.io/appsec-mvp/connectors/sast/sonarqube/\#mapping-example}{SonarQube mapping example} shows a worked instance.
 
 \subsubsection{Normalization}
 
@@ -431,7 +481,7 @@ Connector tests live beside the connector at \inlinecode{src/connectors/\{source
     \item \inlinecode{REQ-DEDUP}: deduplication for every applicable tool overlap pair (omitted when the connector category does not participate in dedup).
 \end{itemize}
 
-The framework target is that new connectors do not merge until every applicable marker above passes in \gls{cicd}; \autoref{ch:implementation} reports the evidence level reached by the \gls{mvp} connectors and names the live-only or deferred paths separately.
+The framework target is that new connectors do not merge until every applicable marker above passes in \gls{cicd}. \autoref{ch:implementation} reports the evidence level reached by the \gls{mvp} connectors and names the paths that require live systems or remain deferred.
 
 %%%%%%%%%%%
 %%% 2.5 %%%
@@ -499,11 +549,11 @@ Rule based analytics are validated by snapshot comparison. Each test supplies si
 
 \Gls{ml} analytics are validated by held out evaluation and drift monitoring. MLflow's \inlinecode{evaluate()} computes accuracy, precision, recall, and F1, and \inlinecode{validate\_evaluation\_results()} gates promotion against configured thresholds and the registered baseline~\cite{MLflow2025}. In production, prediction distribution comparisons flag drift before model quality degrades. Serving endpoints are exercised through \gls{http} clients to verify correctness and latency against the targets in \autoref{sec:serving-patterns}.
 
-The complete framework suite covers every gold table (metric correctness, boundaries, idempotency), every \gls{ml} model (convergence, accuracy, drift, promotion gating), and every serving endpoint (correctness and latency). The \gls{mvp} instantiates the rule based part of this target and reports its concrete analytics evidence in \autoref{sec:impl-results}; \gls{ml} model training and production serving latency evidence remain outside the submitted implementation.
+The complete framework suite covers every gold table (metric correctness, boundaries, idempotency), every \gls{ml} model (convergence, accuracy, drift, promotion gating), and every serving endpoint (correctness and latency). The \gls{mvp} instantiates the rule based part of this target and reports its concrete analytics evidence in \autoref{sec:impl-results}. \Gls{ml} model training and production serving latency evidence remain outside the submitted implementation.
 
 \section{Extension Blueprint and AI Assistance}
 
-Each artifact specified in this chapter is a template, not unrestricted, free-form code. This covers the connector files (\autoref{sec:connector-framework}), the analytics jobs (\autoref{sec:analytics-serving}), and the test suites (\autoref{sec:connector-testing}, \autoref{sec:analytics-testing}). This was an objective. The framework should be suited to \gls{ai} assisted extension. The \href{https://vkraus.github.io/appsec-mvp/}{external requirements specification} provides four Claude Code skills that consume these templates and produce a reference implementation. The skills are organized by phase. \inlinecode{analyze-source} fetches the source's official \gls{api} documentation and writes the connector page reference sections. \inlinecode{provision-source} emits the source-side runtime infrastructure as Terraform plus an install script. \inlinecode{generate-connector} produces the connector artifacts listed in \autoref{sec:connector-framework} together with the Databricks-side runtime layout (secrets loader, install orchestrator, notebook entry wrappers where the category requires them, \gls{sql} bronze envelopes, multi-resource bundle fragments) and the runbook sections of the connector page. \inlinecode{validate-implementation} runs the test suite from \autoref{sec:connector-testing} until the requirements from the specification are mapped to passing tests. A per-source data file at \inlinecode{src/connectors/<source>/operational.yml} records deployment-specific values such as cloud account, secret scope name, and target bronze table; missing fields are gathered conversationally during a skill run, so the operator does not have to know the schema upfront.
+Each artifact specified in this chapter is a template, not unrestricted, free form code. This covers the connector files (\autoref{sec:connector-framework}), the analytics jobs (\autoref{sec:analytics-serving}), and the test suites (\autoref{sec:connector-testing}, \autoref{sec:analytics-testing}). This was an objective. The framework should be suited to \gls{ai} assisted extension. The \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} provides four Claude Code skills that consume these templates and produce a reference implementation. The skills are organized by phase. \inlinecode{analyze-source} fetches the official \gls{api} documentation for the source and writes the connector page reference sections. \inlinecode{provision-source} emits the runtime infrastructure for the source as Terraform plus an install script. \inlinecode{generate-connector} produces the connector artifacts listed in \autoref{sec:connector-framework} together with the Databricks runtime layout (secrets loader, install orchestrator, notebook entry wrappers where the category requires them, \gls{sql} bronze envelopes, bundle fragments with multiple resources) and the runbook sections of the connector page. \inlinecode{validate-implementation} runs the test suite from \autoref{sec:connector-testing} until the requirements from the specification are mapped to passing tests. A data file for each source at \inlinecode{src/connectors/<source>/operational.yml} records deployment values such as cloud account, secret scope name, and target bronze table. Missing fields are gathered conversationally during a skill run, so the operator does not have to know the schema upfront.
 
 It was a conscious design decision that the set consists of four skills rather than a dedicated skill for every combination of role and application security category. This follows the recommended pattern for skills that span multiple variants of the same task~\parencite{Anthropic2026SkillsBestPractices}. Each \inlinecode{SKILL.md} carries the role wide procedure. Guidance per category lives one level deeper, in a \inlinecode{references/<category>.md} file that the agent reads on demand. The seven application security categories are \inlinecode{cmdb}, \inlinecode{scm}, \inlinecode{sast}, \inlinecode{sca}, \inlinecode{secret}, \inlinecode{dast}, and \inlinecode{waf}.
 

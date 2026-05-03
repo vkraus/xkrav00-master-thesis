@@ -22,10 +22,10 @@
 \node[chapterbox] (analysis) {\textbf{Chapter~1} \\ Domain analysis, \\ capability matrix \\ per category};
 \node[chapterbox, below=0.5cm of analysis] (framework) {\textbf{Chapter~2} \\ Framework \\ schema patterns, \\ connector contract, \\ pipeline patterns};
 
-% Center: Appendix A (spec + skills) — auto-sized to fit content
+% Center: Appendix A (spec + skills). Auto sized to fit content
 \node[specbox, right=3.4cm of $(analysis.east)!0.5!(framework.east)$] (spec) {\textbf{Documentation site} \\ Requirements \\ Specification, \\ data mapping, \\ AI agent skills, \\ reference per source, \\ traceability matrix};
 
-% Right: Chapter 3 — extra breathing room for the "skills consumed by" label
+% Right: Chapter 3. Extra breathing room for the "skills consumed by" label
 \node[chapterbox, right=3.6cm of spec] (impl) {\textbf{Chapter~3} \\ Implementation \\ follows skills to build product \\ and reports results};
 
 % Forward arrows from the chapter boxes into the spec.

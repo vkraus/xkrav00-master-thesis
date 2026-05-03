@@ -48,7 +48,8 @@ schema mapping: developer%
 \draw[arr] (d1.east) -- node[lbl, above] {yes} (lfc.west);
 \draw[arr] (d1.south) -- node[lbl, right] {no} (d2.north);
 \draw[arr] (d2.east) -- node[lbl, above] {yes} (sdkn.west);
-\draw[arr] (d2.south) |- node[lbl, pos=0.25, right] {no} (dltn.west);
+\draw[arr] (d2.south) -- ++(0,-0.35) coordinate (d2-no)
+    -- node[lbl, above, pos=0.12] {no} (dltn.west);
 
 \end{tikzpicture}
 \caption[Connector category selection]{Connector category selection. Terminal panels show how the five cross cutting concerns are handled: \textbf{platform} (managed), \textbf{library} (SDK or dlt), or \textbf{developer} (code per connector).}

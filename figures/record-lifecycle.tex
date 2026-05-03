@@ -51,13 +51,13 @@ critical\_count += 1\\
 weighted\_risk\_score += w(CRITICAL) * c(criticality)%
 };
 
-\draw[arr] (api.south) -- node[arrlbl, right, xshift=3pt]
+\draw[arr] (api.south) -- node[arrlbl, right, pos=0.35, xshift=3pt]
     {preserve raw payload, add metadata, advance HWM}
     (bronze.north);
-\draw[arr] (bronze.south) -- node[arrlbl, right, xshift=3pt]
+\draw[arr] (bronze.south) -- node[arrlbl, right, pos=0.35, xshift=3pt]
     {schema mapping (\texttt{mapping.yml}), severity + status lookups}
     (silver.north);
-\draw[arr] (silver.south) -- node[arrlbl, right, xshift=3pt]
+\draw[arr] (silver.south) -- node[arrlbl, right, pos=0.35, xshift=3pt]
     {aggregate by (\texttt{application\_id}, period)}
     (gold.north);
 
