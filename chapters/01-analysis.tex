@@ -225,7 +225,7 @@ Source \glspl{api} and formats change regularly, so rigid schemas break pipeline
 
 Reruns are idempotent so retries and replays do not duplicate. Each layer validates: schema at ingest, value ranges at normalization, referential integrity at aggregation. Records that fail validation go to quarantine tables~\cite{DAMA2017}.
 
-Managed ingestion connectors complement manually coded integration. Databricks Lakeflow Connect ships first party managed connectors for ServiceNow, Salesforce, SQL Server, Workday, and Google Analytics~\cite{DatabricksLakeflowConnect2025}, registered as Unity Catalog connections and consumed through a declarative pipeline definition that the platform schedules and incrementally refreshes. The Databricks Labs project Lakeflow Community Connectors~\cite{DatabricksLakeflowCommunityConnectors2026} extends the catalogue with community maintained connectors built on the Spark Python Data Source \gls{api}, including a connector for GitHub. Community connectors share the registration pattern of first party managed connectors but carry no compatibility guarantees and are pre release at the time of writing. The framework adopts managed and community connectors where their coverage and operational guarantees meet the connector contract. Otherwise it falls back to a maintained Python \gls{sdk}, then to \gls{dltool}, then to artifact path consumption.
+Managed ingestion connectors complement manually coded integration. Databricks documents Lakeflow Connect as a managed ingestion service for SaaS applications and databases, governed by Unity Catalog and powered by serverless compute and Lakeflow Spark Declarative Pipelines~\cite{DatabricksLakeflowConnect2025}. Managed connectors are in different release states, so the framework uses them where a supported connector meets the connector contract. The Databricks Labs project Lakeflow Community Connectors~\cite{DatabricksLakeflowCommunityConnectors2026} extends Lakeflow Connect with community maintained connectors built on the Spark Python Data Source \gls{api}. Community connectors were in Beta at thesis submission, are not maintained by Databricks, and do not guarantee forward compatibility~\cite{DatabricksLakeflowCommunityConnectorsDocs2026}. Otherwise the framework falls back to a maintained Python \gls{sdk}, then to \gls{dltool}, then to artifact path consumption.
 
 %%% 1.7.3 %%%
 
@@ -234,9 +234,9 @@ Managed ingestion connectors complement manually coded integration. Databricks L
 
 The security domains analyzed above produce data about a common set of entities. A vendor agnostic conceptual model precedes physical schemas. \autoref{tab:domain-entities} summarizes the entities and their role in the model.
 
-\begin{table}[htbp]
-\centering
-\caption{Domain model entities}
+\begin{center}
+\begin{minipage}{\textwidth}
+\captionof{table}{Domain model entities}
 \label{tab:domain-entities}
 \begin{tabularx}{\textwidth}{l X}
 \toprule
@@ -255,11 +255,13 @@ Dependencies     & Third party libraries from \gls{sca}: package, version, licen
 Branch policies  & \gls{scm} governance: required reviewers, status checks, merge restrictions. Indicate process maturity. \\
 \bottomrule
 \end{tabularx}
-\end{table}
+\end{minipage}
+\end{center}
 
 The first five rows are primary entities. The rest add development and supply chain context. \autoref{fig:domain-model} illustrates the relationships, with primary entities shown in bold.
 
-\begin{figure}[htbp]
+\begin{center}
+\begin{minipage}{\textwidth}
 \centering
 \begin{tikzpicture}[
     primary/.style={rectangle, draw={rgb,255:red,40;green,80;blue,120},
@@ -315,9 +317,10 @@ The first five rows are primary entities. The rest add development and supply ch
 \draw[arr] (finding) -- node[lbl, right] {tracked by} (issue);
 
 \end{tikzpicture}
-\caption{Conceptual Domain Model}
+\captionof{figure}{Conceptual Domain Model}
 \label{fig:domain-model}
-\end{figure}
+\end{minipage}
+\end{center}
 
 The mapping from app to repo is the key relationship. It links findings to business context and is many to many: shared libraries serve multiple applications, and microservice applications span multiple repositories. Teams own applications, applications connect to repositories many to many, and findings are produced from pipeline runs against those repositories. Dependencies attach to repositories and reach vulnerabilities through \gls{sca} findings: a finding cites a specific library version and references a known \gls{cve}. Issues track remediation.
 
@@ -339,7 +342,7 @@ These span the \gls{olap} and \gls{oltp} requirements from \autoref{sec:data-arc
 \section{Related Work and Gap Analysis}
 \label{sec:related-work}
 
-No standard approach exists for consolidating security tool output into a unified data platform. Organizations face a fragmented set of partial solutions.
+No single surveyed approach consolidates application security tool output into the data platform model required here. Organizations face a fragmented set of partial solutions.
 
 %%% 1.8.1 %%%
 
@@ -351,6 +354,8 @@ Platform native features cover only their own ecosystem. GitHub Advanced Securit
 
 DefectDojo~\cite{DefectDojo2024} is the most prominent open source alternative, supporting imports from over 150 tools through format specific parsers. It was designed as a vulnerability management interface, not a data platform. Its PostgreSQL backend limits enterprise scale analytics, and advanced \gls{api} connectors are commercial only. \Gls{ocsf}~\cite{OCSF2024} standardizes security event schemas for \gls{siem} and \gls{soar} but does not model application level entities such as repositories, applications, or teams.
 
+The direct alternatives therefore leave different gaps relative to the framework of this thesis. Commercial \gls{aspm} platforms address application risk aggregation but keep the data model, connector behavior, and analytics pipeline inside a vendor product~\cite{Gartner2023ASPM}. Platform native features provide strong findings inside one \gls{scm} or DevSecOps ecosystem but do not consolidate mixed toolchains~\cite{GitHubGHAS2025, GitLabSecurity2025}. DefectDojo provides broad parser coverage and vulnerability management workflows, but not a governed lakehouse pipeline from raw source records to analytical and serving tables~\cite{DefectDojo2024}. \Gls{sarif}, CycloneDX, \gls{spdx}, and \gls{ocsf} are valuable interchange standards, but each covers only part of the model needed here: static analysis results, software bills of materials, package metadata, or security events~\cite{OASIS2024, CycloneDX2024, SPDX2024, OCSF2024}. Lakewatch is closest at the data platform level, but its domain is runtime security operations rather than application security posture~\cite{Databricks2026Lakewatch}.
+
 Many enterprises build ad hoc integrations: custom scripts, \gls{etl} pipelines, and dashboards from manual exports. These lack schema governance, break on \gls{api} changes, and persist as institutional knowledge in unmaintained scripts.
 
 %%% 1.8.2 %%%
@@ -358,9 +363,9 @@ Many enterprises build ad hoc integrations: custom scripts, \gls{etl} pipelines,
 \subsection{Databricks Lakewatch}
 \label{sec:lakewatch}
 
-Databricks announced Lakewatch in March 2026 as an open, agentic \gls{siem} built on the Databricks lakehouse~\cite{Databricks2026Lakewatch}. It unifies security, \gls{it}, and business data in a single governed environment powered by Delta Lake and Unity Catalog, with agentic triage, Detection as Code, and integrations from Wiz, Palo Alto Networks, Okta, and Zscaler.
+Databricks announced Lakewatch in March 2026 as an open, agentic \gls{siem} built on the Databricks lakehouse and made it available in Private Preview~\cite{Databricks2026Lakewatch}. It unifies security, \gls{it}, and business data in a single governed environment powered by Delta Lake and Unity Catalog, with agentic triage, Detection as Code, and a partner ecosystem including Wiz, Palo Alto Networks, Okta, and Zscaler.
 
-Lakewatch focuses on runtime security operations: threat detection, incident response, alert triage, and log analytics. This framework focuses on application security posture: findings from \gls{sast}, \gls{sca}, \gls{dast}, secret scanning, and \gls{waf} runtime telemetry, joined to \gls{cmdb} and \gls{scm} context for remediation tracking and risk aggregation. The two are complementary. Shared lakehouse infrastructure enables data exchange: Lakewatch could consume application risk scores for incident triage, and the framework could ingest Lakewatch's runtime detections as a finding source.
+Lakewatch focuses on runtime security operations: threat detection, incident response, alert triage, and log analytics. This framework focuses on application security posture: findings from \gls{sast}, \gls{sca}, \gls{dast}, secret scanning, and \gls{waf} runtime telemetry, joined to \gls{cmdb} and \gls{scm} context for remediation tracking and risk aggregation. The author did not have access to the Private Preview during thesis preparation, so this comparison is based on Databricks public material rather than hands on evaluation. The two are complementary. Shared lakehouse infrastructure could enable data exchange: Lakewatch could consume application risk scores for incident triage, and the framework could ingest Lakewatch runtime detections as a finding source.
 
 %%% 1.8.3 %%%
 
@@ -368,9 +373,9 @@ Lakewatch focuses on runtime security operations: threat detection, incident res
 
 \autoref{tab:related-work-comparison} compares the surveyed approaches against criteria from the preceding analysis.
 
-\begin{table}[htbp]
-\centering
-\caption{Comparison of Existing Approaches}
+\begin{center}
+\begin{minipage}{\textwidth}
+\captionof{table}{Comparison of Existing Approaches}
 \label{tab:related-work-comparison}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X c c c c c}
 \toprule
@@ -386,10 +391,11 @@ AppSec specific model    & Yes     & Partial & Yes     & --      & Yes \\
 Enterprise scalability   & Yes     & Partial & --      & Yes     & Partial \\
 \bottomrule
 \end{tabularx}
-\par\footnotesize \textit{Note.} Yes indicates full support, Partial indicates acknowledged but not demonstrated, -- indicates out of scope or not addressed. Source: author synthesis of cited products' public documentation, accessed 2026-04.
-\end{table}
+\par\footnotesize \textit{Note.} Yes indicates that the capability is specified by the approach. For this thesis, implementation evidence is limited to the \gls{mvp} scope described in \autoref{ch:implementation} and the Limitations section of the Conclusion. Partial indicates acknowledged or partial support. -- indicates out of scope or not addressed. Source: author synthesis of cited product documentation, accessed 2026-04.
+\end{minipage}
+\end{center}
 
-No existing approach satisfies all criteria. Commercial \gls{aspm} is proprietary, platform native aggregations are ecosystem locked, DefectDojo lacks the data architecture for enterprise scale analytics, and Lakewatch addresses runtime operations rather than application security posture. The present work is itself partial on two criteria: the vendor agnostic claim holds at framework level but the reference implementation runs on Databricks alone, and lakehouse based enterprise scalability is supported by design but not empirically validated here (both noted in the Limitations section of the Conclusion). Academic work on application security consolidation as a data engineering problem is limited, focusing on detection techniques instead of cross tool integration at scale.
+The surveyed approaches do not jointly satisfy the criteria in the form required by this thesis. The contribution is the combination of an application security domain model, a medallion pipeline, a connector contract, requirement traceability, and a Databricks reference implementation. The present work is itself partial on two criteria: the vendor agnostic claim holds at framework level but the reference implementation runs on Databricks alone, and lakehouse based enterprise scalability is supported by design but not empirically validated here (both noted in the Limitations section of the Conclusion). The academic sources reviewed in this chapter mainly support the detection and data engineering parts of the problem rather than a complete cross tool integration architecture~\cite{Chess2007, McGraw2006, Stuttard2011, Reis2022, Strengholt2025}.
 
 %%%%%%%%%%%
 %%% 1.9 %%%
@@ -408,15 +414,17 @@ The nine sources are selected based on five criteria:
     \item \textbf{Open source or free tier available.} The reference implementation must be reproducible without commercial licenses.
     \item \textbf{Full domain coverage across three detection tiers.} The nine together must cover every domain in the framework: \gls{cmdb}, \gls{scm}, and the three detection tiers, namely static testing (\gls{sast}, \gls{sca}, secrets), dynamic testing (\gls{dast}), and runtime security (\gls{waf}).
     \item \textbf{\Gls{api} heterogeneity.} The selection deliberately includes \gls{rest} (ServiceNow, SonarQube, Dependency-Track, GitHub, GitLab, OWASP ZAP, AWS WAF), GraphQL (GitHub, GitLab), and \gls{cli} wrapped (Semgrep, TruffleHog) sources so the connector contract is exercised across integration styles.
-    \item \textbf{Limit heterogeneity to nine to maintain scope control.} The nine sources cover the ingestion and integration patterns that the framework must support. A wider sample would dilute pattern coverage without strengthening the framework claim.
+    \item \textbf{Limit heterogeneity to nine to maintain scope control.} The nine sources are selected as a design sample. They cover the ingestion and integration patterns needed to exercise the framework while keeping implementation effort manageable. This improves pattern coverage but does not make the sample statistically representative of all enterprise application security sources.
     \item \textbf{Industry adoption.} Each tool is in widespread enterprise use.
 \end{enumerate}
 
+The selection therefore supports analytical generalization from observed integration patterns, not statistical generalization from a population of tools. The main bias is toward sources with accessible \glspl{api}, free tiers, and formats that can be exercised in a thesis setting. The Limitations section of the Conclusion names source categories not demonstrated, including SOAP, gRPC, syslog, Kafka event streams, binary telemetry, and push only webhook native sources.
+
 A summary of the variation in incremental strategies among the selected sources is presented in \autoref{tab:incremental-strategies}.
 
-\begin{table}[htbp]
-\centering
-\caption{Pairings of source and incremental strategy}
+\begin{center}
+\begin{minipage}{\textwidth}
+\captionof{table}{Pairings of source and incremental strategy}
 \label{tab:incremental-strategies}
 \begin{tabularx}{\textwidth}{l X}
 \toprule
@@ -431,7 +439,8 @@ AWS WAF                                      & Firehose to S3 log stream (prefer
 \bottomrule
 \end{tabularx}
 \par\footnotesize \textit{Note.} Classification synthesized from the medallion pattern treatment in \textcite{Strengholt2025} and the Lakeflow Declarative Pipelines operations guidance in~\cite{DatabricksLDP2025}. Pairings of source and strategy are author attributions based on the API capability matrix per source.
-\end{table}
+\end{minipage}
+\end{center}
 
 \subsection{Source Inventory}
 
@@ -455,9 +464,9 @@ Details for each source are on the \href{https://vkraus.github.io/appsec-mvp/con
 
 \autoref{tab:considered-excluded} enumerates the key tools that were considered and the criterion that excluded each. Tools marked \textbf{within scope, deferred} satisfy all criteria but are excluded based on the cap in Criterion~4. Onboarding them would simply be a repeat of the procedure per source in \autoref{sec:impl-methodology}.
 
-\begin{table}[htbp]
-\centering
-\caption[Considered and excluded sources]{Considered and excluded sources. Each row names the tool, the category it would have populated, and the criterion that excluded it (C1 open source or free tier, C2 full domain coverage, C3 \gls{api} heterogeneity, C4 heterogeneity cap, C5 industry adoption).}
+\begin{center}
+\begin{minipage}{\textwidth}
+\captionof{table}[Considered and excluded sources]{Considered and excluded sources. Each row names the tool, the category it would have populated, and the criterion that excluded it (C1 open source or free tier, C2 full domain coverage, C3 \gls{api} heterogeneity, C4 heterogeneity cap, C5 industry adoption).}
 \label{tab:considered-excluded}
 \small
 \begin{tabularx}{\linewidth}{l l l X}
@@ -480,11 +489,64 @@ Cloudflare WAF    & \gls{waf}           & C4     & \textbf{within scope, deferre
 Akamai WAF        & \gls{waf}           & C1     & commercial, no free tier \\
 \bottomrule
 \end{tabularx}
-\end{table}
+\end{minipage}
+\end{center}
 
 \subsection{Cross Source Synthesis}
 \label{sec:cross-source-synthesis}
 
 Across the nine sources, four record forms recur (ticket like, resource like, finding like, event like), severity scales span three to six levels, and status vocabularies diverge more sharply with tool specific states that rarely map one to one. Five pagination strategies appear: offset (ServiceNow, SonarQube, Dependency-Track), cursor (GitHub \gls{rest}), GraphQL cursor (GitHub and GitLab GraphQL), keyset (GitLab \gls{rest}), and none (\gls{cli} sources, AWS WAF). The sources also split on an operational pattern axis: periodic global scanners polled via \inlinecode{updated\_at} (SonarQube, Dependency-Track), \gls{cicd} step scanners indexed by commit \gls{sha} (Semgrep, TruffleHog), on demand dynamic scanners read via scan lifecycle \gls{api} (OWASP ZAP), and runtime telemetry sampled over time windows (AWS WAF). Together they exercise all five ingestion strategies the framework prescribes. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{capability matrix} tabulates them against the capabilities that matter for connector design.
 
+\section{Requirements Summary}
+\label{sec:req-summary}
+
+The analysis above produces the core requirements used by \autoref{ch:framework}. The complete requirements specification is published in the \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} and attached to this thesis as \texttt{appsec-mvp-docs.zip}. The specification contains the source \gls{api} analysis, mapping derivations, runbooks, validation logs, and the full traceability matrix. This section summarizes the parts needed to evaluate the requirements contribution without reading the external specification. \autoref{tab:req-summary} names the requirement families, the evidence in the thesis, and the implementation trace used to evaluate each family. \autoref{tab:connector-req-snapshot} lists the stable connector requirement identifiers used by tests and by the published traceability matrix.
+
+The requirement identifiers are intentionally stable across sources. A source can mark a requirement as not applicable (for example, tools that only emit artifacts have no \gls{api} pagination or rate limit handling), but applicable requirements must be bound to tests. This is the bridge between the requirements specification contribution and the implementation evidence: the framework defines the identifiers and expected behavior, while \autoref{ch:implementation} reports how the \gls{mvp} satisfies or bounds them for each selected source.
+
 This thesis fills the gap with a vendor agnostic framework. It applies lakehouse architecture and the medallion pattern to ingest tool output, normalize it into a domain model, and serve it through \gls{olap} and \gls{oltp} interfaces. \autoref{ch:framework} presents the framework, and \autoref{ch:implementation} demonstrates its implementation.
+
+\begin{center}
+\begin{minipage}{\textwidth}
+\captionof{table}[Requirements summary]{Requirements summary for the application security data integration framework.}
+\label{tab:req-summary}
+\small
+\begin{tabularx}{\textwidth}{l X X}
+\toprule
+\textbf{Requirement family} & \textbf{Requirement summary} & \textbf{Thesis evidence} \\
+\midrule
+Source coverage & Cover business application inventory, source repositories, static testing, software composition analysis, secrets, dynamic testing, and one runtime security source. & Source selection criteria and inventory in \autoref{sec:selected-sources}. Ingestion assignment in \autoref{sec:ingestion-category-assignment}. \\
+Source heterogeneity & Exercise \gls{rest}, GraphQL, managed connector, \gls{sdk}, \gls{dltool}, and artifact ingestion patterns, including multiple pagination and high water mark styles. & Cross source synthesis in \autoref{sec:cross-source-synthesis}. Connector categories in \autoref{sec:connector-abstraction}. \\
+Standard data model & Normalize heterogeneous records into bronze, silver, and gold layers, with a single findings fact table and relationship tables for application context and deduplication. & Medallion and schema patterns in \autoref{sec:medallion-arch} and \autoref{sec:schema-patterns}. Entity model in \autoref{sec:entity-model}. \\
+Connector contract & Standardize authentication, pagination, rate limits, high water marks, schema mapping, severity/status normalization, timestamp normalization, data quality, and deduplication. & Connector contract and testing requirements in \autoref{sec:connector-framework} and \autoref{sec:connector-testing}. REQ ID summary in \autoref{tab:connector-req-snapshot}. \\
+Serving and analytics & Provide Gold datasets ready for consumption and both analytical and operational serving paths. & Analytics and serving framework in \autoref{sec:analytics-serving}. MVP analytics evidence in \autoref{sec:impl-results}. \\
+Extensibility & Onboard a new source by resolving category, instantiating the module layout, encoding the mapping, testing, and running the skill chain with review. & Implementation methodology in \autoref{sec:impl-methodology}. AI instantiability evaluation in \autoref{sec:ai-eval}. \\
+Validation and traceability & Bind implementation tests to stable requirement identifiers and publish PASS/N/A evidence per source. & Connector REQ IDs in \autoref{tab:connector-req-snapshot}. Implementation evidence matrix in \autoref{tab:impl-evidence-levels}. \\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\end{center}
+
+\begin{center}
+\begin{minipage}{\textwidth}
+\captionof{table}[Connector requirement identifiers]{Connector requirement identifiers used for traceability. The full matrix for each source is published in the \gls{mvp} documentation. \autoref{sec:impl-results} reports the evidence boundary in this thesis.}
+\label{tab:connector-req-snapshot}
+\small
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{ID} & \textbf{Area} & \textbf{Requirement} \\
+\midrule
+\inlinecode{REQ-ING-AUTH} & Ingestion & Credentials resolve from the platform secret scope. Invalid credentials fail clearly. \\
+\inlinecode{REQ-ING-PAG} & Ingestion & Pagination completes without data loss or duplication across at least two pages. \\
+\inlinecode{REQ-ING-RL} & Ingestion & Rate limit handling follows the configured retry and backoff policy. \\
+\inlinecode{REQ-ING-HWM} & Ingestion & High water mark resume fetches only new or changed records on the next run. \\
+\inlinecode{REQ-TRF-MAP} & Transform & Source records map to the target Silver schema with correct types, values, and null handling. \\
+\inlinecode{REQ-TRF-SEV} & Transform & Native severity values normalize to the standard severity model, including edge cases. \\
+\inlinecode{REQ-TRF-STS} & Transform & Native lifecycle states normalize to the standard status model. \\
+\inlinecode{REQ-TRF-TS} & Transform & Source timestamps normalize to UTC datetimes. \\
+\inlinecode{REQ-DQ} & Quality & Silver validation expectations distinguish valid records from quarantine candidates. \\
+\inlinecode{REQ-DEDUP} & Quality & Applicable finding categories produce deterministic deduplication keys and overlap links. \\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\end{center}

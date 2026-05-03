@@ -1,4 +1,5 @@
-\begin{figure}[htbp]
+\begin{center}
+\begin{minipage}{\textwidth}
 \centering
 \begin{tikzpicture}[
     node distance=0.3cm,
@@ -62,6 +63,7 @@
 \draw[arr] (findings.south east) to[out=-60, in=130, looseness=0.7] node[lbl, above right, pos=0.7] {finding\_id\_b} (dedup.north);
 
 \end{tikzpicture}
-\caption[Silver layer entity relationship diagram]{Silver layer entity relationship diagram for the prescribed framework. Representative subset: \textbf{8} of the \textbf{15} prescribed domain silver tables grouped by type (entities, findings, reference, relationships). Highlighted nodes are the prescribed domain tables included in the \gls{mvp} core subset. The \gls{mvp} also includes supporting Silver tables not shown in this compact relationship diagram: \inlinecode{finding\_location}, \inlinecode{hwm}, and \inlinecode{suppression\_rules}. The remaining prescribed domain tables follow the same schema patterns and are listed in \autoref{sec:future-work}.}
+\captionof{figure}[Silver layer entity relationship diagram]{Silver layer entity relationship diagram for the prescribed framework. Representative subset: \textbf{8} of the \textbf{15} prescribed domain silver tables grouped by type (entities, findings, reference, relationships). Highlighted nodes are the prescribed domain tables included in the \gls{mvp} core subset. The \gls{mvp} also includes supporting Silver tables not shown in this compact relationship diagram: \inlinecode{finding\_location}, \inlinecode{hwm}, and \inlinecode{suppression\_rules}. The remaining prescribed domain tables follow the same schema patterns and are listed in \autoref{sec:future-work}.}
 \label{fig:silver-erd}
-\end{figure}
+\end{minipage}
+\end{center}
