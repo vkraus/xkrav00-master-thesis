@@ -11,7 +11,7 @@
 - [Objective](#objective)
 - [Methodology](#methodology)
 - [Structure](#structure)
-- [External Documentation Site](#external-documentation-site)
+- [MVP Implementation and Documentation Artifacts](#mvp-implementation-and-documentation-artifacts)
   - [Analysis](#analysis)
 - [Asset Discovery and Inventory](#asset-discovery-and-inventory)
   - [Application Portfolio Management](#application-portfolio-management)
@@ -46,6 +46,7 @@
   - [Considered and Excluded](#considered-and-excluded)
   - [Cross Source Synthesis](#cross-source-synthesis)
   - [Framework](#framework)
+- [Requirements Snapshot](#requirements-snapshot)
 - [Solution Architecture](#solution-architecture)
   - [Technology Stack](#technology-stack)
   - [Component Design](#component-design)
@@ -127,8 +128,8 @@
   - [Generative AI Use Disclosure](#generative-ai-use-disclosure)
 - [Text Editing](#text-editing)
 - [Images](#images)
-- [Source Code (`mvp.zip`)](#source-code-mvpzip)
-- [Product Documentation (`docs.zip`)](#product-documentation-docszip)
+- [Source Code (`appsec-mvp.zip`)](#source-code-appsec-mvpzip)
+- [MVP Documentation (`appsec-mvp-docs.zip`)](#mvp-documentation-appsec-mvp-docszip)
 - [Supporting Tools](#supporting-tools)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -179,10 +180,10 @@ following ways:
 
 - generation of source code for figures in the thesis,
 
-- generation of source code attached to the thesis (`mvp.zip`),
+- generation of source code attached to the thesis (`appsec-mvp.zip`),
 
 - generation of product documentation attached to the thesis
-  (`docs.zip`),
+  (`appsec-mvp-docs.zip`),
 
 - assistance with the LaTeX build scripts.
 
@@ -385,8 +386,8 @@ The subgoals are:
     data-reference="sec:impl-results">[sec:impl-results]</a> and the
     Limitations section of the Conclusion. The implementation also
     includes the platform app to repository linker and analytics/serving
-    artifacts. The traceability matrix at
-    [platform/reference/catalog](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/)
+    artifacts. The [traceability
+    matrix](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/)
     records PASS or N/A for every (requirement $\times$ source) cell.
     The deliverable is a minimum viable product on a sample chosen to
     cover the ingestion and integration patterns the framework must
@@ -446,8 +447,8 @@ acronym-form="singular+short">ai</span> instantiable integration layer:
 a chain of four skills (analyze-source, provision-source,
 generate-connector, validate-implementation) was authored from the
 connector contract and run across all nine source specifications under
-reviewer subagent supervision, producing the per-source connector
-modules and validation evidence.
+reviewer subagent supervision, producing connector modules for each
+source and validation evidence.
 <a href="#sec:ai-eval" data-reference-type="autoref"
 data-reference="sec:ai-eval">[sec:ai-eval]</a> grades the outcome.
 
@@ -494,9 +495,7 @@ data-reference-type="autoref"
 data-reference="ch:analysis">[ch:analysis]</a> and <a
 href="#ch:framework" data-reference-type="autoref"
 data-reference="ch:framework">[ch:framework]</a> contribute to the
-Requirements Specification published at <a
-href="https://vkraus.github.io/appsec-mvp/"
-class="uri">https://vkraus.github.io/appsec-mvp/</a>. <a
+Requirements Specification published on the documentation site. <a
 href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a> consumes the
 specification, with reviewer subagent cycles catching defect classes
@@ -506,29 +505,39 @@ populate the per source Implementation reports on the site (dashed
 return arrow).</figcaption>
 </figure>
 
-### External Documentation Site
+### MVP Implementation and Documentation Artifacts
 
-The full requirements specification is published at
-<https://vkraus.github.io/appsec-mvp/> instead of inline. It is
-structured into four sections (Requirements, Functional Specification,
-Design, Tests), generated with MkDocs Material from
-<span class="mark">mkdocs/docs/</span> in the
-<span class="mark">appsec-mvp</span> repository, and deployed via GitHub
-Pages. Where the main chapters name a page, they link to it directly.
-The relevant top level sections are the [per category capability
-matrix](https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/),
-the [documented mapping
-requirements](https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/),
-the [connectors reference
-hub](https://vkraus.github.io/appsec-mvp/connectors/), and the
-[requirement catalog and traceability
-matrix](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/).
-
-Offline copies of the reference implementation and the documentation
-site are attached as `mvp.zip` and `docs.zip` (the latter includes a
-prerendered static site under `docs/site/index.html`). Both are
-snapshots at the commit from which this <span acronym-label="pdf"
+Throughout the thesis, **<span acronym-label="mvp"
+acronym-form="singular+short">mvp</span> implementation** refers to the
+public [ <span class="mark">appsec-mvp</span>
+repository](https://github.com/vkraus/appsec-mvp) and its source archive
+attached to this thesis, `appsec-mvp.zip`. **<span acronym-label="mvp"
+acronym-form="singular+short">mvp</span> documentation** or
+**documentation site** refers to the published site at
+<https://vkraus.github.io/appsec-mvp/> and its static archive attached
+to this thesis, `appsec-mvp-docs.zip`, which includes a prerendered site
+under `docs/site/index.html`. Both archives are snapshots at the commit
+from which this <span acronym-label="pdf"
 acronym-form="singular+short">pdf</span> was built.
+
+The full requirements specification is published in the
+<span acronym-label="mvp" acronym-form="singular+short">mvp</span>
+documentation. It is structured into four sections (Requirements,
+Functional Specification, Design, Tests), generated with MkDocs Material
+from <span class="mark">mkdocs/docs/</span> in the
+<span acronym-label="mvp" acronym-form="singular+short">mvp</span>
+implementation repository, and deployed via GitHub Pages.
+<a href="#sec:req-snapshot" data-reference-type="autoref"
+data-reference="sec:req-snapshot">[sec:req-snapshot]</a> gives the
+compact in-thesis snapshot needed to evaluate the
+requirements-specification contribution without browsing the site. Where
+the main chapters name a page, they link to it directly. The relevant
+top level sections are the [capability
+matrix](https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/),
+[mapping
+requirements](https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/),
+[connector hub](https://vkraus.github.io/appsec-mvp/connectors/), and
+[catalog](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/).
 
 ## Analysis
 
@@ -1061,10 +1070,10 @@ acronym-form="singular+short">waf</span> action and status fixed to
 
 ### Source Integration Summary
 
-The [source characteristics reference
-page](https://vkraus.github.io/appsec-mvp/platform/reference/source-characteristics/)
-tabulates integration characteristics across the AppSec sources surveyed
-for the thesis.
+The [source
+characteristics](https://vkraus.github.io/appsec-mvp/platform/reference/source-characteristics/)
+page tabulates integration characteristics across the AppSec sources
+surveyed for the thesis.
 
 Several patterns emerge. <span acronym-label="rest"
 acronym-form="singular+short">rest</span> <span acronym-label="api"
@@ -1163,7 +1172,7 @@ layer validates: schema at ingest, value ranges at normalization,
 referential integrity at aggregation. Records that fail validation go to
 quarantine tables .
 
-Managed ingestion connectors complement hand coded integration.
+Managed ingestion connectors complement manually coded integration.
 Databricks Lakeflow Connect ships first party managed connectors for
 ServiceNow, Salesforce, SQL Server, Workday, and Google Analytics ,
 registered as Unity Catalog connections and consumed through a
@@ -1176,7 +1185,7 @@ GitHub. Community connectors share the registration pattern of first
 party managed connectors but carry no compatibility guarantees and are
 pre release at the time of writing. The framework adopts managed and
 community connectors where their coverage and operational guarantees
-meet the connector contract; otherwise it falls back to a maintained
+meet the connector contract. Otherwise it falls back to a maintained
 Python <span acronym-label="sdk"
 acronym-form="singular+short">sdk</span>, then to
 <span acronym-label="dltool"
@@ -1527,7 +1536,7 @@ for the framework first dependency.
   acronym-form="singular+short">api</span> as the time window sampled
   fallback.
 
-Details for each source are on the [connectors reference
+Details for each source are on the [connector
 hub](https://vkraus.github.io/appsec-mvp/connectors/).
 
 #### Considered and Excluded
@@ -1591,7 +1600,7 @@ demand dynamic scanners read via scan lifecycle
 <span acronym-label="api" acronym-form="singular+short">api</span>
 (OWASP ZAP), and runtime telemetry sampled over time windows (AWS WAF).
 Together they exercise all five ingestion strategies the framework
-prescribes. The [source capability
+prescribes. The [capability
 matrix](https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/)
 tabulates them against the capabilities that matter for connector
 design.
@@ -1620,6 +1629,89 @@ specifics. <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a> then
 demonstrates a concrete implementation.
 
+### Requirements Snapshot
+
+The complete requirements specification is published in the
+<span acronym-label="mvp" acronym-form="singular+short">mvp</span>
+documentation because the <span acronym-label="api"
+acronym-form="singular+short">api</span> analysis for each source,
+mapping derivations, runbooks, and validation logs are too long to
+reproduce in the thesis body. The core requirements are summarized here
+so the framework contribution remains assessable from the thesis itself.
+The snapshot is intentionally compact: it names the requirement
+families, the in-thesis evidence, and the implementation trace used to
+evaluate each family.
+
+<div id="tab:req-snapshot">
+
+| **Requirement family**      | **Requirement summary**                                                                                                                                                                                                                                                                                                                             | **Thesis evidence**                                                                                                                                                               |
+|:----------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Source coverage             | Cover business application inventory, source repositories, static testing, software composition analysis, secrets, dynamic testing, and one runtime security source.                                                                                                                                                                                | Source selection criteria and inventory in <a href="#sec:selected-sources" data-reference-type="autoref"                                                                          
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:selected-sources">[sec:selected-sources]</a>. Ingestion assignment in <a href="#sec:ingestion-category-assignment"                                             
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference-type="autoref"                                                                                                                                                      
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:ingestion-category-assignment">[sec:ingestion-category-assignment]</a>.                                                                                        |
+| Source heterogeneity        | Exercise <span acronym-label="rest" acronym-form="singular+short">rest</span>, GraphQL, managed connector, <span acronym-label="sdk" acronym-form="singular+short">sdk</span>, <span acronym-label="dltool" acronym-form="singular+short">dltool</span>, and artifact ingestion patterns, including multiple pagination and high water mark styles. | Cross source synthesis in <a href="#sec:cross-source-synthesis" data-reference-type="autoref"                                                                                     
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:cross-source-synthesis">[sec:cross-source-synthesis]</a>. Connector categories in <a href="#sec:connector-abstraction" data-reference-type="autoref"           
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:connector-abstraction">[sec:connector-abstraction]</a>.                                                                                                        |
+| Standard data model         | Normalize heterogeneous records into bronze, silver, and gold layers, with a single findings fact table and relationship tables for application context and deduplication.                                                                                                                                                                          | Medallion and schema patterns in <a href="#sec:medallion-arch" data-reference-type="autoref"                                                                                      
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:medallion-arch">[sec:medallion-arch]</a> and <a href="#sec:schema-patterns" data-reference-type="autoref"                                                      
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:schema-patterns">[sec:schema-patterns]</a>. Entity model in <a href="#sec:entity-model" data-reference-type="autoref"                                          
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:entity-model">[sec:entity-model]</a>.                                                                                                                          |
+| Connector contract          | Standardize authentication, pagination, rate limits, high water marks, schema mapping, severity/status normalization, timestamp normalization, data quality, and deduplication.                                                                                                                                                                     | Connector contract and testing requirements in <a href="#sec:connector-framework" data-reference-type="autoref"                                                                   
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:connector-framework">[sec:connector-framework]</a> and <a href="#sec:connector-testing" data-reference-type="autoref"                                          
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:connector-testing">[sec:connector-testing]</a>. REQ ID summary in <a href="#tab:connector-req-snapshot" data-reference-type="autoref"                          
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="tab:connector-req-snapshot">[tab:connector-req-snapshot]</a>.                                                                                                      |
+| Serving and analytics       | Provide consumption-ready Gold datasets and both analytical and operational serving paths.                                                                                                                                                                                                                                                          | Analytics and serving framework in <a href="#sec:analytics-serving" data-reference-type="autoref"                                                                                 
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:analytics-serving">[sec:analytics-serving]</a>. MVP analytics evidence in <a href="#sec:impl-results" data-reference-type="autoref"                            
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:impl-results">[sec:impl-results]</a>.                                                                                                                          |
+| Extensibility               | Onboard a new source by resolving category, instantiating the module layout, encoding the mapping, testing, and running the skill chain with review.                                                                                                                                                                                                | Implementation methodology in <a href="#sec:impl-methodology" data-reference-type="autoref"                                                                                       
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:impl-methodology">[sec:impl-methodology]</a>. AI instantiability evaluation in <a href="#sec:ai-eval" data-reference-type="autoref"                            
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="sec:ai-eval">[sec:ai-eval]</a>.                                                                                                                                    |
+| Validation and traceability | Bind implementation tests to stable requirement identifiers and publish PASS/N/A evidence per source.                                                                                                                                                                                                                                               | Connector REQ IDs in <a href="#tab:connector-req-snapshot" data-reference-type="autoref"                                                                                          
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="tab:connector-req-snapshot">[tab:connector-req-snapshot]</a>. Implementation evidence matrix in <a href="#tab:impl-evidence-levels" data-reference-type="autoref"  
+                                                                                                                                                                                                                                                                                                                                                                                     data-reference="tab:impl-evidence-levels">[tab:impl-evidence-levels]</a>.                                                                                                          |
+
+Requirements snapshot for the application-security data integration
+framework.
+
+</div>
+
+<div id="tab:connector-req-snapshot">
+
+| **ID** | **Area**  | **Requirement**                                                                               |
+|:-------|:----------|:----------------------------------------------------------------------------------------------|
+|        | Ingestion | Credentials resolve from the platform secret scope. Invalid credentials fail clearly.         |
+|        | Ingestion | Pagination completes without data loss or duplication across at least two pages.              |
+|        | Ingestion | Rate-limit handling follows the configured retry and backoff policy.                          |
+|        | Ingestion | High-water-mark resume fetches only new or changed records on the next run.                   |
+|        | Transform | Source records map to the target Silver schema with correct types, values, and null handling. |
+|        | Transform | Native severity values normalize to the standard severity model, including edge cases.        |
+|        | Transform | Native lifecycle states normalize to the standard status model.                               |
+|        | Transform | Source timestamps normalize to UTC datetimes.                                                 |
+|        | Quality   | Silver validation expectations distinguish valid records from quarantine candidates.          |
+|        | Quality   | Applicable finding categories produce deterministic deduplication keys and overlap links.     |
+
+Connector requirement identifiers used for traceability. The full matrix
+for each source is published in the <span acronym-label="mvp"
+acronym-form="singular+short">mvp</span> documentation.
+<a href="#sec:impl-results" data-reference-type="autoref"
+data-reference="sec:impl-results">[sec:impl-results]</a> reports the
+thesis-level evidence boundary.
+
+</div>
+
+The requirement identifiers are intentionally stable across sources. A
+source can mark a requirement as not applicable (for example,
+artifact-only tools have no API pagination or rate-limit handling), but
+applicable requirements must be bound to tests. This is the bridge
+between the requirements specification contribution and the
+implementation evidence: the framework defines the identifiers and
+expected behavior, while
+<a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a> reports how
+the <span acronym-label="mvp" acronym-form="singular+short">mvp</span>
+satisfies or bounds them for each selected source.
+
 ### Solution Architecture
 
 This section presents the framework architecture at three levels:
@@ -1636,9 +1728,10 @@ template defined in this chapter (schema patterns, mappings, connector
 contract) is declarative, not procedural, so that an
 <span acronym-label="ai" acronym-form="singular+short">ai</span> coding
 agent reading the specification has enough material to produce a
-candidate implementation. The published skill catalog, which sits on the
-external specification site and wraps these templates into executable
-prompts, is evaluated separately in
+candidate implementation. The published skill catalog, which sits in the
+<span acronym-label="mvp" acronym-form="singular+short">mvp</span>
+documentation and wraps these templates into executable prompts, is
+evaluated separately in
 <a href="#sec:ai-eval" data-reference-type="autoref"
 data-reference="sec:ai-eval">[sec:ai-eval]</a>.
 
@@ -1834,13 +1927,11 @@ The schema patterns are derived from the <span acronym-label="api"
 acronym-form="plural+short">apis</span> of the nine sources introduced
 in <a href="#sec:selected-sources" data-reference-type="autoref"
 data-reference="sec:selected-sources">[sec:selected-sources]</a>, not
-chosen in advance. The [per category capability
+chosen in advance. The [capability
 matrix](https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/)
-consolidates the observations relevant to schema design at the category
-level. The [connectors reference
-hub](https://vkraus.github.io/appsec-mvp/connectors/) provides facts for
-each source. This section maps the consolidated capabilities onto
-concrete Entity, Finding, and Relationship schemas.
+and [connector hub](https://vkraus.github.io/appsec-mvp/connectors/)
+provide the source facts this section maps onto concrete Entity,
+Finding, and Relationship schemas.
 
 #### Schema Patterns
 
@@ -1906,8 +1997,10 @@ data-reference="ch:implementation">[ch:implementation]</a> simplifies to
 <span acronym-label="scd" acronym-form="singular+short">scd</span>-1
 (overwrite on update) since the <span acronym-label="mvp"
 acronym-form="singular+short">mvp</span> scenarios do not exercise point
-in time queries. The field derivation table per source is published at
-<https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/#silver-entity-mapping-requirements>.
+in time queries. The [mapping
+table](https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/#silver-entity-mapping-requirements)
+is published in the <span acronym-label="mvp"
+acronym-form="singular+short">mvp</span> documentation.
 
 The Bronze to Silver step quarantines a record when (1) the Bronze
 record failed <span acronym-label="json"
@@ -1935,13 +2028,14 @@ data-reference="sec:silver-findings-design">[sec:silver-findings-design]</a>)
 stores normalized fact data for every category. Each target field unions
 over the native fields of the finding emitting sources, with
 inapplicable fields stored as <span class="mark">NULL</span> . The
-<span class="mark">mapping.yml</span> per source
+<span class="mark">mapping.yml</span> for each source
 (<a href="#sec:transformation-patterns" data-reference-type="autoref"
 data-reference="sec:transformation-patterns">[sec:transformation-patterns]</a>)
 makes each mapping explicit, including the
-<span class="mark">category</span> discriminator. Per source derivation
-tables are published at
-<https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/#silver-finding-mapping-requirements>.
+<span class="mark">category</span> discriminator. The [mapping
+tables](https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/#silver-finding-mapping-requirements)
+are published in the <span acronym-label="mvp"
+acronym-form="singular+short">mvp</span> documentation.
 
 ##### Deduplication
 
@@ -2054,7 +2148,7 @@ entity pattern columns ( <span class="mark">id</span> ,
 <span class="mark">source_system</span> ,
 <span class="mark">valid_from</span> ,
 <span class="mark">valid_to</span> ). Domain specific columns and source
-mappings are listed on the [silver table ownership reference
+mappings are listed on the [ownership
 page](https://vkraus.github.io/appsec-mvp/platform/reference/silver-table-ownership/).
 
 ##### Finding Table
@@ -2087,7 +2181,7 @@ mapping is already a union over sources . Splitting it would force
 <span class="mark">UNION ALL</span> for cross category analytics and
 fragment the per category dedup routing. At the target scale, Delta Lake
 columnar compression makes the sparse NULLs cheap. Full column listing
-and rationale on the [single table findings rationale
+and rationale are on the [rationale
 page](https://vkraus.github.io/appsec-mvp/platform/reference/single-silver-findings-rationale/).
 
 ##### Reference and Relationship Tables
@@ -2251,8 +2345,7 @@ consume data from multiple connectors.
 Secrets sit in the platform secret scope and are referenced by name.
 Nonsensitive settings (severity, status lookups) sit colocated with the
 connector code as YAML. Tuning these values is a configuration change,
-not a code change. Full layout with a worked example on the [project
-layout reference
+not a code change. Full layout with a worked example is on the [layout
 page](https://vkraus.github.io/appsec-mvp/platform/reference/project-layout/).
 
 #### Pipeline Orchestration
@@ -2320,10 +2413,9 @@ Tests are linked to requirement identifiers via pytest markers (
 <span class="mark">@pytest.mark.requirement("REQ-TRF-SEV")</span> )
 drawn from the [requirement
 catalog](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/).
-A traceability matrix generated from test results is published at
-<https://vkraus.github.io/appsec-mvp/platform/reference/catalog/#per-source-traceability-matrix>
-and applies uniformly across environment, connector, and analytics
-testing.
+The [traceability
+matrix](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/#per-source-traceability-matrix)
+applies uniformly across environment, connector, and analytics testing.
 
 ### Connector Framework
 
@@ -2606,17 +2698,17 @@ the transform task declaring a hard dependency on the ingest task. Retry
 configuration is identical across connectors (three attempts, capped
 exponential backoff). The bundle fragment exposes a fixed set of
 parameters (source name, target catalog, high water mark reset flag,
-cron expression). Full fragment on the [connector job template reference
-page](https://vkraus.github.io/appsec-mvp/platform/reference/connector-job-template/).
+cron expression). The full fragment is on the [job
+template](https://vkraus.github.io/appsec-mvp/platform/reference/connector-job-template/).
 
 The common landing pattern and bronze table template apply uniformly
-across categories. Per source parameters live in
+across categories. Parameters for each source live in
 <span class="mark">src/connectors/{source}/config.yml</span> . Category
 specific notes (incremental strategy preference for
 <span acronym-label="scm" acronym-form="singular+short">scm</span>,
 scanner deployment styles, <span acronym-label="cmdb"
 acronym-form="singular+short">cmdb</span> relationship traversal) are on
-the [per category capability
+the [capability
 matrix](https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/).
 
 #### Transformation Patterns
@@ -2640,9 +2732,9 @@ has the same structure: a target table declaration and column blocks
 naming the target column, the <span acronym-label="json"
 acronym-form="singular+short">json</span> path into
 <span class="mark">\_raw_payload</span> , and the cast. Severity and
-status lookups live separately as key value maps. A worked example
-(SonarQube) is at
-<https://vkraus.github.io/appsec-mvp/connectors/sast/sonarqube/#mapping-example>.
+status lookups live separately as key value maps. The [SonarQube mapping
+example](https://vkraus.github.io/appsec-mvp/connectors/sast/sonarqube/#mapping-example)
+shows a worked instance.
 
 ##### Normalization
 
@@ -2766,12 +2858,12 @@ traceability matrix links results to the requirements below.
 
 The framework target is that new connectors do not merge until every
 applicable marker above passes in <span acronym-label="cicd"
-acronym-form="singular+short">cicd</span>;
+acronym-form="singular+short">cicd</span>.
 <a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a> reports the
 evidence level reached by the <span acronym-label="mvp"
-acronym-form="singular+short">mvp</span> connectors and names the
-live-only or deferred paths separately.
+acronym-form="singular+short">mvp</span> connectors and names the paths
+that require live systems or remain deferred.
 
 ### Analytics and Serving Framework
 
@@ -2953,7 +3045,7 @@ latency). The <span acronym-label="mvp"
 acronym-form="singular+short">mvp</span> instantiates the rule based
 part of this target and reports its concrete analytics evidence in
 <a href="#sec:impl-results" data-reference-type="autoref"
-data-reference="sec:impl-results">[sec:impl-results]</a>;
+data-reference="sec:impl-results">[sec:impl-results]</a>.
 <span acronym-label="ml" acronym-form="singular+short">ml</span> model
 training and production serving latency evidence remain outside the
 submitted implementation.
@@ -2961,7 +3053,7 @@ submitted implementation.
 ### Extension Blueprint and AI Assistance
 
 Each artifact specified in this chapter is a template, not unrestricted,
-free-form code. This covers the connector files
+free form code. This covers the connector files
 (<a href="#sec:connector-framework" data-reference-type="autoref"
 data-reference="sec:connector-framework">[sec:connector-framework]</a>),
 the analytics jobs
@@ -2974,35 +3066,34 @@ data-reference="sec:connector-testing">[sec:connector-testing]</a>,
 data-reference="sec:analytics-testing">[sec:analytics-testing]</a>).
 This was an objective. The framework should be suited to
 <span acronym-label="ai" acronym-form="singular+short">ai</span>
-assisted extension. The [external requirements
-specification](https://vkraus.github.io/appsec-mvp/) provides four
+assisted extension. The [<span acronym-label="mvp"
+acronym-form="singular+short">mvp</span>
+documentation](https://vkraus.github.io/appsec-mvp/) provides four
 Claude Code skills that consume these templates and produce a reference
 implementation. The skills are organized by phase.
-<span class="mark">analyze-source</span> fetches the source’s official
+<span class="mark">analyze-source</span> fetches the official
 <span acronym-label="api" acronym-form="singular+short">api</span>
-documentation and writes the connector page reference sections.
-<span class="mark">provision-source</span> emits the source-side runtime
-infrastructure as Terraform plus an install script.
+documentation for the source and writes the connector page reference
+sections. <span class="mark">provision-source</span> emits the runtime
+infrastructure for the source as Terraform plus an install script.
 <span class="mark">generate-connector</span> produces the connector
 artifacts listed in
 <a href="#sec:connector-framework" data-reference-type="autoref"
 data-reference="sec:connector-framework">[sec:connector-framework]</a>
-together with the Databricks-side runtime layout (secrets loader,
-install orchestrator, notebook entry wrappers where the category
-requires them, <span acronym-label="sql"
-acronym-form="singular+short">sql</span> bronze envelopes,
-multi-resource bundle fragments) and the runbook sections of the
-connector page. <span class="mark">validate-implementation</span> runs
-the test suite from
-<a href="#sec:connector-testing" data-reference-type="autoref"
+together with the Databricks runtime layout (secrets loader, install
+orchestrator, notebook entry wrappers where the category requires them,
+<span acronym-label="sql" acronym-form="singular+short">sql</span>
+bronze envelopes, bundle fragments with multiple resources) and the
+runbook sections of the connector page.
+<span class="mark">validate-implementation</span> runs the test suite
+from <a href="#sec:connector-testing" data-reference-type="autoref"
 data-reference="sec:connector-testing">[sec:connector-testing]</a> until
 the requirements from the specification are mapped to passing tests. A
-per-source data file at
+data file for each source at
 <span class="mark">src/connectors/\<source\>/operational.yml</span>
-records deployment-specific values such as cloud account, secret scope
-name, and target bronze table; missing fields are gathered
-conversationally during a skill run, so the operator does not have to
-know the schema upfront.
+records deployment values such as cloud account, secret scope name, and
+target bronze table. Missing fields are gathered conversationally during
+a skill run, so the operator does not have to know the schema upfront.
 
 It was a conscious design decision that the set consists of four skills
 rather than a dedicated skill for every combination of role and
@@ -3060,10 +3151,10 @@ data-reference="sec:iteration-summary">[sec:iteration-summary]</a>,
 <a href="#sec:ai-eval" data-reference-type="autoref"
 data-reference="sec:ai-eval">[sec:ai-eval]</a>). The implementation
 evidence is not identical for every source: some sources were exercised
-against live systems, some are fixture-backed only, some Spark wrappers
-write non-empty Silver frames, and some contract wrappers still return
-empty Silver-shaped frames while row-level mapping helpers are tested.
-<a href="#sec:impl-results" data-reference-type="autoref"
+against live systems, some are backed only by fixtures, some Spark
+wrappers write non-empty Silver frames, and some contract wrappers still
+return empty Silver frames while mapping helpers at row level are
+tested. <a href="#sec:impl-results" data-reference-type="autoref"
 data-reference="sec:impl-results">[sec:impl-results]</a> states those
 boundaries. <a href="#sec:impl-representative-connectors"
 data-reference-type="autoref"
@@ -3125,10 +3216,10 @@ data-reference="sec:selected-sources">[sec:selected-sources]</a>:
     utilities shared across connectors. The current
     <span acronym-label="mvp" acronym-form="singular+short">mvp</span>
     keeps the mapping as the authoritative artifact but applies it
-    through source-specific Python helpers and Spark code rather than
+    through Python helpers and Spark code for each source rather than
     through a generic YAML applicator. Several connectors have tested
-    row-level helpers while their Spark contract wrapper still returns
-    an empty schema-shaped frame.
+    helpers at row level while their Spark contract wrapper still
+    returns an empty frame with the target schema.
     <a href="#sec:future-work" data-reference-type="autoref"
     data-reference="sec:future-work">[sec:future-work]</a> carries the
     declarative applicator and wrapper completion as a thread.
@@ -3153,7 +3244,7 @@ data-reference="sec:selected-sources">[sec:selected-sources]</a>:
 5.  **Run the skill chain pass for the source.** The Claude Code skill
     chain (analyze-source, provision-source, generate-connector,
     validate-implementation) executes against the source and writes
-    evidence rows to the operator docs site: an Implementation log entry
+    evidence rows to the documentation site: an Implementation log entry
     per pass and a Validation table keyed by requirement IDs. Each skill
     pass is then reviewed by a separate subagent (one for spec
     compliance, one for code quality), whose findings are folded back as
@@ -3169,9 +3260,9 @@ acronym-form="singular+short">ai</span> pipeline. A generator that emits
 the layout for a new source does not need to branch on category beyond
 what <span class="mark">ingest.py</span> contains and which bundle
 resource kind the source requires. Step 5 makes that generation
-procedure auditable: the operator docs site at
-<https://vkraus.github.io/appsec-mvp/> carries the per source
-Implementation log and Validation table as the trail of evidence.
+procedure auditable: the [documentation
+site](https://vkraus.github.io/appsec-mvp/) carries the Implementation
+log and Validation table for each source as the trail of evidence.
 
 ### Project Structure
 
@@ -3181,14 +3272,13 @@ acronym-form="singular+short">mvp</span> code.
 
 - The thesis repository holds the LaTeX sources for this document.
 
-- The <span class="mark">appsec-mvp</span> repository
-  (<https://github.com/vkraus/appsec-mvp>) holds the reference
-  implementation described in the remainder of this section. The
-  operator docs site lives inside the same repository under
-  <span class="mark">mkdocs/</span> and publishes at
-  <https://vkraus.github.io/appsec-mvp/> via GitHub Pages. The published
-  site is the operator facing reference and the trail of evidence for
-  each connector.
+- The <span acronym-label="mvp" acronym-form="singular+short">mvp</span>
+  implementation repository holds the reference implementation described
+  in the remainder of this section. The source for the documentation
+  site lives inside the same repository under
+  <span class="mark">mkdocs/</span> . The [published
+  site](https://vkraus.github.io/appsec-mvp/) is the operator reference
+  and the trail of evidence for each connector.
 
 #### Layering rule
 
@@ -3215,11 +3305,12 @@ bundle deploys all declared resources regardless of install order.
 
 #### Component colocation
 
-Inside the <span class="mark">appsec-mvp</span> repository, every
-component (the platform, each connector, the analytics layer) owns its
-code, its tests, its bundle resources, its scripts, and (for connectors
-that bring up source systems) an optional Terraform runtime. Adding a
-new source is one new folder under
+Inside the <span acronym-label="mvp"
+acronym-form="singular+short">mvp</span> implementation repository,
+every component (the platform, each connector, the analytics layer) owns
+its code, its tests, its bundle resources, its scripts, and (for
+connectors that bring up source systems) an optional Terraform runtime.
+Adding a new source is one new folder under
 <span class="mark">src/connectors/</span> . There are no top level
 <span class="mark">tests/</span> , <span class="mark">config/</span> ,
 <span class="mark">resources/</span> , <span class="mark">sql/</span> ,
@@ -3230,29 +3321,29 @@ layout with one connector of each category expanded.
 
 ```
 appsec-mvp/
-|-- databricks.yml                       # bundle root: targets, variables
-|-- pyproject.toml                       # Python package metadata
-|-- mkdocs/                              # operator docs site source
+|-- databricks.yml                       # bundle root
+|-- pyproject.toml                       # package metadata
+|-- mkdocs/                              # docs site
 |-- examples/end-to-end-demo/            # demo across scanners
 |-- src/
-|   |-- platform/                        # framework primitives (shared at runtime)
-|   |   |-- silver.py                    # severity/status normalization + dedup
-|   |   |-- hwm.py, schemas.py, ...      # HWM state, StructTypes, helpers
+|   |-- platform/                        # shared primitives
+|   |   |-- silver.py                    # severity, status, dedup
+|   |   |-- hwm.py, schemas.py, ...      # HWM and schemas
 |   |   |-- resources/{platform,bootstrap-job}.yml
-|   |   |-- scripts/bootstrap.sh         # one time bootstrap after deploy
-|   |   |-- sql/silver_tables.sql        # standard silver DDL
-|   |   \-- tests/                       # unit tests for the primitives
+|   |   |-- scripts/bootstrap.sh         # bootstrap after deploy
+|   |   |-- sql/silver_tables.sql        # silver DDL
+|   |   \-- tests/                       # primitive tests
 |   |-- connectors/
-|   |   |-- servicenow/                  # category: Lakeflow Connect
-|   |   |   |-- ingest.py                # contract wrapper; pipeline declared in bundle
+|   |   |-- servicenow/                  # Lakeflow Connect
+|   |   |   |-- ingest.py                # contract wrapper
 |   |   |   |-- transform.py
 |   |   |   |-- mapping.yml, config.yml
 |   |   |   |-- severity.yml, status.yml
 |   |   |   |-- resources/{schemas,connection,pipeline,job}.yml
 |   |   |   |-- scripts/load-secrets.sh
-|   |   |   |-- runtime/                 # Terraform for the source system or its supporting cloud (all 9)
+|   |   |   |-- runtime/                 # source Terraform
 |   |   |   \-- tests/
-|   |   |-- github/                      # category: SDK (PyGitHub)
+|   |   |-- github/                      # SDK connector
 |   |   |   |-- ingest.py, transform.py
 |   |   |   |-- mapping.yml, config.yml
 |   |   |   |-- severity.yml, status.yml
@@ -3261,13 +3352,13 @@ appsec-mvp/
 |   |   |   |-- runtime/
 |   |   |   \-- tests/
 |   |   \-- (gitlab, sonarqube, semgrep, owasp_zap, dependency_track,
-|   |       trufflehog, aws_waf): same layout, each with its own runtime/
-|   \-- analytics/                       # gold, online serving, Databricks App
-|       |-- notebooks/gold/              # five Gold datasets + one Gold view
-|       |-- lib/                         # suppression and shared analytics helpers
-|       |-- app/                         # Databricks App API surface
+|   |       trufflehog, aws_waf): same layout
+|   \-- analytics/                       # Gold and app assets
+|       |-- notebooks/gold/              # Gold datasets and view
+|       |-- lib/                         # shared helpers
+|       |-- app/                         # app API endpoints
 |       |-- resources/{schemas,job,online_tables,app}.yml
-|       \-- tests/                       # gold, helper, and app tests
+|       \-- tests/                       # analytics tests
 ```
 
 The bundle resources for each source are colocated:
@@ -3303,11 +3394,12 @@ three categories and follow the <span acronym-label="cicd"
 acronym-form="singular+short">cicd</span> step artifact pattern
 (<a href="#sec:ingestion-patterns" data-reference-type="autoref"
 data-reference="sec:ingestion-patterns">[sec:ingestion-patterns]</a>).
-The full per source functional requirements live on the operator docs
-site, and the resolutions below cite the deciding factor only.
+The full per source functional requirements live on the documentation
+site. The reference links below cite the deciding factor only.
 
 - **ServiceNow**: Lakeflow Connect. Supported natively by the
-  platform [(reference)](https://vkraus.github.io/appsec-mvp/connectors/cmdb/servicenow/),
+  platform [(source
+  reference)](https://vkraus.github.io/appsec-mvp/connectors/cmdb/servicenow/),
   so <span class="mark">ingest.py</span> carries only the contract
   wrapper and the bundle fragment declares the pipeline.
 
@@ -3316,14 +3408,14 @@ site, and the resolutions below cite the deciding factor only.
   Connect does not support it at <span acronym-label="mvp"
   acronym-form="singular+short">mvp</span> time, and PyGitHub covers the
   required endpoints, handles <span class="mark">Link</span> header
-  pagination, and exposes rate limit
-  status [(reference)](https://vkraus.github.io/appsec-mvp/connectors/scm/github/).
+  pagination, and exposes rate limit status [(source
+  reference)](https://vkraus.github.io/appsec-mvp/connectors/scm/github/).
 
 - **GitLab**: <span acronym-label="sdk"
   acronym-form="singular+short">sdk</span> via python-gitlab . No
   Lakeflow Connect support, and the official client handles keyset
-  pagination
-  transparently [(reference)](https://vkraus.github.io/appsec-mvp/connectors/scm/gitlab/).
+  pagination transparently [(source
+  reference)](https://vkraus.github.io/appsec-mvp/connectors/scm/gitlab/).
 
 - **SonarQube** : <span acronym-label="dltool"
   acronym-form="singular+short">dltool</span>. No first party Python
@@ -3332,7 +3424,8 @@ site, and the resolutions below cite the deciding factor only.
   with <span acronym-label="dltool"
   acronym-form="singular+short">dltool</span> covers all requirements
   declaratively against the Web <span acronym-label="api"
-  acronym-form="singular+short">api</span> [(reference)](https://vkraus.github.io/appsec-mvp/connectors/sast/sonarqube/).
+  acronym-form="singular+short">api</span> [(source
+  reference)](https://vkraus.github.io/appsec-mvp/connectors/sast/sonarqube/).
 
 - **Semgrep**: artifact path. The free <span acronym-label="cli"
   acronym-form="singular+short">cli</span> writes a
@@ -3341,22 +3434,22 @@ site, and the resolutions below cite the deciding factor only.
   acronym-form="singular+short">cicd</span> step, and
   <span class="mark">ingest.py</span> reads from
   <span class="mark">periodic/semgrep/</span> and
-  <span class="mark">cicd/semgrep/</span>
-  prefixes [(reference)](https://vkraus.github.io/appsec-mvp/connectors/sast/semgrep/).
+  <span class="mark">cicd/semgrep/</span> prefixes [(source
+  reference)](https://vkraus.github.io/appsec-mvp/connectors/sast/semgrep/).
 
 - **Dependency-Track** : <span acronym-label="dltool"
   acronym-form="singular+short">dltool</span>. No first party Python
   <span acronym-label="sdk" acronym-form="singular+short">sdk</span>,
   and the published OpenAPI document configures
   <span acronym-label="dltool"
-  acronym-form="singular+short">dltool</span>
-  directly [(reference)](https://vkraus.github.io/appsec-mvp/connectors/sca/dependency-track/).
+  acronym-form="singular+short">dltool</span> directly [(source
+  reference)](https://vkraus.github.io/appsec-mvp/connectors/sca/dependency-track/).
 
 - **TruffleHog** : artifact path. <span acronym-label="cli"
   acronym-form="singular+short">cli</span> tool with no server
   <span acronym-label="api" acronym-form="singular+short">api</span>,
-  same pattern as
-  Semgrep [(reference)](https://vkraus.github.io/appsec-mvp/connectors/secrets/trufflehog/).
+  same pattern as Semgrep [(source
+  reference)](https://vkraus.github.io/appsec-mvp/connectors/secrets/trufflehog/).
 
 - **<span acronym-label="owasp"
   acronym-form="singular+short">owasp</span> <span acronym-label="zap"
@@ -3364,8 +3457,8 @@ site, and the resolutions below cite the deciding factor only.
   <span class="mark">ingest.py</span> supports two trigger contexts (on
   demand against the daemon, and reads of <span acronym-label="cicd"
   acronym-form="singular+short">cicd</span> step artifacts) and
-  dispatches both into the same bronze
-  table [(reference)](https://vkraus.github.io/appsec-mvp/connectors/dast/owasp-zap/).
+  dispatches both into the same bronze table [(source
+  reference)](https://vkraus.github.io/appsec-mvp/connectors/dast/owasp-zap/).
 
 - **<span acronym-label="aws" acronym-form="singular+short">aws</span>
   <span acronym-label="waf" acronym-form="singular+short">waf</span>**:
@@ -3378,7 +3471,8 @@ site, and the resolutions below cite the deciding factor only.
   with <span acronym-label="iam"
   acronym-form="singular+short">iam</span> signed credentials and
   preserves the per record <span class="mark">Weight</span>
-  field [(reference)](https://vkraus.github.io/appsec-mvp/connectors/waf/aws-waf/).
+  field [(source
+  reference)](https://vkraus.github.io/appsec-mvp/connectors/waf/aws-waf/).
 
 <a href="#tab:ingestion-category-assignment"
 data-reference-type="autoref"
@@ -3566,12 +3660,11 @@ All nine sources are delivered under
 connector artifact set: configuration, ingest and transform modules,
 mapping, severity and status lookups, bundle resources, secret loading
 scripts, source runtime where applicable, and co-located tests. Each
-source page on the operator docs site carries an Implementation log
+source page on the documentation site carries an Implementation log
 (four rows: analyze, provision, generate, validate, each linking to the
 producing commit) and a Validation table keyed by requirement IDs that
 map to <span class="mark">@pytest.mark.requirement</span> markers. The
-cross source matrix at
-[platform/reference/catalog](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/)
+[catalog](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/)
 aggregates these into one (requirement $\times$ source) view with PASS
 or N/A per cell. The ten requirement identifiers (
 <span class="mark">REQ-ING-AUTH</span> ,
@@ -3598,17 +3691,17 @@ exercised, and Spark transform wired to write non-empty Silver rows.
 
 <div id="tab:impl-evidence-levels">
 
-| **Source**                                                                                                                                | **Delivered evidence**                                                                                                                          | **Boundary to keep explicit**                                                                                              |
-|:------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------|
-| ServiceNow                                                                                                                                | Lakeflow Connect bundle pipeline, contract wrapper, CMDB row helpers, application and app-repo mapping tests, live developer instance exercise. | Spark wrapper for the full Silver application frame remains schema-shaped while row helpers are tested.                    |
-| GitHub                                                                                                                                    | PyGitHub ingest contract, repository and alert row helpers, severity/status/dedup tests, live GitHub exercise.                                  | Repository population is partial and the finding Spark wrapper remains schema-shaped pending full wiring.                  |
-| GitLab                                                                                                                                    | python-gitlab module layout, mapping files, bundle resources, row-level tests.                                                                  | Fixture-backed only in the submitted evidence; live tenant exercise and wrapper completion remain future work.             |
-| SonarQube                                                                                                                                 | REST/dltool category artifacts, ingestion tests, non-empty Spark transform to                                                                   | Live deployment evidence is source-specific, not evidence for every dltool source.                                         |
-| Semgrep                                                                                                                                   | Artifact ingestion path, mapping and row-level transform tests, CI artifact exercise.                                                           | Spark wrapper completion remains future work.                                                                              |
-| Dependency-Track                                                                                                                          | OpenAPI/dltool artifacts, pagination and mapping tests, source runtime.                                                                         | The live dltool primitive is deferred; evidence is fixture-backed.                                                         |
-| TruffleHog                                                                                                                                | Artifact ingestion path, mapping helpers, severity/status tests, source runtime.                                                                | Fixture-backed only in the submitted evidence; Spark wrapper completion remains future work.                               |
-| <span acronym-label="owasp" acronym-form="singular+short">owasp</span> <span acronym-label="zap" acronym-form="singular+short">zap</span> | Artifact and daemon ingestion paths, non-empty Spark transform to                                                                               | Application attribution still depends on repository/deployment mapping being populated.                                    |
-| <span acronym-label="aws" acronym-form="singular+short">aws</span> <span acronym-label="waf" acronym-form="singular+short">waf</span>     | Log-stream preferred path, boto3 fallback contract, event normalization helpers, source runtime.                                                | Live tenant exercise and the boto3 sampled-request fallback remain deferred; Spark wrapper completion remains future work. |
+| **Source**                                                                                                                                | **Delivered evidence**                                                                                                                                | **Boundary to keep explicit**                                                                                                         |
+|:------------------------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------|
+| ServiceNow                                                                                                                                | Lakeflow Connect bundle pipeline, contract wrapper, CMDB row helpers, application and app repository mapping tests, live developer instance exercise. | Spark wrapper for the full Silver application frame still returns an empty frame with the target schema while row helpers are tested. |
+| GitHub                                                                                                                                    | PyGitHub ingest contract, repository and alert row helpers, severity/status/dedup tests, live GitHub exercise.                                        | Repository population is partial, and the finding Spark wrapper still needs full wiring.                                              |
+| GitLab                                                                                                                                    | python-gitlab module layout, mapping files, bundle resources, tests at row level.                                                                     | Evidence is backed only by fixtures. Live tenant exercise and wrapper completion remain future work.                                  |
+| SonarQube                                                                                                                                 | REST/dltool category artifacts, ingestion tests, non-empty Spark transform to                                                                         | Live deployment evidence is specific to this source, not evidence for every dltool source.                                            |
+| Semgrep                                                                                                                                   | Artifact ingestion path, mapping and transform tests at row level, CI artifact exercise.                                                              | Spark wrapper completion remains future work.                                                                                         |
+| Dependency-Track                                                                                                                          | OpenAPI/dltool artifacts, pagination and mapping tests, source runtime.                                                                               | The live dltool primitive is deferred. Evidence is backed by fixtures.                                                                |
+| TruffleHog                                                                                                                                | Artifact ingestion path, mapping helpers, severity/status tests, source runtime.                                                                      | Evidence is backed only by fixtures. Spark wrapper completion remains future work.                                                    |
+| <span acronym-label="owasp" acronym-form="singular+short">owasp</span> <span acronym-label="zap" acronym-form="singular+short">zap</span> | Artifact and daemon ingestion paths, non-empty Spark transform to                                                                                     | Application attribution still depends on repository/deployment mapping being populated.                                               |
+| <span acronym-label="aws" acronym-form="singular+short">aws</span> <span acronym-label="waf" acronym-form="singular+short">waf</span>     | Preferred log stream path, boto3 fallback contract, event normalization helpers, source runtime.                                                      | Live tenant exercise and the boto3 sampled request fallback remain deferred. Spark wrapper completion remains future work.            |
 
 Implementation evidence levels by source. All rows include the generated
 connector folder, mapping/configuration artifacts, bundle resources,
@@ -3624,15 +3717,15 @@ declares and tests the core Silver subset
 <span class="mark">applications</span> ,
 <span class="mark">app_repo_mapping</span> , and
 <span class="mark">suppression_rules</span> . It also ships an
-app-repository linker that populates
+application repository linker that populates
 <span class="mark">silver.app_repo_mapping</span> by matching
 application codes embedded in repository names to the application
-inventory. CMDB-side relationship traversal and source-side repository
-population remain incomplete, so the linker is evidence for one
-attribution path rather than the full attribution story.
+inventory. CMDB relationship traversal and repository population from
+sources remain incomplete, so the linker is evidence for one attribution
+path rather than the full attribution story.
 
-The analytics layer is implemented as a thesis-grade evidence surface.
-It includes five Gold datasets (
+The analytics layer is implemented as evidence for the thesis rather
+than as a production service. It includes five Gold datasets (
 <span class="mark">app_risk_posture_daily</span> ,
 <span class="mark">mttr_by_source_severity_weekly</span> ,
 <span class="mark">coverage_matrix</span> ,
@@ -3640,7 +3733,7 @@ It includes five Gold datasets (
 <span class="mark">cwe_owasp_heatmap</span> ), one Gold view (
 <span class="mark">app_repo_findings_open</span> ), two Online Table
 resources, suppression rules, and a Databricks App exposing score lookup
-and pre-commit policy checks. Tests cover pure-Python aggregation
+and policy checks before commit. Tests cover pure Python aggregation
 helpers, Spark write paths where marked, suppression logic, and mocked
 application queries. The thesis does not claim production deployment,
 production latency, or model training evidence.
@@ -3649,9 +3742,9 @@ At commit <span class="mark">e58bb7c</span> the source tree contains 38
 <span class="mark">test\_\*.py</span> files and 413 test functions under
 <span class="mark">src/connectors/</span> ,
 <span class="mark">src/platform/</span> , and
-<span class="mark">src/analytics/</span> . The count includes live-only
-and N/A marker tests; the Limitations section states which paths are
-fixture-backed or deferred.
+<span class="mark">src/analytics/</span> . The count includes tests that
+require live systems and N/A marker tests. The Limitations section
+states which paths are backed by fixtures or deferred.
 
 ### Discussion
 
@@ -3682,13 +3775,13 @@ as YAML alongside the connector code. The
 <span class="mark">mapping.yml</span> files document the intended
 derivation for every source. In the current <span acronym-label="mvp"
 acronym-form="singular+short">mvp</span>, the mapping is applied by
-source-specific Python helpers and Spark code rather than by a generic
+Python helpers and Spark code for each source rather than by a generic
 declarative applicator. SonarQube and <span acronym-label="owasp"
 acronym-form="singular+short">owasp</span> <span acronym-label="zap"
 acronym-form="singular+short">zap</span> demonstrate non-empty Spark
-transforms to <span class="mark">silver.findings</span> ; several other
-connectors still expose schema-shaped Spark wrappers while their
-row-level mapping helpers are tested. Aligning the
+transforms to <span class="mark">silver.findings</span> . Several other
+connectors still expose Spark wrappers that return only the target
+schema while their mapping helpers at row level are tested. Aligning the
 <span acronym-label="mvp" acronym-form="singular+short">mvp</span> with
 the declarative mapping prescription of
 <a href="#sec:transformation-patterns" data-reference-type="autoref"
@@ -3806,16 +3899,17 @@ evaluation guidance of . The first is a **requirements specification**
 for an application security data platform, motivated and grounded in
 <a href="#ch:analysis" data-reference-type="autoref"
 data-reference="ch:analysis">[ch:analysis]</a>. The specification text
-was published on the documentation site and attached to the thesis
-instead of placed in an appendix because of its length. The second is a
-**reusable and extensible framework**
+was published on the documentation site and attached to this thesis as
+`appsec-mvp-docs.zip` instead of placed in an appendix because of its
+length. The second is a **reusable and extensible framework**
 (<a href="#ch:framework" data-reference-type="autoref"
 data-reference="ch:framework">[ch:framework]</a>) covering reference
 architecture, data model, and the medallion based pipeline  from source
 records to consumption. The third is a **reference implementation**
 (<a href="#ch:implementation" data-reference-type="autoref"
 data-reference="ch:implementation">[ch:implementation]</a>) on
-Databricks against nine selected data sources.
+Databricks against nine selected data sources, attached to this thesis
+as `appsec-mvp.zip`.
 
 The methodology maps concretely to the work. The framework is the design
 artifact (Hevner: design as an artifact; Peffers: design and
@@ -3834,9 +3928,9 @@ data-reference="sec:ai-eval">[sec:ai-eval]</a> (Hevner: design
 evaluation and research contributions; Peffers: evaluation). Rigor comes
 from tests bound to requirement identifiers and from the iteration
 summary (Hevner: research rigor and design as a search process).
-Communication runs through the thesis and the operator facing
-documentation site (Hevner: communication of research; Peffers:
-communication). Two items are partial: the <span acronym-label="ai"
+Communication runs through the thesis and the documentation site
+(Hevner: communication of research; Peffers: communication). Two items
+are partial: the <span acronym-label="ai"
 acronym-form="singular+short">ai</span> evaluation criterion was settled
 after the first reviewer cycles, not declared in advance, and design
 alternatives are recorded only at the level of the iteration summary.
@@ -3880,7 +3974,7 @@ infrastructure) do not count against the framework.
 #### Empirical outcome
 
 The four-skill chain ran across all nine source specifications,
-producing the per-source connector modules and validation evidence.
+producing connector modules for each source and validation evidence.
 <a href="#sec:iteration-summary" data-reference-type="autoref"
 data-reference="sec:iteration-summary">[sec:iteration-summary]</a>
 enumerates the defects the reviewer cycle caught: a layering boundary
@@ -3890,8 +3984,8 @@ acronym-form="singular+short">ddl</span> and PySpark types (framework
 gap), a secret scope mismatch (environment setup), worktree pollution
 (environment setup), a cron schedule collision (source specific issue),
 and IRSA OIDC trust policy gaps (environment setup). Two of six classify
-as framework gaps. Evidence lives in the per connector Implementation
-logs at <https://vkraus.github.io/appsec-mvp/>.
+as framework gaps. Evidence lives in the [documentation
+site](https://vkraus.github.io/appsec-mvp/).
 
 #### Claim defended
 
@@ -3900,7 +3994,7 @@ connector that adapts a security tool to the lakehouse contract, is
 <span acronym-label="ai" acronym-form="singular+short">ai</span>
 **instantiable** under skill catalog invocation. The reference
 implementation generated connector modules for nine sources by the four
-skill chain with reviewer subagent cycles catching defects;
+skill chain with reviewer subagent cycles catching defects.
 <a href="#sec:impl-results" data-reference-type="autoref"
 data-reference="sec:impl-results">[sec:impl-results]</a> separates
 generated artifacts, live source exercise, and Spark wrapper
@@ -3957,42 +4051,42 @@ post deploy shell script
 secret scope container, Unity Catalog storage credential, and Unity
 Catalog external location. Per connector Terraform modules under
 <span class="mark">src/connectors/\<source\>/runtime/</span> provision
-source side cloud infrastructure. The submitted
-<span class="mark">mvp.zip</span> and <span class="mark">docs.zip</span>
-cannot reproduce the build without these entitlements.
+source side cloud infrastructure. The archives attached to this thesis,
+<span class="mark">appsec-mvp.zip</span> and
+<span class="mark">appsec-mvp-docs.zip</span> , cannot reproduce the
+build without these entitlements.
 
 Several **open implementation items** remain, but they are narrower than
 the pre-redesign framework gaps summarized in
 <a href="#sec:iteration-summary" data-reference-type="autoref"
 data-reference="sec:iteration-summary">[sec:iteration-summary]</a>.
-Connector-side population of
-<span class="mark">silver.repositories</span> is partial: GitHub writes
-the canonical narrow repository shape, while wider target fields and
-GitLab parity remain future work.
-<span class="mark">silver.app_repo_mapping</span> is not empty; the
-platform layer populates it through a name/app-code linker over
-<span class="mark">silver.applications</span> and
-<span class="mark">silver.repositories</span> . Parallel CMDB-side
+Connector population of <span class="mark">silver.repositories</span> is
+partial: GitHub writes the standard narrow repository fields, while
+wider target fields and GitLab parity remain future work.
+<span class="mark">silver.app_repo_mapping</span> is not empty. The
+platform layer populates it through a name and application code linker
+over <span class="mark">silver.applications</span> and
+<span class="mark">silver.repositories</span> . Parallel CMDB
 relationship paths through <span class="mark">cmdb_rel_ci</span> and
 explicit repository link columns remain pending. Several Spark connector
-wrappers currently return empty Silver-shaped DataFrames while their
-row-level mapping helpers are tested; SonarQube and
+wrappers currently return empty Silver DataFrames with target schemas
+while their mapping helpers at row level are tested. SonarQube and
 <span acronym-label="owasp" acronym-form="singular+short">owasp</span>
 <span acronym-label="zap" acronym-form="singular+short">zap</span> have
-non-empty Spark transforms. Some skill-generated notebook entry wrappers
-remain placeholders. Dependency-Track live dltool execution and the
-<span acronym-label="aws" acronym-form="singular+short">aws</span>
+non-empty Spark transforms. Some notebook entry wrappers generated by
+skills remain placeholders. Dependency-Track live dltool execution and
+the <span acronym-label="aws" acronym-form="singular+short">aws</span>
 <span acronym-label="waf" acronym-form="singular+short">waf</span> boto3
-sampled-request fallback remain deferred, while the WAF log-stream path
+sampled request fallback remain deferred, while the WAF log stream path
 is the preferred design. Inherited error handling sharp edges remain in
 <span class="mark">bootstrap.sh</span> and the ServiceNow Terraform
 runtime, both flagged for hardening.
 
-The analytics and serving layer is implemented as a thesis-grade
-evidence surface rather than a production service. It includes five Gold
-datasets, one Gold view, two Online Table resources, suppression rules,
-and a Databricks App. The tests are fixture-backed, mocked, or marked
-for Spark/live execution as appropriate. The thesis does not claim
+The analytics and serving layer is implemented as evidence for the
+thesis rather than a production service. It includes five Gold datasets,
+one Gold view, two Online Table resources, suppression rules, and a
+Databricks App. The tests are backed by fixtures, mocked, or marked for
+Spark/live execution as appropriate. The thesis does not claim
 production deployment, measured serving latency, or trained
 <span acronym-label="ml" acronym-form="singular+short">ml</span> models.
 
@@ -4034,10 +4128,10 @@ data-reference="sec:transformation-patterns">[sec:transformation-patterns]</a>
 treats <span class="mark">mapping.yml</span> as the authoritative
 specification consumed by a generic applicator, but the
 <span acronym-label="mvp" acronym-form="singular+short">mvp</span>
-applies mappings through source-specific Python helpers and Spark code.
-Completing the applicator and replacing the remaining schema-shaped
-wrappers with non-empty Spark transforms would make adding a source
-closer to a configuration edit than a code edit.
+applies mappings through Python helpers and Spark code for each source.
+Completing the applicator and replacing the remaining wrappers with
+non-empty Spark transforms would make adding a source closer to a
+configuration edit than a code edit.
 
 **Realizing the remaining prescribed silver tables.** The framework
 prescribes 15 silver tables
@@ -4061,16 +4155,15 @@ add the remaining entity tables ( <span class="mark">teams</span> ,
 <span acronym-label="nvd" acronym-form="singular+short">nvd</span>,
 <span class="mark">epss_scores</span> ,
 <span class="mark">kev_entries</span> ), and the remaining relationship
-table <span class="mark">finding_cve_mapping</span> . Cross-tool overlap
+table <span class="mark">finding_cve_mapping</span> . Cross tool overlap
 is currently computed in Gold rather than stored in a separate
-<span class="mark">dedup_links</span> table; adding a persisted dedup
+<span class="mark">dedup_links</span> table. Adding a persisted dedup
 relationship remains a future extension.
 
-**Finishing job orchestration and bootstrap hardening.** Some
-skill-generated notebook wrappers still need full job orchestration, and
-the remaining schema-shaped Spark wrappers need implementation. The
-bootstrap script and ServiceNow runtime need the hardening pass named in
-Limitations.
+**Finishing job orchestration and bootstrap hardening.** Some notebook
+wrappers generated by skills still need full job orchestration, and the
+remaining Spark wrappers need implementation. The bootstrap script and
+ServiceNow runtime need the hardening pass named in Limitations.
 
 **Live analytics evidence and downstream triage.** The rule based Gold
 layer and Databricks App now exist, so the next step is to run them
@@ -4125,7 +4218,8 @@ acronym-form="singular+short">ai</span> support.**
 Several review cycles were carried out across the entire thesis using
 the Claude Code tool with Claude Opus models to condense it to its
 target length. These iterations rephrased longer passages into more
-concise wording and relocated some details into the attached product
+concise wording and relocated some details into the attached
+<span acronym-label="mvp" acronym-form="singular+short">mvp</span>
 documentation, which contains the requirements specification and
 reference material per data source. The restructuring decisions were
 mine. The <span acronym-label="ai"
@@ -4153,20 +4247,21 @@ assistant generated TikZ figures from my sketch or textual description
 of the content and layout, and together we iterated them for correctness
 and readability.
 
-### Source Code (`mvp.zip`)
+### Source Code (`appsec-mvp.zip`)
 
 The reference implementation in
 <a href="#ch:implementation" data-reference-type="autoref"
-data-reference="ch:implementation">[ch:implementation]</a> (submitted as
-`mvp.zip`) was built across three distinct <span acronym-label="ai"
-acronym-form="singular+short">ai</span> assisted workflows, all using
-Claude Code with Anthropic Claude Opus models.
+data-reference="ch:implementation">[ch:implementation]</a> (attached to
+this thesis as `appsec-mvp.zip`) was built across three distinct
+<span acronym-label="ai" acronym-form="singular+short">ai</span>
+assisted workflows, all using Claude Code with Anthropic Claude Opus
+models.
 
 The first workflow predates the public `appsec-mvp` repository. Four
 connectors (ServiceNow, GitHub, Semgrep, <span acronym-label="owasp"
 acronym-form="singular+short">owasp</span> <span acronym-label="zap"
-acronym-form="singular+short">zap</span>) were hand coded by me during
-the analysis phase, with Claude Code used conversationally for
+acronym-form="singular+short">zap</span>) were manually coded by me
+during the analysis phase, with Claude Code used conversationally for
 boilerplate and refactoring, and committed as the initial repository
 snapshot. They have since been re-emitted by the skill chain. The
 current connector modules in the repository are output of the chain for
@@ -4175,11 +4270,13 @@ stated in <a href="#sec:impl-results" data-reference-type="autoref"
 data-reference="sec:impl-results">[sec:impl-results]</a>.
 
 The second workflow was the connector skill chain published in the
-documentation site (Product Documentation section below). It ran across
-all nine selected source specifications, producing the per-source
-connector artifact set and validation evidence. Each pass wrote evidence
-rows to the product documentation (an Implementation log entry and a
-Validation table keyed by requirement IDs).
+documentation site (MVP Documentation section below). It ran across all
+nine selected source specifications, producing the connector artifact
+set for each source and validation evidence. Each pass wrote evidence
+rows to the <span acronym-label="mvp"
+acronym-form="singular+short">mvp</span> documentation (an
+Implementation log entry and a Validation table keyed by requirement
+IDs).
 
 The third workflow was the structural redesign that centered the
 implementation on Databricks, run on a separate branch and merged
@@ -4206,18 +4303,19 @@ acronym-form="singular+short">ai</span> use.
 <a href="#sec:ai-eval" data-reference-type="autoref"
 data-reference="sec:ai-eval">[sec:ai-eval]</a> evaluates it. The four
 skills published on the [documentation
-site](https://vkraus.github.io/appsec-mvp/connectors/scm/skills/) (
+site](https://vkraus.github.io/appsec-mvp/connectors/scm/skills/) are
 <span class="mark">analyze-source</span> ,
 <span class="mark">provision-source</span> ,
-<span class="mark">generate-connector</span> ,
-<span class="mark">validate-implementation</span> ) are an
+<span class="mark">generate-connector</span> , and
+<span class="mark">validate-implementation</span> . They are an
 <span acronym-label="ai" acronym-form="singular+short">ai</span>
 assisted companion to the requirements specification.
 
-### Product Documentation (`docs.zip`)
+### MVP Documentation (`appsec-mvp-docs.zip`)
 
-The [product documentation](https://vkraus.github.io/appsec-mvp/),
-attached as `docs.zip`, is <span acronym-label="ai"
+The [<span acronym-label="mvp" acronym-form="singular+short">mvp</span>
+documentation](https://vkraus.github.io/appsec-mvp/), attached to this
+thesis as `appsec-mvp-docs.zip`, is <span acronym-label="ai"
 acronym-form="singular+short">ai</span> assisted content.
 
 I authored the four skills on the [skills
