@@ -6,12 +6,16 @@
 - [Acknowledgements](#acknowledgements)
 - [Abstract](#abstract)
   - [Keywords](#keywords)
-  - [Introduction](#introduction)
-- [Motivation](#motivation)
-- [Objective](#objective)
-- [Methodology](#methodology)
-- [Structure](#structure)
-- [Artifacts](#artifacts)
+  - [Conclusion](#conclusion)
+- [Thesis Outcomes and Contributions](#thesis-outcomes-and-contributions)
+- [Evaluation of AI Instantiability](#evaluation-of-ai-instantiability)
+  - [Acceptance criterion](#acceptance-criterion)
+  - [Empirical outcome](#empirical-outcome)
+  - [Claim defended](#claim-defended)
+- [Limitations](#limitations)
+- [Future Work](#future-work)
+  - [Implementation backlog](#implementation-backlog)
+  - [Research extensions](#research-extensions)
   - [Analysis](#analysis)
 - [Asset Discovery and Inventory](#asset-discovery-and-inventory)
   - [Application Portfolio Management](#application-portfolio-management)
@@ -103,7 +107,7 @@
   - [Testing and Validation](#testing-and-validation-2)
 - [Extension Blueprint and AI Assistance](#extension-blueprint-and-ai-assistance)
   - [MVP Implementation](#mvp-implementation)
-- [Methodology](#methodology-1)
+- [Methodology](#methodology)
 - [Project Structure](#project-structure-1)
   - [Layering rule](#layering-rule)
   - [Component colocation](#component-colocation)
@@ -116,14 +120,16 @@
   - [Contract of three categories](#contract-of-three-categories)
   - [Declarative mapping](#declarative-mapping)
   - [Iteration Summary](#iteration-summary)
-  - [Conclusion](#conclusion)
-- [Thesis Outcomes and Contributions](#thesis-outcomes-and-contributions)
-- [Evaluation of AI Instantiability](#evaluation-of-ai-instantiability)
-  - [Acceptance criterion](#acceptance-criterion)
-  - [Empirical outcome](#empirical-outcome)
-  - [Claim defended](#claim-defended)
-- [Limitations](#limitations)
-- [Future Work](#future-work)
+  - [Conclusion](#conclusion-1)
+- [Thesis Outcomes and Contributions](#thesis-outcomes-and-contributions-1)
+- [Evaluation of AI Instantiability](#evaluation-of-ai-instantiability-1)
+  - [Acceptance criterion](#acceptance-criterion-1)
+  - [Empirical outcome](#empirical-outcome-1)
+  - [Claim defended](#claim-defended-1)
+- [Limitations](#limitations-1)
+- [Future Work](#future-work-1)
+  - [Implementation backlog](#implementation-backlog-1)
+  - [Research extensions](#research-extensions-1)
 - [Appendices](#appendices)
   - [Generative AI Use Disclosure](#generative-ai-use-disclosure)
 - [Text Editing](#text-editing)
@@ -210,7 +216,7 @@ feedback.
 
 ### Abstract
 
-To protect their business-critical applications from cybersecurity
+To protect their business critical applications from cybersecurity
 threats, enterprise security teams rely on numerous tools to detect and
 resolve vulnerabilities in application source code, configuration,
 dependencies, CI/CD pipelines, and runtime infrastructure. These tools
@@ -218,351 +224,332 @@ use different integration patterns, protocols, and data formats, making
 it difficult to consistently parse, deduplicate, triage, and group their
 findings. In large environments, additional challenges emerge when
 linking all findings to the corresponding business applications. This
-thesis presents a data framework to tackle those challenges, delivering
-three distinct contributions: (1) a requirements specification for an
-application security data platform, (2) a reusable and extensible design
-covering architecture, data model, and medallion-based data pipeline,
-and (3) a reference implementation built on the Databricks platform.
-Together, these contributions offer application security teams a
-foundation for building a robust data platform independent of individual
-cybersecurity vendors, relieving them of risks usually associated with
-vendor lock-in.
+thesis presents a data framework to tackle those challenges, delivering
+three distinct contributions: (1) a requirements specification for an
+application security data platform, (2) a reusable and extensible design
+covering architecture, data model, and medallion based data pipeline,
+and (3) a Databricks MVP reference implementation with generated
+connector modules for nine selected sources at various maturity levels.
+Together, these contributions offer application security teams
+a foundation for building a robust data platform independent of
+individual cybersecurity vendors.
 
 #### Keywords
 
 application security, software security, DevSecOps, security
 integration, data consolidation, medallion architecture, Databricks
 
-## Introduction
+## Conclusion
 
-### Motivation
+### Thesis Outcomes and Contributions
 
-To protect business critical applications, security teams rely on a
-large variety of tools: <span acronym-label="sast"
-acronym-form="singular+short">sast</span> scanners analyze source code,
-<span acronym-label="sca" acronym-form="singular+short">sca</span> tools
-check software dependencies, <span acronym-label="dast"
-acronym-form="singular+short">dast</span> probes running applications,
-and secret scanners flag exposed credentials in code .
-
-Further detection runs against build and deployment pipelines, which
-face their own classes of threats such as malicious dependencies
-published to public package registries, compromised build agents
-injecting code into release artifacts, tampered container base images,
-or leaked <span acronym-label="cicd"
-acronym-form="singular+short">cicd</span> credentials used to push
-unauthorized changes . Security teams also deploy
-<span acronym-label="ide" acronym-form="singular+short">ide</span>
-plugins and security context tools integrated into
-<span acronym-label="ai" acronym-form="singular+short">ai</span> coding
-assistants such as Claude Code or GitHub Copilot to catch problems
-before code reaches version control .
-
-In large enterprises, dozens of such tools produce findings through
-different data formats and integration patterns . As application
-security architect in a large organization with thousands of developers
-and tens of thousands of repositories, I have seen firsthand how
-difficult such environment is to secure. Two classes of difficulty
-dominate.
-
-The first is **detection diversity**. Tools in the same category scan
-differently and produce different results, so a single tool is rarely
-sufficient . Running multiple tools in parallel improves coverage but
-creates the opposite problem: the same vulnerability is reported several
-times, and findings must be deduplicated before they can be triaged or
-counted .
-
-The second is **data consolidation**. Findings lack the business context
-needed for prioritization: the owning application, its criticality tier,
-and its regulatory scope live in a separate <span acronym-label="cmdb"
-acronym-form="singular+short">cmdb</span>, not in the security tool .
-Correlation within the findings themselves is nontrivial:
-<span acronym-label="sast" acronym-form="singular+short">sast</span>
-results point to a repository, file, and line, while
-<span acronym-label="dast" acronym-form="singular+short">dast</span>
-results point to a <span acronym-label="url"
-acronym-form="singular+short">url</span> or host, so cross tool
-correlation requires additional deployment and inventory metadata .
-Integration patterns compound the problem. Push based models, where
-scanners upload reports into a vulnerability management interface,
-fragment data and do not scale across dozens of tools, and pull based
-<span acronym-label="api" acronym-form="singular+short">api</span>
-connectors, where they exist, are usually gated behind commercial
-tiers .
-
-Consolidating application security data is a data engineering problem.
-Industry addresses it with commercial <span acronym-label="aspm"
-acronym-form="singular+short">aspm</span> products offering dashboards
-and aggregated views , but these are proprietary products with limited
-customer control over internal pipelines. They can create security tool
-vendor lock in and constrain security teams that need to customize
-pipelines, apply their own <span acronym-label="ml"
-acronym-form="singular+short">ml</span> models, or integrate with
-internal systems.
-
-The most notable open source alternative, DefectDojo, is a Django based
-vulnerability management web application , not a data first platform.
-Its relational backend limits scale, and ingestion relies mostly on push
-based integrations or manual uploads. Pull based
-<span acronym-label="api" acronym-form="singular+short">api</span>
-connectors exist only in the commercial DefectDojo Pro tier.
-
-Databricks Lakewatch, announced in March 2026 and available in Private
-Preview at thesis submission, is a lakehouse native
-<span acronym-label="siem" acronym-form="singular+short">siem</span> .
-It runs on the same lakehouse platform this thesis adopts but addresses
-a different domain: runtime threat detection, alert triage, and log
-analytics, not application security posture. The author did not have
-access to the Private Preview during thesis preparation, so Lakewatch is
-treated as related product context rather than implementation evidence.
-The distinction is discussed
-in <a href="#sec:lakewatch" data-reference-type="autoref"
-data-reference="sec:lakewatch">[sec:lakewatch]</a>.
-
-What is missing is a security tool vendor agnostic framework that
-approaches application security as a data engineering problem, providing
-a reusable architecture for ingestion, normalization, deduplication, and
-serving at enterprise scale. Vendor agnostic in this thesis means
-independent from individual application security tool vendors and their
-proprietary risk models. It does not mean that the submitted
-<span acronym-label="mvp" acronym-form="singular+short">mvp</span> is
-independent from the data platform vendor: Databricks is the reference
-platform used to instantiate the framework, and portability to another
-platform is a design claim bounded in the Limitations section. The pace
-of tool adoption outstrips the engineering effort available to write
-connectors for each one. A framework that encodes integration logic
-declaratively, as schemas, a connector contract, and a catalog of skills
-an <span acronym-label="ai" acronym-form="singular+short">ai</span>
-coding agent can execute, **should reduce onboarding a new source to a
-five step procedure**
-(<a href="#sec:impl-methodology" data-reference-type="autoref"
-data-reference="sec:impl-methodology">[sec:impl-methodology]</a>) rather
-than a pipeline redesign, with the cost per source limited to invoking
-the documented skills under supervision. Step three of the procedure
-(use the mapping artifact as the transformation specification) is
-currently a specification thread, not an executed step in the
-<span acronym-label="mvp" acronym-form="singular+short">mvp</span>,
-which still builds the silver DataFrame in Python. Future Work in the
-Conclusion records the declarative applicator as the consolidation that
-closes this gap.
-<a href="#ch:implementation" data-reference-type="autoref"
-data-reference="ch:implementation">[ch:implementation]</a> and
-<a href="#sec:ai-eval" data-reference-type="autoref"
-data-reference="sec:ai-eval">[sec:ai-eval]</a> examine how far this
-reduction holds under the empirical methodology actually exercised.
-
-This raises the central research question: **how can diverse enterprise
-application security findings be consolidated into a unified, security
-tool vendor agnostic data model and integration framework that serves
-the analytical and operational needs of security teams?**
-
-### Objective
-
-The main goal is to specify, design, and implement a data integration
-framework for enterprise application security that consolidates findings
-from tools into a unified platform, enabling consistent normalization,
-deduplication, triage, and correlation across business applications.
-
-The subgoals are:
-
-1.  **Analysis** (<a href="#ch:analysis" data-reference-type="autoref"
-    data-reference="ch:analysis">[ch:analysis]</a>): Survey the
-    application security domain and its adjacent data sources.
-    Characterize asset inventories, software development platforms,
-    static and dynamic security tooling, and the relevant data
-    engineering patterns. Review related work, identify the research
-    gap, select source systems to carry forward, and summarize the
-    derived requirements. The <span acronym-label="api"
-    acronym-form="singular+short">api</span> analysis per source
-    grounding these findings is collected on the external [documentation
-    site](https://vkraus.github.io/appsec-mvp/).
-
-2.  **Framework** (<a href="#ch:framework" data-reference-type="autoref"
-    data-reference="ch:framework">[ch:framework]</a>): Use the
-    requirements summary to propose a reusable blueprint covering
-    solution architecture, a medallion based data model (bronze, silver,
-    gold) , a connector framework, and an analytics and serving
-    framework. The blueprint targets the Databricks lakehouse  while
-    separating general patterns from platform specific choices. The
-    technology rationale is given
-    in <a href="#sec:tech-stack" data-reference-type="autoref"
-    data-reference="sec:tech-stack">[sec:tech-stack]</a>.
-
-3.  **Implementation**
-    (<a href="#ch:implementation" data-reference-type="autoref"
-    data-reference="ch:implementation">[ch:implementation]</a>): Produce
-    a reference implementation on Databricks that instantiates the
-    framework for the nine selected sources. All nine ship the generated
-    connector artifact set (configuration, ingest and transform modules,
-    mappings, bundle resources, source runtime where applicable, and
-    requirement bound tests). Their live source exercise and Spark
-    wrapper completeness differ by source and are stated explicitly in
-    <a href="#sec:impl-results" data-reference-type="autoref"
-    data-reference="sec:impl-results">[sec:impl-results]</a> and the
-    Limitations section of the Conclusion. The implementation also
-    includes the platform app to repository linker and analytics/serving
-    artifacts. The [traceability
-    matrix](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/)
-    records PASS or N/A for every (requirement $\times$ source) cell.
-    The deliverable is a minimum viable product on a sample chosen to
-    cover the ingestion and integration patterns the framework must
-    support, not an exhaustive integration of every security tool.
-    Validation runs through automated tests with requirement
-    traceability and <span acronym-label="ldp"
-    acronym-form="singular+short">ldp</span> data quality expectations.
-
-The scope is application security posture across three tiers of
-detection. **Static testing** covers preexecution analysis of source,
-dependencies, configuration, and build artifacts:
-<span acronym-label="sast" acronym-form="singular+short">sast</span>,
-<span acronym-label="sca" acronym-form="singular+short">sca</span>,
-secret scanning, container and <span acronym-label="iac"
-acronym-form="singular+short">iac</span> scanning, and supply chain
-integrity checks. **Dynamic testing** covers active probing of running
-applications: <span acronym-label="dast"
-acronym-form="singular+short">dast</span> (OWASP ZAP ) and penetration
-testing. **Runtime security** covers observational telemetry from
-production systems. One representative source (AWS WAF sampled
-requests ) is included so the model covers runtime findings linked to
-applications through deployment metadata, although live WAF tenant
-exercise remains outside the submitted evidence. Broader runtime
-operations (threat detection, incident response, log analytics) are out
-of scope.
-
+This thesis delivers the three contributions announced in the abstract,
+evaluated against the design science framework of and the outcome
+evaluation guidance of . The first is a **requirements specification**
+for an application security data platform, motivated and grounded in
 <a href="#ch:analysis" data-reference-type="autoref"
-data-reference="ch:analysis">[ch:analysis]</a> and
-<a href="#ch:framework" data-reference-type="autoref"
-data-reference="ch:framework">[ch:framework]</a> are framed against the
-full <span acronym-label="aspm"
-acronym-form="singular+short">aspm</span> scope.
+data-reference="ch:analysis">[ch:analysis]</a>. The specification text
+was published on the documentation site and attached to this thesis as
+`appsec-mvp-docs.zip` instead of placed in an appendix because of its
+length. The second is a **reusable and extensible framework**
+(<a href="#ch:framework" data-reference-type="autoref"
+data-reference="ch:framework">[ch:framework]</a>) covering reference
+architecture, data model, and the medallion based pipeline  from source
+records to consumption. The third is a **Databricks MVP reference
+implementation**
+(<a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a>) with
+generated connector modules for nine selected data sources, explicit
+evidence levels in
+<a href="#sec:impl-results" data-reference-type="autoref"
+data-reference="sec:impl-results">[sec:impl-results]</a>, and the
+implementation archive attached to this thesis as `appsec-mvp.zip`.
+
+The methodology maps concretely to the work. The framework is the design
+artifact (Hevner: design as an artifact; Peffers: design and
+development), motivated by the application security data consolidation
+problem in <a href="#ch:analysis" data-reference-type="autoref"
+data-reference="ch:analysis">[ch:analysis]</a> (Hevner: problem
+relevance; Peffers: identify the problem and define objectives). It is
+instantiated in
 <a href="#ch:implementation" data-reference-type="autoref"
-data-reference="ch:implementation">[ch:implementation]</a> instantiates
-the framework against the nine sources selected in
-<a href="#sec:selected-sources" data-reference-type="autoref"
-data-reference="sec:selected-sources">[sec:selected-sources]</a>.
-Onboarding a tenth source repeats the procedure described in
-<a href="#sec:impl-methodology" data-reference-type="autoref"
-data-reference="sec:impl-methodology">[sec:impl-methodology]</a> without
-changes to the framework.
-
-The intended audience is application security architects and data
-platform engineers who need to consolidate security findings at scale
-without lockin to one application security tool vendor.
-
-### Methodology
-
-This thesis follows the design science research methodology of  in three
-phases aligned with the main chapters. The **analysis** phase combines a
-literature review with a systematic study of source systems, identifies
-the research gap, and summarizes the derived requirements. The
-**framework** phase designs the architecture, data model, connector
-contract, and analytics patterns. The **implementation** phase targets a
-reference implementation with an <span acronym-label="ai"
-acronym-form="singular+short">ai</span> instantiable integration layer.
-In this thesis, <span acronym-label="ai"
-acronym-form="singular+short">ai</span> instantiable means that a human
-supervised coding agent can generate connector artifacts from the
-framework templates and pass the specified review and test cycle. A
-prompt based chain of four skills (analyze-source, provision-source,
-generate-connector, validate-implementation) was authored from the
-connector contract and run across all nine source specifications under
-reviewer subagent supervision, producing connector modules for each
-source and validation evidence.
-<a href="#sec:ai-eval" data-reference-type="autoref"
-data-reference="sec:ai-eval">[sec:ai-eval]</a> grades the outcome.
-
-The thesis delivers three contributions: (1) a **requirements
-specification**, (2) a **reusable framework** covering architecture,
-data model, connector contract, and analytics and serving patterns, and
-(3) a **reference implementation** on Databricks. The integration layer
-is <span acronym-label="ai" acronym-form="singular+short">ai</span>
-instantiable in the specific sense that a human supervised coding agent
-can generate connector artifacts from the framework templates and pass
-the specified review and test cycle.
-<a href="#sec:ai-eval" data-reference-type="autoref"
-data-reference="sec:ai-eval">[sec:ai-eval]</a> evaluates this claim.
-
-### Structure
-
-<a href="#ch:analysis" data-reference-type="autoref"
-data-reference="ch:analysis">[ch:analysis]</a> surveys the problem
-domain and closes with related work, gap analysis, source selection, and
-the requirements summary.
-<a href="#ch:framework" data-reference-type="autoref"
-data-reference="ch:framework">[ch:framework]</a> presents the framework:
-solution architecture, data model, connector framework, and analytics
-and serving framework.
-<a href="#ch:implementation" data-reference-type="autoref"
-data-reference="ch:implementation">[ch:implementation]</a> reports the
-MVP reference implementation against the nine selected sources. The
-Conclusion evaluates outcomes against the objectives, defends the
+data-reference="ch:implementation">[ch:implementation]</a> (Peffers:
+demonstration), and evaluated through the traceability matrix and the
 <span acronym-label="ai" acronym-form="singular+short">ai</span>
-instantiability claim in
+instantiability assessment in
 <a href="#sec:ai-eval" data-reference-type="autoref"
-data-reference="sec:ai-eval">[sec:ai-eval]</a>, discusses limitations,
-and suggests future work.
-<a href="#app:genai" data-reference-type="autoref"
-data-reference="app:genai">[app:genai]</a> discloses the use of
-generative <span acronym-label="ai"
-acronym-form="singular+short">ai</span> tooling.
-<a href="#fig:contribution-flow" data-reference-type="autoref"
-data-reference="fig:contribution-flow">[fig:contribution-flow]</a>
-summarizes the contribution flow.
+data-reference="sec:ai-eval">[sec:ai-eval]</a> (Hevner: design
+evaluation and research contributions; Peffers: evaluation). Rigor comes
+from tests bound to requirement identifiers and from the iteration
+summary (Hevner: research rigor and design as a search process).
+Communication runs through the thesis and the documentation site
+(Hevner: communication of research; Peffers: communication). Two items
+are partial: the <span acronym-label="ai"
+acronym-form="singular+short">ai</span> evaluation criterion was settled
+after the first reviewer cycles, not declared in advance, and design
+alternatives are recorded only at the level of the iteration summary.
 
-<div class="center">
-
-\[Thesis contribution flow\]Thesis contribution flow.
-<a href="#ch:analysis" data-reference-type="autoref"
-data-reference="ch:analysis">[ch:analysis]</a> and
-<a href="#ch:framework" data-reference-type="autoref"
-data-reference="ch:framework">[ch:framework]</a> contribute to the
-Requirements Specification published on the documentation site.
+The framework is **reusable** in the concrete sense that
 <a href="#ch:implementation" data-reference-type="autoref"
-data-reference="ch:implementation">[ch:implementation]</a> consumes the
-specification, with reviewer subagent cycles catching defect classes
-evaluated in <a href="#sec:ai-eval" data-reference-type="autoref"
-data-reference="sec:ai-eval">[sec:ai-eval]</a>. Implementation results
-populate the Implementation reports for each source on the site (dashed
-return arrow). <span id="fig:contribution-flow"
-label="fig:contribution-flow"></span>
+data-reference="ch:implementation">[ch:implementation]</a> introduced no
+new connector level design decisions beyond which sources to onboard. It
+is **extensible** in the sense that onboarding a new source reduces to
+the five step procedure of
+<a href="#sec:impl-methodology" data-reference-type="autoref"
+data-reference="sec:impl-methodology">[sec:impl-methodology]</a>:
+category resolution, module instantiation, mapping specification,
+layered testing, and skill chain pass with reviewer supervision.
+ServiceNow on Lakeflow Connect and GitHub on PyGitHub are concrete
+examples of the same contract supporting different integration patterns.
 
-</div>
+### Evaluation of AI Instantiability
 
-### Artifacts
+<a href="#ch:framework" data-reference-type="autoref"
+data-reference="ch:framework">[ch:framework]</a> aimed the framework
+outputs at an <span acronym-label="ai"
+acronym-form="singular+short">ai</span> coding agent. The original
+target was fully autonomous generation from the agent [skill
+catalog](https://vkraus.github.io/appsec-mvp/connectors/scm/skills/).
+The <span acronym-label="mvp" acronym-form="singular+short">mvp</span>
+was produced by invocations of that catalog under reviewer subagent
+supervision (Subagent-Driven Development).
 
-Throughout the thesis, **<span acronym-label="mvp"
-acronym-form="singular+short">mvp</span> implementation** refers to the
-public [ <span class="mark">appsec-mvp</span>
-repository](https://github.com/vkraus/appsec-mvp) and its source archive
-attached to this thesis, `appsec-mvp.zip`. **<span acronym-label="mvp"
-acronym-form="singular+short">mvp</span> documentation** or
-**documentation site** refers to the published site at
-<https://vkraus.github.io/appsec-mvp/> and its static archive attached
-to this thesis, `appsec-mvp-docs.zip`, which includes a prerendered site
-under `docs/site/index.html`. Both archives are snapshots at the commit
-from which this <span acronym-label="pdf"
-acronym-form="singular+short">pdf</span> was built.
+#### Acceptance criterion
 
-The full requirements specification is published in the
+A correction counts as a **framework gap** when extending the
+specification (schema pattern, connector contract from
+<a href="#sec:connector-contract" data-reference-type="autoref"
+data-reference="sec:connector-contract">[sec:connector-contract]</a>, or
+declarative artifact) would have produced the right output on first pass
+and the extension would generalize. Corrections tracing to **source
+specific issues** or **environment setup** (setup, authentication,
+infrastructure) do not count against the framework.
+
+#### Empirical outcome
+
+The four-skill chain ran across all nine source specifications,
+producing connector modules for each source and validation evidence.
+<a href="#sec:iteration-summary" data-reference-type="autoref"
+data-reference="sec:iteration-summary">[sec:iteration-summary]</a>
+enumerates the defects the reviewer cycle caught: a layering boundary
+(framework gap), schema drift between <span acronym-label="sql"
+acronym-form="singular+short">sql</span> <span acronym-label="ddl"
+acronym-form="singular+short">ddl</span> and PySpark types (framework
+gap), a secret scope mismatch (environment setup), worktree pollution
+(environment setup), a cron schedule collision (source specific issue),
+and IRSA OIDC trust policy gaps (environment setup). Two of six classify
+as framework gaps. Evidence lives in the [documentation
+site](https://vkraus.github.io/appsec-mvp/).
+
+#### Claim defended
+
+The integration layer of the framework, that is every connector that
+adapts a security tool to the lakehouse contract, supports supervised
+<span acronym-label="ai" acronym-form="singular+short">ai</span>
+assisted connector artifact generation in the specific sense defined in
+<a href="#ch:implementation" data-reference-type="autoref"
+data-reference="ch:implementation">[ch:implementation]</a>. A human
+supervised coding agent can generate connector artifacts from a prompt
+by using the author created skill catalog, with reviewer cycles before
+acceptance. The reference implementation generated connector modules for
+nine sources by the four skill chain with reviewer subagent cycles
+catching defects.
+<a href="#sec:impl-results" data-reference-type="autoref"
+data-reference="sec:impl-results">[sec:impl-results]</a> separates
+generated artifacts, live source exercise, and Spark wrapper
+completeness. The platform layer the connectors run against and the
+analytics layer they feed are deliberately hand written: the platform is
+the singleton contract the skills depend on by name, and the analytics
+layer is the specific evidence the thesis presents. The contract,
+mapping, and module layout reduce new connector work to a five step
+procedure that converges with supervised review. It is not yet
+<span acronym-label="ai" acronym-form="singular+short">ai</span>
+**autonomous**: every connector still required reviewer cycles, and the
+schema drift gap plus the open items below remain. The empirical
+evidence above was produced by a single framework user (the author)
+acting as both implementer and reviewer of the evaluation, without inter
+rater reliability or an independent grader. Closing the open items,
+refining the skills until invocations are self sustaining, and
+replicating the evaluation under a controlled study with multiple
+framework users would measure the distance from instantiable to
+autonomous. That measurement is the subject of Future Work.
+
+### Limitations
+
+The <span acronym-label="mvp" acronym-form="singular+short">mvp</span>
+is a working reference rather than a production ready integration. It is
+**platform specific**: it runs on Databricks over
+<span acronym-label="aws" acronym-form="singular+short">aws</span>
+object storage, the only combination exercised end to end. **Live tenant
+exercise** is partial: of the nine connectors, ServiceNow, GitHub,
+SonarQube, Semgrep, and <span acronym-label="owasp"
+acronym-form="singular+short">owasp</span> <span acronym-label="zap"
+acronym-form="singular+short">zap</span> have been exercised against
+live source systems during the construction of this thesis. The
+remaining four (GitLab, Dependency-Track, TruffleHog,
+<span acronym-label="aws" acronym-form="singular+short">aws</span>
+<span acronym-label="waf" acronym-form="singular+short">waf</span>) pass
+their unit tests against fixtures but have not been exercised against a
+live tenant. The connector contract in
+<a href="#sec:connector-framework" data-reference-type="autoref"
+data-reference="sec:connector-framework">[sec:connector-framework]</a>
+is written to be cloud and platform agnostic in principle, but it has
+not been ported to Snowflake, Microsoft Fabric, or an on premises
+platform, so the portability claim rests on contract design alone, with
+no second demonstrated implementation.
+
+**Reproducibility** requires a Databricks workspace with Unity Catalog,
+an <span acronym-label="aws" acronym-form="singular+short">aws</span>
+account with an S3 bucket and federated credentials, a Lakeflow Connect
+entitlement, a ServiceNow developer instance, and a GitHub Personal
+Access Token (<span acronym-label="pat"
+acronym-form="singular+short">pat</span>). The Declarative Automation
+Bundle, formerly Databricks Asset Bundle , deploys every workspace
+resource the bundle format covers natively. The post deploy shell script
+<span class="mark">src/platform/scripts/bootstrap.sh</span> creates the
+secret scope container, Unity Catalog storage credential, and Unity
+Catalog external location. Per connector Terraform modules under
+<span class="mark">src/connectors/\<source\>/runtime/</span> provision
+source side cloud infrastructure. The archives attached to this thesis,
+<span class="mark">appsec-mvp.zip</span> and
+<span class="mark">appsec-mvp-docs.zip</span> , cannot reproduce the
+build without these entitlements.
+
+Several **open implementation items** remain, but they are narrower than
+the framework gaps before the redesign summarized in
+<a href="#sec:iteration-summary" data-reference-type="autoref"
+data-reference="sec:iteration-summary">[sec:iteration-summary]</a>.
+Connector population of <span class="mark">silver.repositories</span> is
+partial: GitHub writes the standard narrow repository fields, while
+wider target fields and GitLab parity remain future work. Application
+attribution has one implemented path, not the full CMDB relationship
+story. <span class="mark">silver.app_repo_mapping</span> is populated by
+a platform linker over <span class="mark">silver.applications</span> and
+<span class="mark">silver.repositories</span> , using application codes
+embedded in repository names. Parallel CMDB relationship paths through
+<span class="mark">cmdb_rel_ci</span> , explicit repository link
+columns, and fuller connector side repository writers remain pending.
+Several Spark connector wrappers currently return empty Silver
+DataFrames with target schemas while their mapping helpers at row level
+are tested. SonarQube and <span acronym-label="owasp"
+acronym-form="singular+short">owasp</span> <span acronym-label="zap"
+acronym-form="singular+short">zap</span> have Spark transforms that emit
+rows. Some notebook entry wrappers generated by skills remain
+placeholders. Dependency-Track live dltool execution and the
+<span acronym-label="aws" acronym-form="singular+short">aws</span>
+<span acronym-label="waf" acronym-form="singular+short">waf</span> boto3
+sampled request fallback remain deferred, while the WAF log stream path
+is the preferred design. Inherited error handling sharp edges remain in
+<span class="mark">bootstrap.sh</span> and the ServiceNow Terraform
+runtime, both flagged for hardening.
+
+The analytics and serving layer is implemented as evidence for the
+thesis rather than a production service. It includes five Gold datasets,
+one Gold view, two Online Table resources, suppression rules, and a
+Databricks App. The tests are backed by fixtures, mocked, or marked for
+Spark/live execution as appropriate. The thesis does not claim
+production deployment, measured serving latency, or trained
+<span acronym-label="ml" acronym-form="singular+short">ml</span> models.
+
+The **variation** of the selected sources is biased toward
+<span acronym-label="rest" acronym-form="singular+short">rest</span>
+<span acronym-label="json" acronym-form="singular+short">json</span>
+<span acronym-label="api" acronym-form="plural+short">apis</span> with
+token authentication (five of the nine: GitHub, GitLab, ServiceNow,
+SonarQube, Dependency-Track). <span acronym-label="aws"
+acronym-form="singular+short">aws</span> <span acronym-label="waf"
+acronym-form="singular+short">waf</span> consumes a log stream from
+Kinesis Data Firehose to S3 with SigV4 service credentials rather than a
+bearer token, <span acronym-label="owasp"
+acronym-form="singular+short">owasp</span> <span acronym-label="zap"
+acronym-form="singular+short">zap</span> follows an artifact pattern,
+and the two file based sources (Semgrep, TruffleHog) deliver via S3
+instead of an interactive <span acronym-label="api"
+acronym-form="singular+short">api</span>. Source categories not
+demonstrated include SOAP, gRPC, syslog, Kafka event streams, binary
+telemetry, and push only webhook native sources. The contract is written
+to accommodate these, but evidence is absent on a category by category
+basis.
+
+### Future Work
+
+#### Implementation backlog
+
+**Closing the remaining framework gap.** The layering boundary gap was
+closed by the structural redesign. The schema drift gap remains open. A
+single source of truth for silver schemas resolving the drift between
+<span acronym-label="sql" acronym-form="singular+short">sql</span>
+<span acronym-label="ddl" acronym-form="singular+short">ddl</span> and
+PySpark <span class="mark">StructType</span> definitions is the
+precondition for any stronger <span acronym-label="ai"
+acronym-form="singular+short">ai</span> autonomy claim.
+
+**Completing the declarative mapping applicator and Spark wrapper
+wiring.**
+<a href="#sec:transformation-patterns" data-reference-type="autoref"
+data-reference="sec:transformation-patterns">[sec:transformation-patterns]</a>
+treats <span class="mark">mapping.yml</span> as the authoritative
+specification consumed by a generic applicator, but the
 <span acronym-label="mvp" acronym-form="singular+short">mvp</span>
-documentation. It is structured into four sections (Requirements,
-Functional Specification, Design, Tests), generated with MkDocs Material
-from <span class="mark">mkdocs/docs/</span> in the
+applies mappings through Python helpers and Spark code for each source.
+Completing the applicator and replacing the remaining wrappers with
+Spark transforms that emit rows would make adding a source closer to a
+configuration edit than a code edit.
+
+**Realizing the remaining prescribed silver tables.** The framework
+prescribes 15 silver tables
+(<a href="#sec:entity-model" data-reference-type="autoref"
+data-reference="sec:entity-model">[sec:entity-model]</a>). The
 <span acronym-label="mvp" acronym-form="singular+short">mvp</span>
-implementation repository, and deployed via GitHub Pages. The same
-documentation snapshot is attached to this thesis as
-`appsec-mvp-docs.zip`.
-<a href="#sec:req-summary" data-reference-type="autoref"
-data-reference="sec:req-summary">[sec:req-summary]</a> gives the compact
-in thesis summary needed to evaluate the requirements specification
-contribution without browsing the site. Where the main chapters name a
-page, they link to it directly. The relevant top level sections are the
-[capability
-matrix](https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/),
-[mapping
-requirements](https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/),
-[connector hub](https://vkraus.github.io/appsec-mvp/connectors/), and
-[catalog](https://vkraus.github.io/appsec-mvp/platform/reference/catalog/).
+realizes the core subset <span class="mark">applications</span> ,
+<span class="mark">repositories</span> ,
+<span class="mark">findings</span> ,
+<span class="mark">finding_location</span> ,
+<span class="mark">hwm</span> ,
+<span class="mark">app_repo_mapping</span> , and
+<span class="mark">suppression_rules</span> . Future iterations should
+add the remaining entity tables ( <span class="mark">teams</span> ,
+<span class="mark">commits</span> ,
+<span class="mark">pull_requests</span> ,
+<span class="mark">pipeline_runs</span> ,
+<span class="mark">dependencies</span> ,
+<span class="mark">branch_policies</span> ), the reference tables (
+<span class="mark">vulnerabilities</span> from the
+<span acronym-label="nvd" acronym-form="singular+short">nvd</span>,
+<span class="mark">epss_scores</span> ,
+<span class="mark">kev_entries</span> ), and the remaining relationship
+table <span class="mark">finding_cve_mapping</span> . Cross tool overlap
+is currently computed in Gold rather than stored in a separate
+<span class="mark">dedup_links</span> table. Adding a persisted dedup
+relationship remains a future extension.
+
+**Finishing job orchestration and bootstrap hardening.** Some notebook
+wrappers generated by skills still need full job orchestration, and the
+remaining Spark wrappers need implementation. The bootstrap script and
+ServiceNow runtime need the hardening pass named in Limitations.
+
+**Live analytics evidence and downstream triage.** The rule based Gold
+layer and Databricks App now exist, so the next step is to run them
+against live data from multiple sources, measure serving latency, and
+connect them to downstream triage workflows.
+
+#### Research extensions
+
+**Replication of <span acronym-label="ai"
+acronym-form="singular+short">ai</span> instantiability.** The
+evaluation in this thesis used one framework user, the author, and
+reviewer subagent cycles. A controlled study with several framework
+users, a fixed source onboarding task, and independent grading would
+measure how well the skill chain transfers beyond the author and how far
+the framework remains from autonomous connector generation.
+
+**Large Language Model assisted triage and correlation.** The Gold layer
+provides application risk posture, overlap, coverage, and remediation
+metrics. Large Language Model assisted triage and correlation over these
+tables is a natural extension and would exercise the data model of
+<a href="#sec:data-model" data-reference-type="autoref"
+data-reference="sec:data-model">[sec:data-model]</a> in the direction it
+was designed for.
 
 ## Analysis
 
@@ -2154,10 +2141,13 @@ independent of line number.
 ##### Relationship pattern
 
 Relationship tables hold many to many mappings between entities: foreign
-keys to both sides, a source system indicator, and
+keys to both sides, a source system indicator, relationship state fields
+such as <span class="mark">link_source</span> or
+<span class="mark">attribution_state</span> , and
 <span class="mark">valid_from</span> /
-<span class="mark">valid_to</span> . No payload columns. Examples are
-application to repository, finding to <span acronym-label="cve"
+<span class="mark">valid_to</span> . They carry relationship metadata
+rather than entity payload columns. Examples are application to
+repository, finding to <span acronym-label="cve"
 acronym-form="singular+short">cve</span>, and cross tool deduplication
 links.
 
@@ -2885,13 +2875,40 @@ primary authoritative mapping is expected from the
 <span acronym-label="cmdb" acronym-form="singular+short">cmdb</span>
 connector when the inventory carries repository relationships. The
 relationship table can also be populated by deterministic supplemental
-linkers (for example application-code matching in repository names, used
+linkers (for example application code matching in repository names, used
 by the <span acronym-label="mvp"
 acronym-form="singular+short">mvp</span>) or by automated inference in
 the <span acronym-label="ml" acronym-form="singular+short">ml</span>
 workflows from
 <a href="#sec:analytics-patterns" data-reference-type="autoref"
 data-reference="sec:analytics-patterns">[sec:analytics-patterns]</a>.
+
+The framework treats attribution as a data quality outcome rather than a
+binary join. Relationship records preserve the link source and an
+attribution state so downstream consumers can distinguish authoritative,
+supplemental, inferred, and failed matches.
+<a href="#tab:attribution-state-model" data-reference-type="autoref"
+data-reference="tab:attribution-state-model">[tab:attribution-state-model]</a>
+defines the states and required downstream behavior.
+
+<div class="center">
+
+\[Application attribution state model\]Application attribution state
+model for <span class="mark">app_repo_mapping</span> .
+<span id="tab:attribution-state-model"
+label="tab:attribution-state-model"></span>
+
+| **State** | **Meaning**                                                                                                                                                                                                                                                                                        | **Gold and ticketing behavior**                                                                                                                                                                                        |
+|:----------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|           | No application relationship exists for the repository, <span acronym-label="url" acronym-form="singular+short">url</span>, or deployment coordinate.                                                                                                                                               | Gold keeps the finding in unattributed counts. Automated ticketing routes to security triage or data quality review rather than to an application owner.                                                               |
+|           | A deterministic linker finds exactly one application code in a repository name or other governed naming field.                                                                                                                                                                                     | Gold includes the finding in the application risk score with supplemental attribution. Ticketing may proceed if the organization accepts the naming convention as a routing rule.                                      |
+|           | A <span acronym-label="cmdb" acronym-form="singular+short">cmdb</span> relationship links the application and repository or deployment asset.                                                                                                                                                      | Gold treats the relationship as authoritative. Ticketing routes to the application owner from the inventory.                                                                                                           |
+|           | A <span acronym-label="cmdb" acronym-form="singular+short">cmdb</span>, <span acronym-label="scm" acronym-form="singular+short">scm</span>, or registry field carries an explicit repository <span acronym-label="url" acronym-form="singular+short">url</span> or identifier for the application. | Gold treats the relationship as authoritative. Ticketing routes to the mapped application owner.                                                                                                                       |
+|           | A rule based or <span acronym-label="ml" acronym-form="singular+short">ml</span> workflow proposes an application with a confidence score but without an authoritative source.                                                                                                                     | Gold separates inferred context from authoritative context. Ticketing requires review or uses a lower automation level.                                                                                                |
+|           | More than one application matches the same repository, <span acronym-label="url" acronym-form="singular+short">url</span>, or deployment coordinate with no clear winner.                                                                                                                          | Gold counts the finding in an ambiguity bucket and excludes it from owner level <span acronym-label="sla" acronym-form="singular+short">sla</span> metrics. Automated owner ticketing is suppressed or sent to triage. |
+|           | The matched application or repository is inactive, expired, ownerless, or outside the valid time window.                                                                                                                                                                                           | Gold flags stale context and keeps the finding visible. Ticketing routes to inventory correction before remediation ownership is assigned.                                                                             |
+
+</div>
 
 #### Testing and Validation
 
@@ -3352,12 +3369,13 @@ data-reference="sec:selected-sources">[sec:selected-sources]</a>:
 
 Step 1 has a deterministic answer for every source in the sample. Step 2
 has an invariant layout across categories. That invariance is what makes
-the framework instantiable by an <span acronym-label="ai"
-acronym-form="singular+short">ai</span> pipeline. A generator that emits
-the layout for a new source does not need to branch on category beyond
-what <span class="mark">ingest.py</span> contains and which bundle
-resource kind the source requires. Step 5 makes that generation
-procedure auditable: the [documentation
+supervised <span acronym-label="ai"
+acronym-form="singular+short">ai</span> assisted generation repeatable
+for the connector layer. A generator that emits the layout for a new
+source does not need to branch on category beyond what
+<span class="mark">ingest.py</span> contains and which bundle resource
+kind the source requires. Step 5 makes that generation procedure
+auditable: the [documentation
 site](https://vkraus.github.io/appsec-mvp/) carries the Implementation
 log and Validation table for each source as the trail of evidence.
 
@@ -3893,7 +3911,13 @@ application codes embedded in repository names to the application
 inventory. CMDB relationship traversal, explicit repository link
 columns, and fuller connector side repository writers remain incomplete,
 so this is evidence for one attribution path rather than the full
-attribution story.
+attribution story. The <span acronym-label="mvp"
+acronym-form="singular+short">mvp</span> exercises the
+<span class="mark">deterministic_code_match</span> state from
+<a href="#tab:attribution-state-model" data-reference-type="autoref"
+data-reference="tab:attribution-state-model">[tab:attribution-state-model]</a>.
+The remaining states describe framework behavior that is not yet
+demonstrated by separate implementation paths.
 
 The analytics layer is implemented as evidence for the thesis rather
 than as a production service. It includes five Gold datasets (
@@ -4073,11 +4097,15 @@ length. The second is a **reusable and extensible framework**
 (<a href="#ch:framework" data-reference-type="autoref"
 data-reference="ch:framework">[ch:framework]</a>) covering reference
 architecture, data model, and the medallion based pipeline  from source
-records to consumption. The third is a **reference implementation**
+records to consumption. The third is a **Databricks MVP reference
+implementation**
 (<a href="#ch:implementation" data-reference-type="autoref"
-data-reference="ch:implementation">[ch:implementation]</a>) on
-Databricks against nine selected data sources, attached to this thesis
-as `appsec-mvp.zip`.
+data-reference="ch:implementation">[ch:implementation]</a>) with
+generated connector modules for nine selected data sources, explicit
+evidence levels in
+<a href="#sec:impl-results" data-reference-type="autoref"
+data-reference="sec:impl-results">[sec:impl-results]</a>, and the
+implementation archive attached to this thesis as `appsec-mvp.zip`.
 
 The methodology maps concretely to the work. The framework is the design
 artifact (Hevner: design as an artifact; Peffers: design and
@@ -4158,15 +4186,16 @@ site](https://vkraus.github.io/appsec-mvp/).
 #### Claim defended
 
 The integration layer of the framework, that is every connector that
-adapts a security tool to the lakehouse contract, is
+adapts a security tool to the lakehouse contract, supports supervised
 <span acronym-label="ai" acronym-form="singular+short">ai</span>
-**instantiable** in the specific sense defined in
+assisted connector artifact generation in the specific sense defined in
 <a href="#ch:implementation" data-reference-type="autoref"
-data-reference="ch:implementation">[ch:implementation]</a>. A coding
-agent can generate connector artifacts from a prompt by using the author
-created skill catalog, with human supervision and reviewer cycles. The
-reference implementation generated connector modules for nine sources by
-the four skill chain with reviewer subagent cycles catching defects.
+data-reference="ch:implementation">[ch:implementation]</a>. A human
+supervised coding agent can generate connector artifacts from a prompt
+by using the author created skill catalog, with reviewer cycles before
+acceptance. The reference implementation generated connector modules for
+nine sources by the four skill chain with reviewer subagent cycles
+catching defects.
 <a href="#sec:impl-results" data-reference-type="autoref"
 data-reference="sec:impl-results">[sec:impl-results]</a> separates
 generated artifacts, live source exercise, and Spark wrapper
@@ -4286,6 +4315,8 @@ basis.
 
 ### Future Work
 
+#### Implementation backlog
+
 **Closing the remaining framework gap.** The layering boundary gap was
 closed by the structural redesign. The schema drift gap remains open. A
 single source of truth for silver schemas resolving the drift between
@@ -4341,10 +4372,23 @@ ServiceNow runtime need the hardening pass named in Limitations.
 
 **Live analytics evidence and downstream triage.** The rule based Gold
 layer and Databricks App now exist, so the next step is to run them
-against live multi-source data, measure serving latency, and connect
-them to downstream triage workflows. Large Language Model assisted
-triage and correlation over the gold tables is a natural extension and
-would exercise the data model of
+against live data from multiple sources, measure serving latency, and
+connect them to downstream triage workflows.
+
+#### Research extensions
+
+**Replication of <span acronym-label="ai"
+acronym-form="singular+short">ai</span> instantiability.** The
+evaluation in this thesis used one framework user, the author, and
+reviewer subagent cycles. A controlled study with several framework
+users, a fixed source onboarding task, and independent grading would
+measure how well the skill chain transfers beyond the author and how far
+the framework remains from autonomous connector generation.
+
+**Large Language Model assisted triage and correlation.** The Gold layer
+provides application risk posture, overlap, coverage, and remediation
+metrics. Large Language Model assisted triage and correlation over these
+tables is a natural extension and would exercise the data model of
 <a href="#sec:data-model" data-reference-type="autoref"
 data-reference="sec:data-model">[sec:data-model]</a> in the direction it
 was designed for.
