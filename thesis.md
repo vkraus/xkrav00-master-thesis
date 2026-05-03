@@ -178,8 +178,7 @@ following ways:
   passages and relocating details into the MVP documentation attached to
   this thesis,
 
-- <span acronym-label="ai" acronym-form="singular+abbrv">ai</span>
-  assisted TikZ source for figures from author sketches and
+- generation of TikZ source code for figures from author sketches and
   descriptions,
 
 - generation of source code attached to this thesis (`appsec-mvp.zip`),
