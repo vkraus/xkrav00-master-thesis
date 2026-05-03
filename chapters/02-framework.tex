@@ -191,7 +191,7 @@ A match across two tools links the records via a \inlinecode{dedup\_links} recor
 
 \subsubsection{Relationship pattern}
 
-Relationship tables hold many to many mappings between entities: foreign keys to both sides, a source system indicator, and \inlinecode{valid\_from}/\inlinecode{valid\_to}. No payload columns. Examples are application to repository, finding to \gls{cve}, and cross tool deduplication links.
+Relationship tables hold many to many mappings between entities: foreign keys to both sides, a source system indicator, relationship state fields such as \inlinecode{link\_source} or \inlinecode{attribution\_state}, and \inlinecode{valid\_from}/\inlinecode{valid\_to}. They carry relationship metadata rather than entity payload columns. Examples are application to repository, finding to \gls{cve}, and cross tool deduplication links.
 
 \subsubsection{Gold aggregation}
 
@@ -413,7 +413,30 @@ Deduplication keys are defined in the Silver Finding pattern (\autoref{sec:schem
 
 \subsubsection{Business context attribution}
 
-Findings are linked to business applications through the \inlinecode{app\_repo\_mapping} relationship table. Because the mapping is many to many, findings inherit application context through a join instead of a direct foreign key, which enables the per application aggregations in \autoref{sec:aggregation-model}. The primary authoritative mapping is expected from the \gls{cmdb} connector when the inventory carries repository relationships. The relationship table can also be populated by deterministic supplemental linkers (for example application-code matching in repository names, used by the \gls{mvp}) or by automated inference in the \gls{ml} workflows from \autoref{sec:analytics-patterns}.
+Findings are linked to business applications through the \inlinecode{app\_repo\_mapping} relationship table. Because the mapping is many to many, findings inherit application context through a join instead of a direct foreign key, which enables the per application aggregations in \autoref{sec:aggregation-model}. The primary authoritative mapping is expected from the \gls{cmdb} connector when the inventory carries repository relationships. The relationship table can also be populated by deterministic supplemental linkers (for example application code matching in repository names, used by the \gls{mvp}) or by automated inference in the \gls{ml} workflows from \autoref{sec:analytics-patterns}.
+
+The framework treats attribution as a data quality outcome rather than a binary join. Relationship records preserve the link source and an attribution state so downstream consumers can distinguish authoritative, supplemental, inferred, and failed matches. \autoref{tab:attribution-state-model} defines the states and required downstream behavior.
+
+\begin{center}
+\begin{minipage}{\textwidth}
+\captionof{table}[Application attribution state model]{Application attribution state model for \inlinecode{app\_repo\_mapping}.}
+\label{tab:attribution-state-model}
+\scriptsize
+\begin{tabularx}{\textwidth}{l X X}
+\toprule
+\textbf{State} & \textbf{Meaning} & \textbf{Gold and ticketing behavior} \\
+\midrule
+\inlinecode{unmapped} & No application relationship exists for the repository, \gls{url}, or deployment coordinate. & Gold keeps the finding in unattributed counts. Automated ticketing routes to security triage or data quality review rather than to an application owner. \\
+\inlinecode{deterministic\_code\_match} & A deterministic linker finds exactly one application code in a repository name or other governed naming field. & Gold includes the finding in the application risk score with supplemental attribution. Ticketing may proceed if the organization accepts the naming convention as a routing rule. \\
+\inlinecode{cmdb\_relationship} & A \gls{cmdb} relationship links the application and repository or deployment asset. & Gold treats the relationship as authoritative. Ticketing routes to the application owner from the inventory. \\
+\inlinecode{explicit\_repository\_link} & A \gls{cmdb}, \gls{scm}, or registry field carries an explicit repository \gls{url} or identifier for the application. & Gold treats the relationship as authoritative. Ticketing routes to the mapped application owner. \\
+\inlinecode{inferred} & A rule based or \gls{ml} workflow proposes an application with a confidence score but without an authoritative source. & Gold separates inferred context from authoritative context. Ticketing requires review or uses a lower automation level. \\
+\inlinecode{ambiguous} & More than one application matches the same repository, \gls{url}, or deployment coordinate with no clear winner. & Gold counts the finding in an ambiguity bucket and excludes it from owner level \gls{sla} metrics. Automated owner ticketing is suppressed or sent to triage. \\
+\inlinecode{stale} & The matched application or repository is inactive, expired, ownerless, or outside the valid time window. & Gold flags stale context and keeps the finding visible. Ticketing routes to inventory correction before remediation ownership is assigned. \\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\end{center}
 
 %%% 2.4.4 %%%
 
