@@ -183,7 +183,7 @@ These platforms bundle \gls{ddos} protection alongside \gls{waf} capabilities. \
 \section{Source Integration Summary}
 \label{sec:source-integration-summary}
 
-The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-characteristics/}{source characteristics reference page} tabulates integration characteristics across the AppSec sources surveyed for the thesis.
+The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-characteristics/}{source characteristics} page tabulates integration characteristics across the AppSec sources surveyed for the thesis.
 
 Several patterns emerge. \gls{rest} \glspl{api} with \gls{json} responses are dominant, but \gls{xml}, GraphQL, \gls{cli} output parsing, and manual uploads are all necessary. Standardization varies: \gls{sca} benefits from the \gls{cve}/\gls{nvd} ecosystem, \gls{sast} is partially standardized through \gls{sarif}, and secret scanning has no standard format. Update frequencies range from continuous dependency monitoring to periodic penetration tests. These characteristics define what the ingestion layer in \autoref{ch:framework} must accommodate.
 
@@ -225,7 +225,7 @@ Source \glspl{api} and formats change regularly, so rigid schemas break pipeline
 
 Reruns are idempotent so retries and replays do not duplicate. Each layer validates: schema at ingest, value ranges at normalization, referential integrity at aggregation. Records that fail validation go to quarantine tables~\cite{DAMA2017}.
 
-Managed ingestion connectors complement hand coded integration. Databricks Lakeflow Connect ships first party managed connectors for ServiceNow, Salesforce, SQL Server, Workday, and Google Analytics~\cite{DatabricksLakeflowConnect2025}, registered as Unity Catalog connections and consumed through a declarative pipeline definition that the platform schedules and incrementally refreshes. The Databricks Labs project Lakeflow Community Connectors~\cite{DatabricksLakeflowCommunityConnectors2026} extends the catalogue with community maintained connectors built on the Spark Python Data Source \gls{api}, including a connector for GitHub. Community connectors share the registration pattern of first party managed connectors but carry no compatibility guarantees and are pre release at the time of writing. The framework adopts managed and community connectors where their coverage and operational guarantees meet the connector contract; otherwise it falls back to a maintained Python \gls{sdk}, then to \gls{dltool}, then to artifact path consumption.
+Managed ingestion connectors complement manually coded integration. Databricks Lakeflow Connect ships first party managed connectors for ServiceNow, Salesforce, SQL Server, Workday, and Google Analytics~\cite{DatabricksLakeflowConnect2025}, registered as Unity Catalog connections and consumed through a declarative pipeline definition that the platform schedules and incrementally refreshes. The Databricks Labs project Lakeflow Community Connectors~\cite{DatabricksLakeflowCommunityConnectors2026} extends the catalogue with community maintained connectors built on the Spark Python Data Source \gls{api}, including a connector for GitHub. Community connectors share the registration pattern of first party managed connectors but carry no compatibility guarantees and are pre release at the time of writing. The framework adopts managed and community connectors where their coverage and operational guarantees meet the connector contract. Otherwise it falls back to a maintained Python \gls{sdk}, then to \gls{dltool}, then to artifact path consumption.
 
 %%% 1.7.3 %%%
 
@@ -449,7 +449,7 @@ The selection resolves to nine sources spanning the three detection tiers, plus 
     \item \textbf{AWS WAF} (\gls{waf}, runtime). Kinesis Data Firehose to S3 log stream as the primary path~\parencite{AWSWAF2026}, with the \inlinecode{GetSampledRequests} \gls{api} as the time window sampled fallback.
 \end{itemize}
 
-Details for each source are on the \href{https://vkraus.github.io/appsec-mvp/connectors/}{connectors reference hub}.
+Details for each source are on the \href{https://vkraus.github.io/appsec-mvp/connectors/}{connector hub}.
 
 \subsection{Considered and Excluded}
 
@@ -485,6 +485,6 @@ Akamai WAF        & \gls{waf}           & C1     & commercial, no free tier \\
 \subsection{Cross Source Synthesis}
 \label{sec:cross-source-synthesis}
 
-Across the nine sources, four record forms recur (ticket like, resource like, finding like, event like), severity scales span three to six levels, and status vocabularies diverge more sharply with tool specific states that rarely map one to one. Five pagination strategies appear: offset (ServiceNow, SonarQube, Dependency-Track), cursor (GitHub \gls{rest}), GraphQL cursor (GitHub and GitLab GraphQL), keyset (GitLab \gls{rest}), and none (\gls{cli} sources, AWS WAF). The sources also split on an operational pattern axis: periodic global scanners polled via \inlinecode{updated\_at} (SonarQube, Dependency-Track), \gls{cicd} step scanners indexed by commit \gls{sha} (Semgrep, TruffleHog), on demand dynamic scanners read via scan lifecycle \gls{api} (OWASP ZAP), and runtime telemetry sampled over time windows (AWS WAF). Together they exercise all five ingestion strategies the framework prescribes. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{source capability matrix} tabulates them against the capabilities that matter for connector design.
+Across the nine sources, four record forms recur (ticket like, resource like, finding like, event like), severity scales span three to six levels, and status vocabularies diverge more sharply with tool specific states that rarely map one to one. Five pagination strategies appear: offset (ServiceNow, SonarQube, Dependency-Track), cursor (GitHub \gls{rest}), GraphQL cursor (GitHub and GitLab GraphQL), keyset (GitLab \gls{rest}), and none (\gls{cli} sources, AWS WAF). The sources also split on an operational pattern axis: periodic global scanners polled via \inlinecode{updated\_at} (SonarQube, Dependency-Track), \gls{cicd} step scanners indexed by commit \gls{sha} (Semgrep, TruffleHog), on demand dynamic scanners read via scan lifecycle \gls{api} (OWASP ZAP), and runtime telemetry sampled over time windows (AWS WAF). Together they exercise all five ingestion strategies the framework prescribes. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{capability matrix} tabulates them against the capabilities that matter for connector design.
 
 This thesis fills the gap with a vendor agnostic framework. It applies lakehouse architecture and the medallion pattern to ingest tool output, normalize it into a domain model, and serve it through \gls{olap} and \gls{oltp} interfaces. \autoref{ch:framework} presents the framework, and \autoref{ch:implementation} demonstrates its implementation.
