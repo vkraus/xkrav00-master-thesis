@@ -2,67 +2,17 @@
 \chapter{Framework}
 \label{ch:framework}
 
-\autoref{ch:analysis} analyzed the sources, patterns, and gaps in enterprise application security data integration. This chapter presents the proposed framework: a reusable blueprint defining the architecture, data model, and patterns an organization follows to build its own implementation. The framework targets the Databricks Lakehouse, separating general patterns from platform specifics. \autoref{ch:implementation} then demonstrates a concrete implementation.
+\autoref{ch:analysis} analyzed the sources, patterns, and gaps in enterprise application security data integration, then summarized the derived requirements in \autoref{sec:req-summary}. This chapter presents the proposed framework: a reusable blueprint defining the architecture, data model, and patterns an organization follows to build its own implementation. The framework targets the Databricks Lakehouse, separating general patterns from platform specifics. \autoref{ch:implementation} then demonstrates a concrete implementation.
 
 %%%%%%%%%%%
 %%% 2.1 %%%
 %%%%%%%%%%%
 
-\section{Requirements Snapshot}
-\label{sec:req-snapshot}
-
-The complete requirements specification is published in the \gls{mvp} documentation because the \gls{api} analysis for each source, mapping derivations, runbooks, and validation logs are too long to reproduce in the thesis body. The core requirements are summarized here so the framework contribution remains assessable from the thesis itself. The snapshot is intentionally compact: it names the requirement families, the in-thesis evidence, and the implementation trace used to evaluate each family.
-
-\begin{table}[htbp]
-\centering
-\caption[Requirements snapshot]{Requirements snapshot for the application-security data integration framework.}
-\label{tab:req-snapshot}
-\small
-\begin{tabularx}{\textwidth}{l X X}
-\toprule
-\textbf{Requirement family} & \textbf{Requirement summary} & \textbf{Thesis evidence} \\
-\midrule
-Source coverage & Cover business application inventory, source repositories, static testing, software composition analysis, secrets, dynamic testing, and one runtime security source. & Source selection criteria and inventory in \autoref{sec:selected-sources}. Ingestion assignment in \autoref{sec:ingestion-category-assignment}. \\
-Source heterogeneity & Exercise \gls{rest}, GraphQL, managed connector, \gls{sdk}, \gls{dltool}, and artifact ingestion patterns, including multiple pagination and high water mark styles. & Cross source synthesis in \autoref{sec:cross-source-synthesis}. Connector categories in \autoref{sec:connector-abstraction}. \\
-Standard data model & Normalize heterogeneous records into bronze, silver, and gold layers, with a single findings fact table and relationship tables for application context and deduplication. & Medallion and schema patterns in \autoref{sec:medallion-arch} and \autoref{sec:schema-patterns}. Entity model in \autoref{sec:entity-model}. \\
-Connector contract & Standardize authentication, pagination, rate limits, high water marks, schema mapping, severity/status normalization, timestamp normalization, data quality, and deduplication. & Connector contract and testing requirements in \autoref{sec:connector-framework} and \autoref{sec:connector-testing}. REQ ID summary in \autoref{tab:connector-req-snapshot}. \\
-Serving and analytics & Provide consumption-ready Gold datasets and both analytical and operational serving paths. & Analytics and serving framework in \autoref{sec:analytics-serving}. MVP analytics evidence in \autoref{sec:impl-results}. \\
-Extensibility & Onboard a new source by resolving category, instantiating the module layout, encoding the mapping, testing, and running the skill chain with review. & Implementation methodology in \autoref{sec:impl-methodology}. AI instantiability evaluation in \autoref{sec:ai-eval}. \\
-Validation and traceability & Bind implementation tests to stable requirement identifiers and publish PASS/N/A evidence per source. & Connector REQ IDs in \autoref{tab:connector-req-snapshot}. Implementation evidence matrix in \autoref{tab:impl-evidence-levels}. \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\caption[Connector requirement identifiers]{Connector requirement identifiers used for traceability. The full matrix for each source is published in the \gls{mvp} documentation. \autoref{sec:impl-results} reports the thesis-level evidence boundary.}
-\label{tab:connector-req-snapshot}
-\small
-\begin{tabularx}{\textwidth}{l l X}
-\toprule
-\textbf{ID} & \textbf{Area} & \textbf{Requirement} \\
-\midrule
-\inlinecode{REQ-ING-AUTH} & Ingestion & Credentials resolve from the platform secret scope. Invalid credentials fail clearly. \\
-\inlinecode{REQ-ING-PAG} & Ingestion & Pagination completes without data loss or duplication across at least two pages. \\
-\inlinecode{REQ-ING-RL} & Ingestion & Rate-limit handling follows the configured retry and backoff policy. \\
-\inlinecode{REQ-ING-HWM} & Ingestion & High-water-mark resume fetches only new or changed records on the next run. \\
-\inlinecode{REQ-TRF-MAP} & Transform & Source records map to the target Silver schema with correct types, values, and null handling. \\
-\inlinecode{REQ-TRF-SEV} & Transform & Native severity values normalize to the standard severity model, including edge cases. \\
-\inlinecode{REQ-TRF-STS} & Transform & Native lifecycle states normalize to the standard status model. \\
-\inlinecode{REQ-TRF-TS} & Transform & Source timestamps normalize to UTC datetimes. \\
-\inlinecode{REQ-DQ} & Quality & Silver validation expectations distinguish valid records from quarantine candidates. \\
-\inlinecode{REQ-DEDUP} & Quality & Applicable finding categories produce deterministic deduplication keys and overlap links. \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-The requirement identifiers are intentionally stable across sources. A source can mark a requirement as not applicable (for example, artifact-only tools have no API pagination or rate-limit handling), but applicable requirements must be bound to tests. This is the bridge between the requirements specification contribution and the implementation evidence: the framework defines the identifiers and expected behavior, while \autoref{ch:implementation} reports how the \gls{mvp} satisfies or bounds them for each selected source.
-
 \section{Solution Architecture}
 
 This section presents the framework architecture at three levels: technology stack, component design, and data layer. The architecture addresses the requirements from domain analysis: heterogeneous source ingestion, vendor agnostic normalization, dual \gls{olap}/\gls{oltp} data serving, and extensibility for new data sources and analytics.
 
-A further design principle applies to the framework artifacts: every template defined in this chapter (schema patterns, mappings, connector contract) is declarative, not procedural, so that an \gls{ai} coding agent reading the specification has enough material to produce a candidate implementation. The published skill catalog, which sits in the \gls{mvp} documentation and wraps these templates into executable prompts, is evaluated separately in \autoref{sec:ai-eval}.
+A further design principle applies to the framework artifacts: every template defined in this chapter (schema patterns, mappings, connector contract) is declarative, not procedural, so that an \gls{ai} coding agent reading the specification has enough material to produce a candidate connector implementation. The published skill catalog, which sits in the \gls{mvp} documentation and wraps these templates into executable prompts, is evaluated separately in \autoref{sec:ai-eval}.
 
 %%% 2.1.1 %%%
 
@@ -71,9 +21,9 @@ A further design principle applies to the framework artifacts: every template de
 
 The framework targets the Databricks platform on \gls{aws}. Databricks separates storage from compute: data resides in object storage and compute scales independently. This reduces costs for uneven workloads typical for security data integration~\cite{Armbrust2021}.
 
-The four platform components are Delta Lake, Unity Catalog, Lakeflow Declarative Pipelines, and Lakebase. \textbf{Delta Lake}~\cite{Armbrust2020, Lee2024} is the open table format providing the storage layer for all three medallion tiers, with \gls{acid} transactions, schema enforcement, schema evolution, and time travel. \textbf{Unity Catalog}~\cite{DatabricksUC2025} manages a three level namespace (\inlinecode{catalog.schema.table}) mapped to the medallion layout (one catalog per environment, schemas per source for bronze, per domain for silver and gold), with fine grained access control and automated lineage. \textbf{\Gls{ldp}}~\cite{DatabricksLDP2025} declares pipelines as Python or \gls{sql} functions, embeds data quality expectations as declarative constraints with quarantine on violation, and processes incrementally through change data feed. \textbf{Lakebase}~\cite{DatabricksLakebase2026} is a serverless PostgreSQL database that shares storage with the lakehouse and provides the \gls{oltp} serving layer required by \autoref{sec:data-architecture}.
+The four platform components are Delta Lake, Unity Catalog, Lakeflow Declarative Pipelines, and Lakebase. \textbf{Delta Lake}~\cite{Armbrust2020, Lee2024} is the open table format providing the storage layer for all three medallion tiers, with \gls{acid} transactions, schema enforcement, schema evolution, and time travel. \textbf{Unity Catalog}~\cite{DatabricksUC2025} manages a three level namespace (\inlinecode{catalog.schema.table}) mapped to the medallion layout (one catalog per environment, schemas per source for bronze, per domain for silver and gold), with fine grained access control and automated lineage. \textbf{\Gls{ldp}}~\cite{DatabricksLDP2025} declares pipelines as Python or \gls{sql} functions, embeds data quality expectations as declarative constraints with quarantine on violation, and processes incrementally through change data feed. \textbf{Lakebase}~\cite{DatabricksLakebase2026} is a serverless Postgres operational database integrated with the Databricks platform and provides the \gls{oltp} serving layer required by \autoref{sec:data-architecture}.
 
-Running all four on one platform yields governance, lineage, and compute benefits that would require significant integration across separate tools. The platform also lines up with Lakewatch, the Databricks \gls{siem} analyzed in \autoref{sec:lakewatch}: both share Delta Lake storage and Unity Catalog governance, opening a path for the framework gold outputs (risk scores, remediation status) to enrich Lakewatch threat detection and for Lakewatch runtime events to feed back as a finding source.
+Running all four on one platform yields governance, lineage, and compute benefits that would require significant integration across separate tools. The platform also lines up with Lakewatch, the Databricks \gls{siem} analyzed in \autoref{sec:lakewatch}: both use the lakehouse and Unity Catalog governance, opening a possible path for the framework gold outputs (risk scores, remediation status) to enrich Lakewatch threat detection and for Lakewatch runtime events to feed back as a finding source.
 
 %%% 2.1.2 %%%
 
@@ -101,7 +51,8 @@ Five tiers organize the framework, illustrated in \autoref{fig:component-design}
 
 The processing tier applies the medallion architecture pattern from \autoref{sec:data-architecture}. Each layer is a Delta Lake schema within a single Unity Catalog, providing unified governance and cross layer lineage. \autoref{fig:medallion-design} illustrates the layer structure and transformations between them.
 
-\begin{figure}[htbp]
+\begin{center}
+\begin{minipage}{\textwidth}
 \centering
 \begin{tikzpicture}[
     node distance=1cm,
@@ -159,9 +110,10 @@ The processing tier applies the medallion architecture pattern from \autoref{sec
 \draw[arrow] (s2g.south) -- (gold-bg.north);
 
 \end{tikzpicture}
-\caption{Medallion Layer Design}
+\captionof{figure}{Medallion Layer Design}
 \label{fig:medallion-design}
-\end{figure}
+\end{minipage}
+\end{center}
 
 \subsubsection{Bronze Layer}
 
@@ -197,12 +149,14 @@ The schema patterns are derived from the \glspl{api} of the nine sources introdu
 
 Schema patterns standardize how tables are created at each medallion layer. \autoref{fig:record-lifecycle} walks a single SonarQube \gls{sast} finding through the layers and shows the metadata envelope from \autoref{sec:bronze-pattern}.
 
-\begin{figure}[htbp]
+\begin{center}
+\begin{minipage}{\textwidth}
 \centering
 \input{figures/record-lifecycle}
-\caption[Record lifecycle through the medallion layers]{Lifecycle of a single SonarQube \gls{sast} finding from \gls{api} response through Bronze ingestion with the metadata envelope with five columns, Silver normalization into \inlinecode{silver.findings} with category discriminator, and Gold aggregation into \inlinecode{app\_risk\_scores}.}
+\captionof{figure}[Record lifecycle through the medallion layers]{Lifecycle of a single SonarQube \gls{sast} finding from \gls{api} response through Bronze ingestion with the metadata envelope with five columns, Silver normalization into \inlinecode{silver.findings} with category discriminator, and Gold aggregation into \inlinecode{app\_risk\_scores}.}
 \label{fig:record-lifecycle}
-\end{figure}
+\end{minipage}
+\end{center}
 
 \subsubsection{Bronze envelope}
 \label{sec:bronze-pattern}
@@ -291,14 +245,14 @@ Adding a new gold table follows the same procedure: define the granularity, spec
 
 \section{Environment and Deployment}
 
-Deployment assumes a working Databricks environment. Account onboarding, workspace creation, networking, and \gls{iam} federation are outside scope. Deployment splits into two tiers along resource ownership: every Databricks object that the bundle format has a native type for is declared in a Databricks Asset Bundle, and source side cloud infrastructure for each connector is declared in Terraform under the connector folder. The deployment model follows the declarative infrastructure as code patterns established in the DevOps literature~\parencite{Forsgren2018, Kim2021}.
+Deployment assumes a working Databricks environment. Account onboarding, workspace creation, networking, and \gls{iam} federation are outside scope. Deployment splits into two tiers along resource ownership: every Databricks object that the bundle format has a native type for is declared in a Declarative Automation Bundle, formerly Databricks Asset Bundle~\cite{DatabricksDAB2026}, and source side cloud infrastructure for each connector is declared in Terraform under the connector folder. The deployment model follows the declarative infrastructure as code patterns established in the DevOps literature~\parencite{Forsgren2018, Kim2021}.
 
 %%% 2.3.1 %%%
 
 \subsection{Deployment Strategy}
 \label{sec:deployment-strategy}
 
-The \textbf{Databricks tier} owns every workspace resource the bundle format covers natively: catalogs, schemas, volumes, jobs, \gls{ldp} pipelines, notebooks, permissions, cluster attachments, and the Lakeflow Connect connection objects. Databricks Asset Bundles~\cite{DatabricksDAB2025} declare these alongside the source code, so one \inlinecode{databricks bundle deploy} recreates the workspace state for a new environment. The handful of Databricks objects the bundle format does not yet have a native type for (the secret scope container, Unity Catalog storage credential, and Unity Catalog external location) are created by a small post deploy shell script colocated with the platform layer at \inlinecode{src/platform/scripts/bootstrap.sh}. The framework deliberately keeps a single state owner per resource. Mixing the bundle with the Databricks Terraform provider would split state ownership for the same Databricks objects across two state stores and create promotion drift.
+The \textbf{Databricks tier} owns every workspace resource the bundle format covers natively: catalogs, schemas, volumes, jobs, \gls{ldp} pipelines, notebooks, permissions, cluster attachments, and the Lakeflow Connect connection objects. Declarative Automation Bundles, formerly Databricks Asset Bundles, declare these alongside the source code, so one \inlinecode{databricks bundle deploy} recreates the workspace state for a new environment~\cite{DatabricksDAB2026}. The handful of Databricks objects the bundle format does not yet have a native type for (the secret scope container, Unity Catalog storage credential, and Unity Catalog external location) are created by a small post deploy shell script colocated with the platform layer at \inlinecode{src/platform/scripts/bootstrap.sh}. The framework deliberately keeps a single state owner per resource. Mixing the bundle with the Databricks Terraform provider would split state ownership for the same Databricks objects across two state stores and create promotion drift.
 
 The \textbf{source side tier} owns cloud infrastructure for each connector that needs to bring up its source system or supporting cloud resources (S3 buckets, \gls{iam} roles, OIDC trust policies, source side VMs). Each connector ships a Terraform runtime under \inlinecode{src/connectors/<source>/}\allowbreak\inlinecode{runtime/}, scoped to that connector and never referencing Databricks resources. This keeps the layering rule of \autoref{sec:impl-layering-rule} clean: per connector setup code has no upward or sideways dependencies. Organizations preferring Pulumi or OpenTofu can substitute those at this tier without touching the Databricks tier.
 
@@ -330,7 +284,7 @@ Source characteristics drive frequency: high change sources (\gls{scm}, scanners
 
 \subsection{Monitoring and Observability}
 
-Monitoring handles whether pipelines are working over time. The platform provides system tables for job execution history, pipeline events, and compute utilization~\cite{DatabricksObservability2026}. The framework tracks three dimensions: \textbf{data freshness} (last successful ingestion timestamp against thresholds from the scheduling frequency in \autoref{sec:orchestration}), \textbf{pipeline health} (success rate, mean run duration, retry frequency, quarantine volume, with a rising quarantine rate preceding data quality issues), and \textbf{data quality trends} (violations of \gls{ldp} expectations over time). Alerts fire at job level (individual failures) and system level (aggregate degradation such as multiple connectors stale simultaneously). Thresholds and delivery channels are configuration, so operators tune sensitivity without redeploying pipelines.
+Monitoring handles whether pipelines are working over time. The platform provides system tables for job execution history, pipeline events, and compute utilization~\cite{DatabricksObservability2026}. The framework tracks three dimensions: \textbf{data freshness} (last successful ingestion timestamp against thresholds from the scheduling frequency in \autoref{sec:orchestration}), \textbf{pipeline health} (success rate, mean run duration, retry frequency, quarantine volume, with a rising quarantine rate preceding data quality issues), and \textbf{data quality trends} (violations of \gls{ldp} expectations over time). Alerts fire at job level (individual failures) and system level (aggregate degradation such as multiple connectors stale simultaneously). Thresholds and delivery channels are configuration, so framework users tune sensitivity without redeploying pipelines.
 
 %%% 2.3.5 %%%
 
@@ -338,7 +292,7 @@ Monitoring handles whether pipelines are working over time. The platform provide
 
 Deployment level verification covers the environment and codebase. Component level patterns live in \autoref{sec:connector-testing} and \autoref{sec:analytics-testing}. The \gls{cicd} pipeline enforces linting, formatting, and unit tests over isolated helpers (severity lookups, timestamp parsers, schema mapping). After deployment, smoke tests confirm Unity Catalog objects, compute resources, secret scopes, and \gls{ldp} pipelines exist with the expected configuration.
 
-Tests are linked to requirement identifiers via pytest markers (\inlinecode{@pytest.mark.requirement("REQ-TRF-SEV")}) drawn from the \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{requirement catalog}. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/\#per-source-traceability-matrix}{traceability matrix} applies uniformly across environment, connector, and analytics testing.
+Tests are linked to requirement identifiers via pytest markers (\inlinecode{@pytest.mark.requirement("REQ-TRF-SEV")}) drawn from the \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{requirement catalog}. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/\#per-source-traceability-matrix}{source traceability matrix} applies uniformly across environment, connector, and analytics testing.
 
 %%%%%%%%%%%
 %%% 2.4 %%%
@@ -466,7 +420,7 @@ Findings are linked to business applications through the \inlinecode{app\_repo\_
 \subsection{Testing and Validation}
 \label{sec:connector-testing}
 
-Connector tests live beside the connector at \inlinecode{src/connectors/\{source\}/tests/}, not in a central suite. \inlinecode{test\_ingest.py} covers the ingestion contract, \inlinecode{test\_transform.py} covers the transformation, and \inlinecode{fixtures/} holds \gls{json} inputs named \inlinecode{\{endpoint\}\_\{scenario\}.json}. Fixtures are recorded once from a representative source instance and frozen, so the suite runs in \gls{cicd} without network access. The stack adds three libraries on top of pytest: an \gls{http} mocking library, a PySpark DataFrame assertion library (\inlinecode{chispa}), and \gls{ldp} expectations for runtime checks. Each test carries a \inlinecode{@pytest.mark.requirement(...)} marker so the traceability matrix links results to the requirements below.
+Connector tests live beside the connector at \inlinecode{src/connectors/\{source\}/tests/}, not in a central suite. \inlinecode{test\_ingest.py} covers the ingestion contract, \inlinecode{test\_transform.py} covers the transformation, and \inlinecode{fixtures/} holds \gls{json} inputs named \inlinecode{\{endpoint\}\_\{scenario\}.json}. Fixtures are recorded once from a representative source instance and frozen, so the suite runs in \gls{cicd} without network access. The stack adds three libraries on top of pytest: an \gls{http} mocking library, a PySpark DataFrame assertion library (\inlinecode{chispa}), and \gls{ldp} expectations for runtime checks. Each test carries a \inlinecode{@pytest.mark.requirement(...)} marker so the traceability matrix links results to the identifiers in \autoref{tab:connector-req-snapshot}.
 
 \begin{itemize}
     \item \inlinecode{REQ-ING-AUTH}: authentication and credential resolution against the platform secret scope.
@@ -526,7 +480,7 @@ Analytical serving targets dashboards and ad hoc analysis through the \gls{olap}
 
 \subsubsection{Operational serving}
 
-Operational serving targets low latency workloads through the \gls{oltp} path. Lakebase exposes gold tables as PostgreSQL queryable relations with sub 50 millisecond response times~\cite{DatabricksLakebase2026}, sharing storage with the lakehouse so no synchronization pipelines are needed. Three workloads use this path: remediation state lookups for developer workflow integration, operational \glspl{api} exposed through PostgREST without custom \gls{api} code, and cached \gls{ml} inference results for real time risk assessment.
+Operational serving targets low latency workloads through the \gls{oltp} path. Lakebase serves Unity Catalog data through synced tables: Unity Catalog tables are copied into Lakebase Postgres and kept current by managed Lakeflow pipelines, so applications can query the data through standard Postgres interfaces~\cite{DatabricksLakebaseSyncTables2026}. Three workloads use this path: remediation state lookups for developer workflow integration, operational \glspl{api} exposed through PostgREST without custom \gls{api} code, and cached \gls{ml} inference results for real time risk assessment.
 
 \subsubsection{Event driven serving}
 
@@ -536,7 +490,7 @@ Event driven serving pushes data to external systems instead of waiting for quer
 
 \textbf{Threshold based notifications} alert stakeholders when metrics cross configured boundaries (risk score, new \gls{kev} listing, \gls{sla} drop) through configured channels.
 
-\textbf{\gls{siem} and \gls{soar} feeds} push events to platforms such as Lakewatch (\autoref{sec:lakewatch}) via \gls{cdc} on gold tables. Shared infrastructure with Lakewatch removes the need for external data movement.
+\textbf{\gls{siem} and \gls{soar} feeds} push events to platforms such as Lakewatch (\autoref{sec:lakewatch}) via \gls{cdc} on gold tables. The Lakewatch path is a compatibility direction, not implementation evidence, because the author did not have access to the Lakewatch Private Preview.
 
 \textbf{Bidirectional synchronization} flows external status updates back to silver via scheduled polling or webhooks, so gold remediation metrics reflect actual resolution progress.
 
@@ -553,8 +507,8 @@ The complete framework suite covers every gold table (metric correctness, bounda
 
 \section{Extension Blueprint and AI Assistance}
 
-Each artifact specified in this chapter is a template, not unrestricted, free form code. This covers the connector files (\autoref{sec:connector-framework}), the analytics jobs (\autoref{sec:analytics-serving}), and the test suites (\autoref{sec:connector-testing}, \autoref{sec:analytics-testing}). This was an objective. The framework should be suited to \gls{ai} assisted extension. The \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} provides four Claude Code skills that consume these templates and produce a reference implementation. The skills are organized by phase. \inlinecode{analyze-source} fetches the official \gls{api} documentation for the source and writes the connector page reference sections. \inlinecode{provision-source} emits the runtime infrastructure for the source as Terraform plus an install script. \inlinecode{generate-connector} produces the connector artifacts listed in \autoref{sec:connector-framework} together with the Databricks runtime layout (secrets loader, install orchestrator, notebook entry wrappers where the category requires them, \gls{sql} bronze envelopes, bundle fragments with multiple resources) and the runbook sections of the connector page. \inlinecode{validate-implementation} runs the test suite from \autoref{sec:connector-testing} until the requirements from the specification are mapped to passing tests. A data file for each source at \inlinecode{src/connectors/<source>/operational.yml} records deployment values such as cloud account, secret scope name, and target bronze table. Missing fields are gathered conversationally during a skill run, so the operator does not have to know the schema upfront.
+Each artifact specified in this chapter is a template, not unrestricted, free form code. This covers the connector files (\autoref{sec:connector-framework}), the analytics jobs (\autoref{sec:analytics-serving}), and the test suites (\autoref{sec:connector-testing}, \autoref{sec:analytics-testing}). This was an objective. The framework should be suited to \gls{ai} assisted extension. The \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} provides four Claude Code skills that consume these templates and produce a reference implementation. The skills are organized by phase. \inlinecode{analyze-source} fetches the official \gls{api} documentation for the source and writes the connector page reference sections. \inlinecode{provision-source} emits the runtime infrastructure for the source as Terraform plus an install script. \inlinecode{generate-connector} produces the connector artifacts listed in \autoref{sec:connector-framework} together with the Databricks runtime layout (secrets loader, install orchestrator, notebook entry wrappers where the category requires them, \gls{sql} bronze envelopes, bundle fragments with multiple resources) and the runbook sections of the connector page. \inlinecode{validate-implementation} runs the test suite from \autoref{sec:connector-testing} until the requirements from the specification are mapped to passing tests. A data file for each source at \inlinecode{src/connectors/<source>/operational.yml} records deployment values such as cloud account, secret scope name, and target bronze table. Missing fields are gathered conversationally during a skill run, so the framework user does not have to know the schema upfront.
 
 It was a conscious design decision that the set consists of four skills rather than a dedicated skill for every combination of role and application security category. This follows the recommended pattern for skills that span multiple variants of the same task~\parencite{Anthropic2026SkillsBestPractices}. Each \inlinecode{SKILL.md} carries the role wide procedure. Guidance per category lives one level deeper, in a \inlinecode{references/<category>.md} file that the agent reads on demand. The seven application security categories are \inlinecode{cmdb}, \inlinecode{scm}, \inlinecode{sast}, \inlinecode{sca}, \inlinecode{secret}, \inlinecode{dast}, and \inlinecode{waf}.
 
-This structure inherits two properties from the underlying skills mechanism~\parencite{Anthropic2025AgentSkills, AgentSkills2026Spec}.The metadata overhead in the agent’s system prompt remains fixed at four descriptions, regardless of how many categories are eventually added to the framework. The procedure is authored once and shared across categories. \autoref{ch:implementation} reports on the execution of the catalog against the selected sources. Manually writing connectors is mundane. The approach of this thesis relies on modern \gls{ai} assistance. A well specified framework plus a compact skill set makes the platform reproducibly constructible, with full traceability from test to requirement directly in the specification.
+This structure inherits two properties from the underlying skills mechanism~\parencite{Anthropic2025AgentSkills, AgentSkills2026Spec}. The metadata overhead in the agent’s system prompt remains fixed at four descriptions, regardless of how many categories are eventually added to the framework. The procedure is authored once and shared across categories. \autoref{ch:implementation} reports on the execution of the catalog against the selected sources. The approach of this thesis relies on modern \gls{ai} assistance for connector construction. A well specified framework plus a compact skill set makes the integration layer reproducibly constructible, with full traceability from test to requirement directly in the specification.

@@ -1,4 +1,5 @@
-\begin{figure}[htbp]
+\begin{center}
+\begin{minipage}{\textwidth}
 \centering
 \begin{tikzpicture}[
     node distance=0.5cm,
@@ -64,6 +65,7 @@
 \draw[arrq] (tx.west) -| node[rulelbl, pos=0.25, above] {validation fail} (qs.north);
 
 \end{tikzpicture}
-\caption[Data plane flow]{Data plane flow within the framework: ingestion with auditable high water mark state in \texttt{silver.hwm} (right), quarantine on the Bronze side and on the Silver side for records that fail structural or required field validation (left), SCD-2 tracking on entity tables via \texttt{valid\_from}/\texttt{valid\_to}, a post mapping dedup pass that writes \texttt{silver.dedup\_links} during the transform task, and gold \texttt{finding\_group\_id} clustering at the aggregate task.}
+\captionof{figure}[Data plane flow]{Data plane flow within the framework: ingestion with auditable high water mark state in \texttt{silver.hwm} (right), quarantine on the Bronze side and on the Silver side for records that fail structural or required field validation (left), SCD-2 tracking on entity tables via \texttt{valid\_from}/\texttt{valid\_to}, a post mapping dedup pass that writes \texttt{silver.dedup\_links} during the transform task, and gold \texttt{finding\_group\_id} clustering at the aggregate task.}
 \label{fig:data-plane-flow}
-\end{figure}
+\end{minipage}
+\end{center}
