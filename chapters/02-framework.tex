@@ -198,7 +198,7 @@ Aggregation tables follow a grain, metric, period structure~\parencite{Kimball20
 \subsection{Entity Model}
 \label{sec:entity-model}
 
-The silver layer instantiates the schema patterns as concrete tables in four groups: entities (dimensions), findings (facts), reference data, and relationships. \autoref{fig:silver-erd} shows a representative subset that exercises every relationship type. The prescription totals 15 tables across the four groups. The \gls{mvp} in \autoref{ch:implementation} realizes the four table subset \{\inlinecode{applications}, \inlinecode{repositories}, \inlinecode{findings}, \inlinecode{app\_repo\_mapping}\} sufficient to demonstrate the medallion contract end to end. Population of the remaining tables is recorded as Future Work in \autoref{sec:future-work}.
+The silver layer instantiates the schema patterns as concrete tables in four groups: entities (dimensions), findings (facts), reference data, and relationships. \autoref{fig:silver-erd} shows a representative subset that exercises every relationship type. The prescription totals 15 domain tables across the four groups. The \gls{mvp} in \autoref{ch:implementation} realizes four of those prescribed domain tables (\inlinecode{applications}, \inlinecode{repositories}, \inlinecode{findings}, and \inlinecode{app\_repo\_mapping}) plus three supporting Silver tables (\inlinecode{finding\_location}, \inlinecode{hwm}, and \inlinecode{suppression\_rules}). Together they form the current core Silver subset sufficient to demonstrate the medallion contract. Population of the remaining prescribed domain tables is recorded as Future Work in \autoref{sec:future-work}.
 
 \input{figures/silver-erd}
 
@@ -409,7 +409,7 @@ Deduplication keys are defined in the Silver Finding pattern (\autoref{sec:schem
 
 \subsubsection{Business context attribution}
 
-Findings are linked to business applications through the \inlinecode{app\_repo\_mapping} relationship table. Because the mapping is many to many, findings inherit application context through a join instead of a direct foreign key, which enables the per application aggregations in \autoref{sec:aggregation-model}. The mapping is sourced from the \gls{cmdb} connector and can be supplemented by automated inference in the \gls{ml} workflows from \autoref{sec:analytics-patterns}.
+Findings are linked to business applications through the \inlinecode{app\_repo\_mapping} relationship table. Because the mapping is many to many, findings inherit application context through a join instead of a direct foreign key, which enables the per application aggregations in \autoref{sec:aggregation-model}. The primary authoritative mapping is expected from the \gls{cmdb} connector when the inventory carries repository relationships. The relationship table can also be populated by deterministic supplemental linkers (for example application-code matching in repository names, used by the \gls{mvp}) or by automated inference in the \gls{ml} workflows from \autoref{sec:analytics-patterns}.
 
 %%% 2.4.4 %%%
 
@@ -431,7 +431,7 @@ Connector tests live beside the connector at \inlinecode{src/connectors/\{source
     \item \inlinecode{REQ-DEDUP}: deduplication for every applicable tool overlap pair (omitted when the connector category does not participate in dedup).
 \end{itemize}
 
-New connectors do not merge until every applicable marker above passes in \gls{cicd}.
+The framework target is that new connectors do not merge until every applicable marker above passes in \gls{cicd}; \autoref{ch:implementation} reports the evidence level reached by the \gls{mvp} connectors and names the live-only or deferred paths separately.
 
 %%%%%%%%%%%
 %%% 2.5 %%%
@@ -451,7 +451,7 @@ Gold layer computations fall into two categories: rule based analytics applying 
 
 \subsubsection{Extension blueprint}
 
-Adding an analytics workflow follows the same procedure as a connector: define the business question and stakeholder, choose rule based or \gls{ml}, implement as a \gls{ldp} pipeline or MLflow experiment, then wire the output to a gold table with the configured refresh strategy. The artifacts under \inlinecode{src/analytics/\{name\}/} mirror the connector layout: \inlinecode{pipeline.py}, \inlinecode{ddl.sql}, \inlinecode{config.yml}, a bundle fragment under \inlinecode{resources/}, and \inlinecode{tests/}. Silver is the stable boundary: authoring a new analytic never requires connector edits, and adding a connector never requires analytics edits.
+Adding an analytics workflow follows the same procedure as a connector: define the business question and stakeholder, choose rule based or \gls{ml}, implement as a \gls{ldp} pipeline, notebook job, or MLflow experiment, then wire the output to a gold table with the configured refresh strategy. The framework-level artifacts are the executable workflow, its DDL or table/view declaration, configuration, a bundle fragment under \inlinecode{resources/}, and tests. The \gls{mvp} realizes this under \inlinecode{src/analytics/notebooks/gold/}, \inlinecode{src/analytics/resources/}, and \inlinecode{src/analytics/tests/}. Silver is the stable boundary: authoring a new analytic never requires connector edits, and adding a connector never requires analytics edits.
 
 \subsubsection{Rule Based Analytics}
 
@@ -499,7 +499,7 @@ Rule based analytics are validated by snapshot comparison. Each test supplies si
 
 \Gls{ml} analytics are validated by held out evaluation and drift monitoring. MLflow's \inlinecode{evaluate()} computes accuracy, precision, recall, and F1, and \inlinecode{validate\_evaluation\_results()} gates promotion against configured thresholds and the registered baseline~\cite{MLflow2025}. In production, prediction distribution comparisons flag drift before model quality degrades. Serving endpoints are exercised through \gls{http} clients to verify correctness and latency against the targets in \autoref{sec:serving-patterns}.
 
-The suite covers every gold table (metric correctness, boundaries, idempotency), every \gls{ml} model (convergence, accuracy, drift, promotion gating), and every serving endpoint (correctness and latency). New analytics do not merge until it passes.
+The complete framework suite covers every gold table (metric correctness, boundaries, idempotency), every \gls{ml} model (convergence, accuracy, drift, promotion gating), and every serving endpoint (correctness and latency). The \gls{mvp} instantiates the rule based part of this target and reports its concrete analytics evidence in \autoref{sec:impl-results}; \gls{ml} model training and production serving latency evidence remain outside the submitted implementation.
 
 \section{Extension Blueprint and AI Assistance}
 
