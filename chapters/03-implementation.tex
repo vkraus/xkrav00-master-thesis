@@ -1,7 +1,7 @@
 \chapter{MVP Implementation}
 \label{ch:implementation}
 
-This chapter reports the reference implementation of the framework defined in \autoref{ch:framework}. The deliverable is a Declarative Automation Bundle, formerly Databricks Asset Bundle~\parencite{DatabricksDAB2026}, that instantiates the three ingestion categories plus the artifact path carve out against the nine sources selected in \autoref{sec:selected-sources}: two \gls{scm} platforms, four scanners across static and dynamic testing, a \gls{cmdb}, a secrets tool, and a runtime security source. It is a minimum viable product. Open items are listed in \autoref{sec:impl-results}.
+This chapter reports the reference implementation of the framework defined in \autoref{ch:framework}. The deliverable is a Declarative Automation Bundle, formerly Databricks Asset Bundle~\parencite{DatabricksDAB2026}, that instantiates the three connector categories plus the artifact ingestion pattern against the nine sources selected in \autoref{sec:selected-sources}: two \gls{scm} platforms, four scanners across static and dynamic testing, a \gls{cmdb}, a secrets tool, and a runtime security source. It is a minimum viable product. Open items are listed in \autoref{sec:impl-results}.
 
 The contribution is twofold. The contract of three categories holds across all nine sources, and the resulting code fits one small repeating module layout. The chain of four skills was run across the nine source specifications and produced the connector modules, runtime artifacts, bundle fragments, tests, and documentation evidence, with reviewer subagent cycles catching named defect classes (\autoref{sec:iteration-summary}, \autoref{sec:ai-eval}). The implementation evidence is not identical for every source: some sources were exercised against live systems, some are backed only by fixtures, some Spark wrappers write Silver frames with rows, and some contract wrappers still return empty Silver frames while mapping helpers at row level are tested. \autoref{sec:impl-results} states those boundaries. \autoref{sec:impl-representative-connectors} shows two ends of the category range in concrete code: ServiceNow on Lakeflow Connect and GitHub on PyGitHub~\parencite{PyGithubDocs2025}.
 
@@ -28,7 +28,7 @@ In this thesis, \gls{ai} instantiable means prompt based generation through tail
 The reference implementation is distributed across two repositories that separate the thesis document from the \gls{mvp} code.
 
 \begin{itemize}
-    \item The thesis repository holds the LaTeX sources for this document.
+    \item The thesis repository holds the \LaTeX{} sources for this document.
     \item The \gls{mvp} implementation repository holds the reference implementation described in the remainder of this section. The source for the documentation site lives inside the same repository under \inlinecode{mkdocs/}. The \href{https://vkraus.github.io/appsec-mvp/}{published site} is the framework user reference and the trail of evidence for each connector.
 \end{itemize}
 
@@ -112,9 +112,9 @@ Each source is resolved to one of the three ingestion categories defined in \aut
 
 \autoref{tab:ingestion-category-assignment} collects the nine assignments alongside the key functional requirement that drove each choice.
 
-\begin{table}[htbp]
-\centering
-\caption[Ingestion category assignment across selected sources]{Ingestion category assignment across the nine selected sources, showing the category chosen for each source and the library or mechanism that instantiates it.}
+\begin{center}
+\begin{minipage}{\textwidth}
+\captionof{table}[Ingestion category assignment across selected sources]{Ingestion category assignment across the nine selected sources, showing the category chosen for each source and the library or mechanism that instantiates it.}
 \label{tab:ingestion-category-assignment}
 \small
 \begin{tabularx}{\textwidth}{l l l X}
@@ -132,7 +132,8 @@ TruffleHog & Artifact path & \gls{cicd} to Volume & \Gls{cli} tool with no serve
 \gls{aws} \gls{waf} & \gls{sdk} & boto3 & Two modes: log stream from Kinesis Data Firehose to S3 (preferred), boto3 \inlinecode{GetSampledRequests} (fallback). \\
 \bottomrule
 \end{tabularx}
-\end{table}
+\end{minipage}
+\end{center}
 
 Across the nine sources, one resolves to Lakeflow Connect (ServiceNow), three to an \gls{sdk} (GitHub, GitLab, \gls{aws} \gls{waf}), two to \gls{dltool} (SonarQube, Dependency-Track), and three to the artifact path of \autoref{sec:ingestion-patterns} (Semgrep, TruffleHog, \gls{owasp} \gls{zap}).
 
@@ -144,7 +145,7 @@ This section shows the realized structure of a connector at each end of the cate
 \subsection{ServiceNow: Lakeflow Connect Pipeline}
 \label{sec:impl-servicenow-connector}
 
-The ServiceNow connector performs no live Python ingestion. The \inlinecode{ingest.py} module carries a module docstring pointing at the bundle fragment under \inlinecode{src/connectors/servicenow/}\allowbreak\inlinecode{resources/pipeline.yml} (reproduced in \autoref{lst:servicenow-pipeline}) and a thin framework contract wrapper (\inlinecode{ingest\_contract}) that validates the credential set so a misconfigured bundle job fails fast. Lakeflow Connect performs the actual \gls{http} ingestion against ServiceNow. Authentication is carried by a Databricks Connection declared in the same folder under \inlinecode{resources/connection.yml} and referenced by name. The \inlinecode{objects} block enumerates the two \gls{cmdb} tables the silver layer consumes and their destination tables in bronze. Schedule and target catalog come from bundle variables so the same fragment can promote across dev, staging, and prod.
+The ServiceNow connector performs no live Python ingestion. The \inlinecode{ingest.py} module carries a module docstring pointing at the bundle fragment under \inlinecode{src/connectors/servicenow/}\allowbreak\inlinecode{resources/pipeline.yml} (reproduced in \autoref{lst:servicenow-pipeline}) and a thin framework contract wrapper (\inlinecode{ingest\_contract}) that validates the credential set so a misconfigured bundle job fails fast. Lakeflow Connect performs the actual \gls{http} ingestion against ServiceNow. Authentication is carried by a Databricks Connection declared in the same folder under \inlinecode{resources/connection.yml} and referenced by name. The \inlinecode{objects} block enumerates the two \gls{cmdb} tables the silver layer consumes and their destination tables in bronze. The \inlinecode{cmdb\_ci\_business\_app} table supplies application records, and \inlinecode{cmdb\_rel\_ci} supplies the relationship edges used by the \gls{mvp} app repository mapping path; fuller production inventories would add explicit repository link fields or additional relationship classes. Schedule and target catalog come from bundle variables so the same fragment can promote across dev, staging, and prod.
 
 \begin{lstlisting}[language=yaml,caption={[ServiceNow pipeline bundle fragment]\texttt{src/connectors/servicenow/resources/pipeline.yml}},label={lst:servicenow-pipeline}]
 resources:
@@ -289,7 +290,7 @@ At commit \inlinecode{e58bb7c} the source tree contains 38 \inlinecode{test\_*.p
 
 \subsection{Contract of three categories}
 
-Every source in the sample resolved to exactly one of Lakeflow Connect, \gls{sdk}, or \gls{dltool}, with the three artifact path sources (Semgrep, TruffleHog, OWASP ZAP) falling into the carve out (\autoref{sec:ingestion-patterns}). No source required a category the framework does not admit. The Lakeflow Connect and \gls{sdk} cases produce visibly different layouts: ServiceNow has no Python ingestion file of substance, while GitHub has a small flat \inlinecode{ingest.py} composed of \gls{sdk} calls. Both preserve the module layout prescribed by the framework, with platform lock in on one side and per source client knowledge on the other.
+Every source in the sample resolved to one of the three connector categories or to the artifact ingestion pattern of \autoref{sec:ingestion-patterns}. No source required another connector category. The Lakeflow Connect and \gls{sdk} cases produce visibly different layouts: ServiceNow has no Python ingestion file of substance, while GitHub has a small flat \inlinecode{ingest.py} composed of \gls{sdk} calls. Both preserve the module layout prescribed by the framework, with platform lock in on one side and per source client knowledge on the other.
 
 \subsection{Declarative mapping}
 
