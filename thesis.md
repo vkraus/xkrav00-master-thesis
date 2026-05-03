@@ -294,10 +294,11 @@ tiers .
 Consolidating application security data is a data engineering problem.
 Industry addresses it with commercial <span acronym-label="aspm"
 acronym-form="singular+short">aspm</span> products offering dashboards
-and aggregated views , but these are proprietary and inflexible. They
-create vendor lockin and prevent security teams from customizing
-pipelines, applying their own <span acronym-label="ml"
-acronym-form="singular+short">ml</span> models, or integrating with
+and aggregated views , but these are proprietary products with limited
+customer control over internal pipelines. They can create security tool
+vendor lock in and constrain security teams that need to customize
+pipelines, apply their own <span acronym-label="ml"
+acronym-form="singular+short">ml</span> models, or integrate with
 internal systems.
 
 The most notable open source alternative, DefectDojo, is a Django based
@@ -458,8 +459,12 @@ the research gap, and summarizes the derived requirements. The
 **framework** phase designs the architecture, data model, connector
 contract, and analytics patterns. The **implementation** phase targets a
 reference implementation with an <span acronym-label="ai"
-acronym-form="singular+short">ai</span> instantiable integration layer:
-a prompt based chain of four skills (analyze-source, provision-source,
+acronym-form="singular+short">ai</span> instantiable integration layer.
+In this thesis, <span acronym-label="ai"
+acronym-form="singular+short">ai</span> instantiable means that a human
+supervised coding agent can generate connector artifacts from the
+framework templates and pass the specified review and test cycle. A
+prompt based chain of four skills (analyze-source, provision-source,
 generate-connector, validate-implementation) was authored from the
 connector contract and run across all nine source specifications under
 reviewer subagent supervision, producing connector modules for each
@@ -1887,10 +1892,9 @@ acronym-form="singular+short">api</span> connectors use the open source
 <span acronym-label="dltool" acronym-form="singular+short">dltool</span>
 library for sources which lack Lakeflow Connect or dedicated
 <span acronym-label="sdk" acronym-form="singular+short">sdk</span>. A
-fourth carve out, the artifact path, applies to
-<span acronym-label="cli" acronym-form="singular+short">cli</span> only
-tools that emit a report file during a continuous integration step and
-is documented as a separate ingestion pattern at
+separate artifact ingestion pattern applies to <span acronym-label="cli"
+acronym-form="singular+short">cli</span> only tools that emit a report
+file during a continuous integration step and is documented in
 <a href="#sec:ingestion-patterns" data-reference-type="autoref"
 data-reference="sec:ingestion-patterns">[sec:ingestion-patterns]</a>.
 All connectors share common concerns: authentication, pagination, rate
@@ -3222,8 +3226,8 @@ This chapter reports the reference implementation of the framework
 defined in <a href="#ch:framework" data-reference-type="autoref"
 data-reference="ch:framework">[ch:framework]</a>. The deliverable is a
 Declarative Automation Bundle, formerly Databricks Asset Bundle , that
-instantiates the three ingestion categories plus the artifact path carve
-out against the nine sources selected in
+instantiates the three connector categories plus the artifact ingestion
+pattern against the nine sources selected in
 <a href="#sec:selected-sources" data-reference-type="autoref"
 data-reference="sec:selected-sources">[sec:selected-sources]</a>: two
 <span acronym-label="scm" acronym-form="singular+short">scm</span>
@@ -3582,7 +3586,13 @@ data-reference="tab:ingestion-category-assignment">[tab:ingestion-category-assig
 collects the nine assignments alongside the key functional requirement
 that drove each choice.
 
-<div id="tab:ingestion-category-assignment">
+<div class="center">
+
+\[Ingestion category assignment across selected sources\]Ingestion
+category assignment across the nine selected sources, showing the
+category chosen for each source and the library or mechanism that
+instantiates it. <span id="tab:ingestion-category-assignment"
+label="tab:ingestion-category-assignment"></span>
 
 | **Source**                                                                                                                                | **Category**                                                       | **Binding**                                                                    | **Decisive requirement**                                                                                                                                                                                                                                                                                                  |
 |:------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------|:-------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -3595,10 +3605,6 @@ that drove each choice.
 | TruffleHog                                                                                                                                | Artifact path                                                      | <span acronym-label="cicd" acronym-form="singular+short">cicd</span> to Volume | <span acronym-label="cli" acronym-form="singular+short">cli</span> tool with no server <span acronym-label="api" acronym-form="singular+short">api</span>. Ingestion via <span acronym-label="cicd" acronym-form="singular+short">cicd</span> step pattern.                                                               |
 | <span acronym-label="owasp" acronym-form="singular+short">owasp</span> <span acronym-label="zap" acronym-form="singular+short">zap</span> | Artifact path                                                      | <span acronym-label="cicd" acronym-form="singular+short">cicd</span> to Volume | Scan report <span acronym-label="json" acronym-form="singular+short">json</span> produced in <span acronym-label="cicd" acronym-form="singular+short">cicd</span> and uploaded to Unity Catalog Volume.                                                                                                                   |
 | <span acronym-label="aws" acronym-form="singular+short">aws</span> <span acronym-label="waf" acronym-form="singular+short">waf</span>     | <span acronym-label="sdk" acronym-form="singular+short">sdk</span> | boto3                                                                          | Two modes: log stream from Kinesis Data Firehose to S3 (preferred), boto3                                                                                                                                                                                                                                                 |
-
-Ingestion category assignment across the nine selected sources, showing
-the category chosen for each source and the library or mechanism that
-instantiates it.
 
 </div>
 
@@ -3646,9 +3652,15 @@ same folder under <span class="mark">resources/connection.yml</span> and
 referenced by name. The <span class="mark">objects</span> block
 enumerates the two <span acronym-label="cmdb"
 acronym-form="singular+short">cmdb</span> tables the silver layer
-consumes and their destination tables in bronze. Schedule and target
-catalog come from bundle variables so the same fragment can promote
-across dev, staging, and prod.
+consumes and their destination tables in bronze. The
+<span class="mark">cmdb_ci_business_app</span> table supplies
+application records, and <span class="mark">cmdb_rel_ci</span> supplies
+the relationship edges used by the <span acronym-label="mvp"
+acronym-form="singular+short">mvp</span> app repository mapping path;
+fuller production inventories would add explicit repository link fields
+or additional relationship classes. Schedule and target catalog come
+from bundle variables so the same fragment can promote across dev,
+staging, and prod.
 
 ``` yaml
 resources:
@@ -3910,18 +3922,15 @@ states which paths are backed by fixtures or deferred.
 
 #### Contract of three categories
 
-Every source in the sample resolved to exactly one of Lakeflow Connect,
-<span acronym-label="sdk" acronym-form="singular+short">sdk</span>, or
-<span acronym-label="dltool"
-acronym-form="singular+short">dltool</span>, with the three artifact
-path sources (Semgrep, TruffleHog, OWASP ZAP) falling into the carve out
-(<a href="#sec:ingestion-patterns" data-reference-type="autoref"
-data-reference="sec:ingestion-patterns">[sec:ingestion-patterns]</a>).
-No source required a category the framework does not admit. The Lakeflow
-Connect and <span acronym-label="sdk"
-acronym-form="singular+short">sdk</span> cases produce visibly different
-layouts: ServiceNow has no Python ingestion file of substance, while
-GitHub has a small flat <span class="mark">ingest.py</span> composed of
+Every source in the sample resolved to one of the three connector
+categories or to the artifact ingestion pattern of
+<a href="#sec:ingestion-patterns" data-reference-type="autoref"
+data-reference="sec:ingestion-patterns">[sec:ingestion-patterns]</a>. No
+source required another connector category. The Lakeflow Connect and
+<span acronym-label="sdk" acronym-form="singular+short">sdk</span> cases
+produce visibly different layouts: ServiceNow has no Python ingestion
+file of substance, while GitHub has a small flat
+<span class="mark">ingest.py</span> composed of
 <span acronym-label="sdk" acronym-form="singular+short">sdk</span>
 calls. Both preserve the module layout prescribed by the framework, with
 platform lock in on one side and per source client knowledge on the
