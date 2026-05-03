@@ -32,7 +32,7 @@
 \node[secondary] (vuln) at (3.2, 1.2) {vulnerabilities\\[2pt]{\tiny\sffamily\mdseries cve\_id (PK)\\ cvss\_score\\ published\_at}};
 
 % Relationship tables
-\node[primary] (appmap) at (-4.2, -3.0) {app\_repo\_mapping\\[2pt]{\tiny\sffamily\mdseries application\_id (FK)\\ repository\_id (FK)\\ link\_source}};
+\node[primary] (appmap) at (-4.2, -3.0) {app\_repo\_mapping\\[2pt]{\tiny\sffamily\mdseries application\_id (FK)\\ repository\_id (FK)\\ link\_source\\ attribution\_state}};
 \node[secondary, text width=2.8cm] (cvemap) at (0, -3.0) {finding\_cve\_mapping\\[2pt]{\tiny\sffamily\mdseries finding\_id (FK)\\ cve\_id (FK)}};
 \node[secondary] (dedup) at (4.2, -3.0) {dedup\_links\\[2pt]{\tiny\sffamily\mdseries finding\_id\_a (FK)\\ finding\_id\_b (FK)\\ match\_tuple}};
 
