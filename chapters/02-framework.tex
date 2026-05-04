@@ -2,7 +2,7 @@
 \chapter{Framework}
 \label{ch:framework}
 
-\autoref{ch:analysis} analyzed the sources, patterns, and gaps in enterprise application security data integration, then summarized the derived requirements in \autoref{sec:req-summary}. This chapter presents the proposed framework: a reusable blueprint defining the architecture, data model, and patterns an organization follows to build its own implementation. The framework targets the Databricks Lakehouse, separating general patterns from platform specifics. \autoref{ch:implementation} then demonstrates a concrete implementation.
+\autoref{ch:analysis} produced the source patterns and requirements. The framework turns them into three design parts: deployment architecture, medallion data model, and connector and analytics contracts. The design targets the Databricks Lakehouse while separating general patterns from platform specific choices. \autoref{ch:implementation} then instantiates it.
 
 %%%%%%%%%%%
 %%% 2.1 %%%
@@ -10,7 +10,7 @@
 
 \section{Solution Architecture}
 
-This section presents the framework architecture at three levels: technology stack, component design, and data layer. The architecture addresses the requirements from domain analysis: heterogeneous source ingestion, vendor agnostic normalization, dual \gls{olap}/\gls{oltp} data serving, and extensibility for new data sources and analytics.
+The architecture is described through three views: the Databricks stack, the runtime components, and the bronze, silver, and gold data layers. These views cover the requirements from domain analysis: heterogeneous source ingestion, vendor agnostic normalization, dual \gls{olap}/\gls{oltp} serving, and extension to new data sources and analytics.
 
 A further design principle applies to the framework artifacts: every template defined in this chapter (schema patterns, mappings, connector contract) is declarative, not procedural, so that an \gls{ai} coding agent reading the specification has enough material to produce a candidate connector implementation. The published skill catalog, which sits in the \gls{mvp} documentation and wraps these templates into executable prompts, is evaluated separately in \autoref{sec:ai-eval}.
 
@@ -134,7 +134,7 @@ Gold computes consumption ready datasets from silver. Aggregation tables compute
 \section{Data Model}
 \label{sec:data-model}
 
-This section maps the conceptual domain model from \autoref{sec:data-entities} to physical table designs across the three medallion layers. Reusable schema patterns are applied to produce the concrete entity, finding, and aggregation tables that the framework provides.
+The conceptual domain model from \autoref{sec:data-entities} is mapped to physical tables across the three medallion layers. The schema patterns produce the entity, finding, relationship, reference, and aggregation tables used by the framework.
 
 %%% 2.2.1 %%%
 
@@ -467,7 +467,7 @@ The framework target is that new connectors do not merge until every applicable 
 \section{Analytics and Serving Framework}
 \label{sec:analytics-serving}
 
-This section addresses the final stage: computing consumption ready insights from silver data and delivering them to stakeholders. \autoref{sec:aggregation-model} defined \textbf{which} gold tables the framework provides. This section defines \textbf{how} those computations are structured and how results reach consumers through analytical, operational, and event driven channels.
+The final stage turns Silver data into Gold outputs for stakeholders. \autoref{sec:aggregation-model} defined \textbf{which} Gold tables exist. The sections below define \textbf{how} those tables are computed and how results reach analytical, operational, and event driven consumers.
 
 %%% 2.5.1 %%%
 
@@ -530,8 +530,8 @@ The complete framework suite covers every gold table (metric correctness, bounda
 
 \section{Extension Blueprint and AI Assistance}
 
-Each artifact specified in this chapter is a template, not unrestricted, free form code. This covers the connector files (\autoref{sec:connector-framework}), the analytics jobs (\autoref{sec:analytics-serving}), and the test suites (\autoref{sec:connector-testing}, \autoref{sec:analytics-testing}). This was an objective. The framework should be suited to \gls{ai} assisted extension. The \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} provides four Claude Code skills that consume these templates and produce a reference implementation. The skills are organized by phase. \inlinecode{analyze-source} fetches the official \gls{api} documentation for the source and writes the connector page reference sections. \inlinecode{provision-source} emits the runtime infrastructure for the source as Terraform plus an install script. \inlinecode{generate-connector} produces the connector artifacts listed in \autoref{sec:connector-framework} together with the Databricks runtime layout (secrets loader, install orchestrator, notebook entry wrappers where the category requires them, \gls{sql} bronze envelopes, bundle fragments with multiple resources) and the runbook sections of the connector page. \inlinecode{validate-implementation} runs the test suite from \autoref{sec:connector-testing} until the requirements from the specification are mapped to passing tests. A data file for each source at \inlinecode{src/connectors/<source>/operational.yml} records deployment values such as cloud account, secret scope name, and target bronze table. Missing fields are gathered conversationally during a skill run, so the framework user does not have to know the schema upfront.
+AI assisted extension is built into the artifact design. Connector files, analytics jobs, and tests are templates with fixed inputs and expected outputs. The \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} packages the procedure as four Claude Code skills: \inlinecode{analyze-source}, \inlinecode{provision-source}, \inlinecode{generate-connector}, and \inlinecode{validate-implementation}. The first skill writes the source reference sections from official \gls{api} documentation. The second emits source runtime infrastructure. The third produces the connector artifacts and Databricks runtime layout. The fourth runs the test suite until requirements from the specification are mapped to passing tests. A data file for each source at \inlinecode{src/connectors/<source>/operational.yml} records deployment values such as cloud account, secret scope name, and target bronze table. Missing fields are gathered during a skill run, so the framework user does not have to know the schema upfront.
 
 It was a conscious design decision that the set consists of four skills rather than a dedicated skill for every combination of role and application security category. This follows the recommended pattern for skills that span multiple variants of the same task~\parencite{Anthropic2026SkillsBestPractices}. Each \inlinecode{SKILL.md} carries the role wide procedure. Guidance per category lives one level deeper, in a \inlinecode{references/<category>.md} file that the agent reads on demand. The seven application security categories are \inlinecode{cmdb}, \inlinecode{scm}, \inlinecode{sast}, \inlinecode{sca}, \inlinecode{secret}, \inlinecode{dast}, and \inlinecode{waf}.
 
-This structure inherits two properties from the underlying skills mechanism~\parencite{Anthropic2025AgentSkills, AgentSkills2026Spec}. The metadata overhead in the agent’s system prompt remains fixed at four descriptions, regardless of how many categories are eventually added to the framework. The procedure is authored once and shared across categories. \autoref{ch:implementation} reports on the execution of the catalog against the selected sources. The approach of this thesis relies on modern \gls{ai} assistance for connector construction. A well specified framework plus a compact skill set makes the integration layer reproducibly constructible, with full traceability from test to requirement directly in the specification.
+This structure inherits two properties from the underlying skills mechanism~\parencite{Anthropic2025AgentSkills, AgentSkills2026Spec}. The metadata overhead in the agent system prompt remains fixed at four descriptions, regardless of how many categories are eventually added to the framework. The procedure is authored once and shared across categories. \autoref{ch:implementation} reports on the execution of the catalog against the selected sources. The approach of this thesis relies on modern \gls{ai} assistance for connector construction. A well specified framework plus a compact skill set makes the integration layer reproducibly constructible, with full traceability from test to requirement directly in the specification.
