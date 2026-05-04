@@ -1,7 +1,7 @@
 \chapter{MVP Implementation}
 \label{ch:implementation}
 
-This chapter reports the reference implementation of the framework defined in \autoref{ch:framework}. The deliverable is a Declarative Automation Bundle, formerly Databricks Asset Bundle~\parencite{DatabricksDAB2026}, that instantiates the three connector categories plus the artifact ingestion pattern against the nine sources selected in \autoref{sec:selected-sources}: two \gls{scm} platforms, four scanners across static and dynamic testing, a \gls{cmdb}, a secrets tool, and a runtime security source. It is a minimum viable product. Open items are listed in \autoref{sec:impl-results}.
+The reference implementation instantiates the framework from \autoref{ch:framework} as a Declarative Automation Bundle, formerly Databricks Asset Bundle~\parencite{DatabricksDAB2026}. It covers the three connector categories plus the artifact ingestion pattern across the nine sources selected in \autoref{sec:selected-sources}: two \gls{scm} platforms, four scanners across static and dynamic testing, a \gls{cmdb}, a secrets tool, and a runtime security source. It is a minimum viable product. Open items are listed in \autoref{sec:impl-results}.
 
 The contribution is twofold. The contract of three categories holds across all nine sources, and the resulting code fits one small repeating module layout. The chain of four skills was run across the nine source specifications and produced the connector modules, runtime artifacts, bundle fragments, tests, and documentation evidence, with reviewer subagent cycles catching named defect classes (\autoref{sec:iteration-summary}, \autoref{sec:ai-eval}). The implementation evidence is not identical for every source: some sources were exercised against live systems, some are backed only by fixtures, some Spark wrappers write Silver frames with rows, and some contract wrappers still return empty Silver frames while mapping helpers at row level are tested. \autoref{sec:impl-results} states those boundaries. \autoref{sec:impl-representative-connectors} shows two ends of the category range in concrete code: ServiceNow on Lakeflow Connect and GitHub on PyGitHub~\parencite{PyGithubDocs2025}.
 
@@ -18,7 +18,7 @@ The implementation follows the procedure below for every source in \autoref{sec:
     \item \textbf{Run the skill chain pass for the source.} The Claude Code skill chain (analyze-source, provision-source, generate-connector, validate-implementation) executes against the source and writes evidence rows to the documentation site: an Implementation log entry per pass and a Validation table keyed by requirement IDs. Each skill pass is then reviewed by a separate subagent (one for spec compliance, one for code quality), whose findings are folded back as follow up commits before the next source moves forward. \autoref{sec:iteration-summary} records the defect classes the reviewer cycle caught.
 \end{enumerate}
 
-Step~1 has a deterministic answer for every source in the sample. Step~2 has an invariant layout across categories. That invariance is what makes supervised \gls{ai} assisted generation repeatable for the connector layer. A generator that emits the layout for a new source does not need to branch on category beyond what \inlinecode{ingest.py} contains and which bundle resource kind the source requires. Step~5 makes that generation procedure auditable: the \href{https://vkraus.github.io/appsec-mvp/}{documentation site} carries the Implementation log and Validation table for each source as the trail of evidence.
+The procedure is repeatable because the source category is resolved before generation and the connector folder layout stays fixed across categories. A generator that emits the layout for a new source only needs to vary \inlinecode{ingest.py} and the bundle resource kind. The \href{https://vkraus.github.io/appsec-mvp/}{documentation site} makes the run auditable by recording the Implementation log and Validation table for each source.
 
 In this thesis, \gls{ai} instantiable means prompt based generation through tailored agent skills created for the framework. The skills encode the connector procedure, required artifacts, and validation steps. The framework user supplies missing environment facts, reviews generated changes, and reruns the skill chain until requirement linked tests and reviewer checks pass.
 
@@ -140,12 +140,12 @@ Across the nine sources, one resolves to Lakeflow Connect (ServiceNow), three to
 \section{Representative Connectors}
 \label{sec:impl-representative-connectors}
 
-This section shows the realized structure of a connector at each end of the category range. ServiceNow represents the Lakeflow Connect case, in which \inlinecode{ingest.py} reduces to a thin contract wrapper and the bundle fragment carries the ingestion specification. GitHub represents the \gls{sdk} case, in which \inlinecode{ingest.py} composes client calls into iterators over bronze records.
+Two connectors show the category range. ServiceNow represents the Lakeflow Connect case, where \inlinecode{ingest.py} reduces to a thin contract wrapper and the bundle fragment carries the ingestion specification. GitHub represents the \gls{sdk} case, where \inlinecode{ingest.py} composes client calls into iterators over bronze records.
 
 \subsection{ServiceNow: Lakeflow Connect Pipeline}
 \label{sec:impl-servicenow-connector}
 
-The ServiceNow connector performs no live Python ingestion. The \inlinecode{ingest.py} module carries a module docstring pointing at the bundle fragment under \inlinecode{src/connectors/servicenow/}\allowbreak\inlinecode{resources/pipeline.yml} (reproduced in \autoref{lst:servicenow-pipeline}) and a thin framework contract wrapper (\inlinecode{ingest\_contract}) that validates the credential set so a misconfigured bundle job fails fast. Lakeflow Connect performs the actual \gls{http} ingestion against ServiceNow. Authentication is carried by a Databricks Connection declared in the same folder under \inlinecode{resources/connection.yml} and referenced by name. The \inlinecode{objects} block enumerates the two \gls{cmdb} tables the silver layer consumes and their destination tables in bronze. The \inlinecode{cmdb\_ci\_business\_app} table supplies application records, and \inlinecode{cmdb\_rel\_ci} supplies the relationship edges used by the \gls{mvp} app repository mapping path; fuller production inventories would add explicit repository link fields or additional relationship classes. Schedule and target catalog come from bundle variables so the same fragment can promote across dev, staging, and prod.
+The ServiceNow connector performs no live Python ingestion. The \inlinecode{ingest.py} module carries a module docstring pointing at the bundle fragment under \inlinecode{src/connectors/servicenow/}\allowbreak\inlinecode{resources/pipeline.yml} (reproduced in \autoref{lst:servicenow-pipeline}) and a thin framework contract wrapper (\inlinecode{ingest\_contract}) that validates the credential set so a misconfigured bundle job fails fast. Lakeflow Connect performs the actual \gls{http} ingestion against ServiceNow. Authentication is carried by a Databricks Connection declared in the same folder under \inlinecode{resources/connection.yml} and referenced by name. The \inlinecode{objects} block enumerates the two \gls{cmdb} tables the silver layer consumes and their destination tables in bronze. The \inlinecode{cmdb\_ci\_business\_app} table supplies application records, and \inlinecode{cmdb\_rel\_ci} supplies the relationship edges used by the \gls{mvp} app repository mapping path. Fuller production inventories would add explicit repository link fields or additional relationship classes. Schedule and target catalog come from bundle variables so the same fragment can promote across dev, staging, and prod.
 
 \begin{lstlisting}[language=yaml,caption={[ServiceNow pipeline bundle fragment]\texttt{src/connectors/servicenow/resources/pipeline.yml}},label={lst:servicenow-pipeline}]
 resources:
@@ -203,13 +203,15 @@ The tests under \inlinecode{src/connectors/github/tests/} fake PyGitHub at the o
 \section{Aggregate Results}
 \label{sec:impl-results}
 
-All nine sources are delivered under \inlinecode{src/connectors/<source>/} with the generated connector artifact set: configuration, ingest and transform modules, mapping, severity and status lookups, bundle resources, secret loading scripts, source runtime where applicable, and co-located tests. Each source page on the documentation site carries an Implementation log (four rows: analyze, provision, generate, validate, each linking to the producing commit) and a Validation table keyed by requirement IDs that map to \inlinecode{@pytest.mark.requirement} markers. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{catalog} aggregates these into one (requirement $\times$ source) view with PASS or N/A per cell. The ten requirement identifiers (\inlinecode{REQ-ING-AUTH}, \inlinecode{REQ-ING-PAG}, \inlinecode{REQ-ING-RL}, \inlinecode{REQ-ING-HWM}, \inlinecode{REQ-TRF-MAP}, \inlinecode{REQ-TRF-SEV}, \inlinecode{REQ-TRF-STS}, \inlinecode{REQ-TRF-TS}, \inlinecode{REQ-DQ}, \inlinecode{REQ-DEDUP}) structure the matrix and form the trail of evidence behind the \gls{ai} claim defended in \autoref{sec:ai-eval}.
+All nine sources have a connector folder under \inlinecode{src/connectors/<source>/}. Each folder contains configuration, ingest and transform modules, mappings, severity and status lookups, bundle resources, secret loading scripts, source runtime where applicable, and colocated tests.
 
-\autoref{tab:impl-evidence-levels} separates the artifact claim from runtime evidence. This distinction is important because "working connector" has several levels in the \gls{mvp}: generated module present, requirement-bound tests present, live source exercised, and Spark transform wired to write Silver rows.
+Evidence is recorded at two levels. Each source page on the documentation site contains an Implementation log and a Validation table keyed by requirement IDs that map to \inlinecode{@pytest.mark.requirement} markers. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{catalog} combines those rows into one requirement by source view with PASS or N/A cells. The ten requirement identifiers (\inlinecode{REQ-ING-AUTH}, \inlinecode{REQ-ING-PAG}, \inlinecode{REQ-ING-RL}, \inlinecode{REQ-ING-HWM}, \inlinecode{REQ-TRF-MAP}, \inlinecode{REQ-TRF-SEV}, \inlinecode{REQ-TRF-STS}, \inlinecode{REQ-TRF-TS}, \inlinecode{REQ-DQ}, \inlinecode{REQ-DEDUP}) structure the matrix and form the evidence trail behind the \gls{ai} claim defended in \autoref{sec:ai-eval}.
+
+\autoref{tab:impl-evidence-levels} separates the artifact claim from runtime evidence. A "working connector" has several levels in the \gls{mvp}: generated module present, requirement bound tests present, live source exercised, and Spark transform wired to write Silver rows.
 
 \begin{center}
 \begin{minipage}{\textwidth}
-\captionof{table}[Implementation evidence levels by source]{Implementation evidence levels by source. All rows include the generated connector folder, mapping/configuration artifacts, bundle resources, source runtime where applicable, and requirement-bound tests.}
+\captionof{table}[Implementation evidence levels by source]{Implementation evidence levels by source. All rows include the generated connector folder, mapping/configuration artifacts, bundle resources, source runtime where applicable, and requirement bound tests.}
 \label{tab:impl-evidence-levels}
 \scriptsize
 \begin{tabularx}{\textwidth}{l X X}
@@ -234,7 +236,7 @@ TruffleHog & Artifact ingestion path, mapping helpers, severity/status tests, so
 
 \begin{center}
 \begin{minipage}{\textwidth}
-\captionof{table}[Connector evidence matrix]{Connector evidence matrix. Every row has a requirement matrix on the documentation site with PASS or N/A cells. ``Rows'' means the Spark wrapper emits non-empty Silver rows; ``Schema'' means it returns the target schema while row helpers are tested.}
+\captionof{table}[Connector evidence matrix]{Connector evidence matrix. Every row has a requirement matrix on the documentation site with PASS or N/A cells. ``Rows'' means the Spark wrapper emits non empty Silver rows. ``Schema'' means it returns the target schema while row helpers are tested.}
 \label{tab:connector-evidence-matrix}
 \scriptsize
 \begin{tabularx}{\textwidth}{l c c c c c X}
@@ -242,10 +244,10 @@ TruffleHog & Artifact ingestion path, mapping helpers, severity/status tests, so
 \textbf{Source} & \textbf{Tests} & \textbf{Live} & \textbf{Bundle} & \textbf{Rows} & \textbf{Spark} & \textbf{Boundary} \\
 \midrule
 ServiceNow & Yes & Yes & Yes & Yes & Schema & Full Silver application frame pending. \\
-GitHub & Yes & Yes & Yes & Yes & Partial & Repository rows are partial; finding wrapper pending. \\
+GitHub & Yes & Yes & Yes & Yes & Partial & Repository rows are partial. Finding wrapper pending. \\
 GitLab & Yes & No & Yes & Yes & Schema & Fixture backed only. \\
 SonarQube & Yes & Yes & Yes & Yes & Rows & Live evidence is source specific. \\
-Semgrep & Yes & Yes & Yes & Yes & Schema & Artifact path exercised; wrapper pending. \\
+Semgrep & Yes & Yes & Yes & Yes & Schema & Artifact path exercised. Wrapper pending. \\
 Dependency-Track & Yes & No & Yes & Yes & Schema & Live dltool primitive deferred. \\
 TruffleHog & Yes & No & Yes & Yes & Schema & Fixture backed only. \\
 \gls{owasp} \gls{zap} & Yes & Yes & Yes & Yes & Rows & Attribution depends on deployment mapping. \\
@@ -299,7 +301,7 @@ Connectors share severity and status normalization helpers in \inlinecode{src/pl
 \subsection{Iteration Summary}
 \label{sec:iteration-summary}
 
-This subsection collects iterations caught by review. Each is classified against the acceptance criterion defined in \autoref{sec:ai-eval}: \textbf{framework gap} (a specification extension would have prevented the issue and would generalize), \textbf{source specific issue} (not generalizable beyond one source), or \textbf{environment setup} (setup or infrastructure outside framework scope). Earlier iterations before the structural redesign exposed three framework gaps: a hand written shared \gls{http} primitive that introduced an unsanctioned fourth ingestion category, a missing boundary validator on incremental state inputs, and a misconfigured retry policy on the GitHub client. The redesign closed all three by enforcing the layering rule of \autoref{sec:impl-layering-rule} and by binding the connector contract to the colocated test suite. The findings below are from the reviewer cycle after the redesign.
+Review caught the iterations below. Each one is classified against the acceptance criterion in \autoref{sec:ai-eval}: \textbf{framework gap} (a specification extension would have prevented the issue and would generalize), \textbf{source specific issue} (not generalizable beyond one source), or \textbf{environment setup} (setup or infrastructure outside framework scope). Earlier iterations before the structural redesign exposed three framework gaps: a hand written shared \gls{http} primitive that introduced an unsanctioned fourth ingestion category, a missing boundary validator on incremental state inputs, and a misconfigured retry policy on the GitHub client. The redesign closed all three by enforcing the layering rule of \autoref{sec:impl-layering-rule} and by binding the connector contract to the colocated test suite. The findings below are from the reviewer cycle after the redesign.
 
 \begin{itemize}
     \item \textbf{Layering boundary that the redesign closed.} The layout before the redesign mixed top level \inlinecode{tests/}, \inlinecode{config/}, \inlinecode{resources/}, \inlinecode{sql/}, and \inlinecode{infra/terraform/} folders, and the platform layer predeclared resources for specific connectors. This permitted exactly the failure mode that the unsanctioned fourth ingestion category had exposed. The redesign moved every component to its own folder, deleted the predeclared resources from the platform layer, and stated the layering rule explicitly. \textbf{Framework gap.} The framework now states three install layers with no upward or sideways setup code dependencies, and the data level \gls{scm} first ordering is recorded separately as a job time constraint.

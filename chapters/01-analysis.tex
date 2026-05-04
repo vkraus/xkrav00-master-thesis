@@ -1,7 +1,7 @@
 \chapter{Analysis}
 \label{ch:analysis}
 
-This chapter analyzes the functional domains relevant to building an application security data platform. Each section combines theoretical foundations with practical tool and \gls{api} analysis, focusing on source system interfaces, data models, and integration patterns. Technology choices are deferred to \autoref{ch:framework} and \autoref{ch:implementation}.
+The analysis starts from the data that an application security platform has to integrate: inventories, development systems, security tools, vulnerability intelligence, and runtime telemetry. For each area, the chapter identifies the relevant interfaces, data models, and integration patterns. Technology choices are made later in \autoref{ch:framework} and \autoref{ch:implementation}.
 
 %%%%%%%%%%%
 %%% 1.1 %%%
@@ -10,7 +10,7 @@ This chapter analyzes the functional domains relevant to building an application
 \section{Asset Discovery and Inventory}
 \label{sec:app-inventory}
 
-Asset discovery and inventory is the foundational data source for any application security data platform. Organizations maintain application inventories in a \gls{cmdb} or custom catalog, while cloud providers and container orchestrators expose asset inventories through \glspl{api}. Without this context, a vulnerability cannot be attributed to an owner, scored for business impact, or prioritized.
+Asset discovery and inventory provide the first required context for an application security data platform. Organizations maintain application inventories in a \gls{cmdb} or custom catalog, while cloud providers and container orchestrators expose asset inventories through \glspl{api}. Without this context, a vulnerability cannot be attributed to an owner, scored for business impact, or prioritized.
 
 %%% 1.1.1 %%%
 
@@ -193,7 +193,7 @@ Several patterns emerge. \gls{rest} \glspl{api} with \gls{json} responses are do
 
 \section{Data Engineering}
 
-Consolidating the diverse sources analyzed above into a unified analytical platform is a data integration problem. This section surveys the architectural paradigms and engineering patterns relevant to solving it.
+Consolidating the sources above into one analytical platform is a data integration problem. The relevant engineering patterns are lakehouse storage, layered transformation, incremental ingestion, and dual analytical and operational serving.
 
 %%% 1.7.1 %%%
 
@@ -377,21 +377,22 @@ Lakewatch focuses on runtime security operations: threat detection, incident res
 \begin{minipage}{\textwidth}
 \captionof{table}{Comparison of Existing Approaches}
 \label{tab:related-work-comparison}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X c c c c c}
+\scriptsize
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X c c c c c c}
 \toprule
-\textbf{Criterion} & \textbf{ASPM} & \textbf{Platform native} & \textbf{DefectDojo} & \textbf{Lakewatch} & \textbf{This thesis} \\
+\textbf{Criterion} & \textbf{ASPM} & \shortstack{\textbf{Platform}\\\textbf{native}} & \textbf{DefectDojo} & \textbf{Lakewatch} & \shortstack{\textbf{Thesis}\\\textbf{framework}} & \shortstack{\textbf{Thesis}\\\textbf{MVP}} \\
 \midrule
-Open source              & --      & --      & Yes     & --      & Yes \\
-Vendor agnostic model    & --      & --      & Partial & --      & Partial \\
-Extensible connectors    & --      & --      & Yes     & Partial & Yes \\
-Lakehouse architecture   & --      & --      & --      & Yes     & Yes \\
-OLAP + OLTP serving      & --      & --      & --      & --      & Yes \\
-Data quality enforcement & --      & --      & --      & --      & Yes \\
-AppSec specific model    & Yes     & Partial & Yes     & --      & Yes \\
-Enterprise scalability   & Yes     & Partial & --      & Yes     & Partial \\
+Open source              & --      & --      & Yes     & --      & Yes     & Yes \\
+Vendor agnostic model    & --      & --      & Partial & --      & Yes     & Partial \\
+Extensible connectors    & --      & --      & Yes     & Partial & Yes     & Yes \\
+Lakehouse architecture   & --      & --      & --      & Yes     & Yes     & Yes \\
+OLAP + OLTP serving      & --      & --      & --      & --      & Yes     & Partial \\
+Data quality enforcement & --      & --      & --      & --      & Yes     & Partial \\
+AppSec specific model    & Yes     & Partial & Yes     & --      & Yes     & Partial \\
+Enterprise scalability   & Yes     & Partial & --      & Yes     & Partial & -- \\
 \bottomrule
 \end{tabularx}
-\par\footnotesize \textit{Note.} Yes indicates that the capability is specified by the approach. For this thesis, implementation evidence is limited to the \gls{mvp} scope described in \autoref{ch:implementation} and the Limitations section of the Conclusion. Partial indicates acknowledged or partial support. -- indicates out of scope or not addressed. Source: author synthesis of cited product documentation, accessed 2026-04.
+\par\footnotesize \textit{Note.} Thesis framework means design specification. Thesis MVP means Databricks reference implementation evidence. Partial indicates bounded or acknowledged support. -- indicates out of scope or not addressed. Source: cited product documentation and author synthesis (accessed 2026-03/04).
 \end{minipage}
 \end{center}
 
@@ -500,11 +501,11 @@ Across the nine sources, four record forms recur (ticket like, resource like, fi
 \section{Requirements Summary}
 \label{sec:req-summary}
 
-The analysis above produces the core requirements used by \autoref{ch:framework}. The complete requirements specification is published in the \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} and attached to this thesis as \texttt{appsec-mvp-docs.zip}. The specification contains the source \gls{api} analysis, mapping derivations, runbooks, validation logs, and the full traceability matrix. This section summarizes the parts needed to evaluate the requirements contribution without reading the external specification. \autoref{tab:req-summary} names the requirement families, the evidence in the thesis, and the implementation trace used to evaluate each family. \autoref{tab:connector-req-snapshot} lists the stable connector requirement identifiers used by tests and by the published traceability matrix.
+The analysis above produces the core requirements used by \autoref{ch:framework}. The complete requirements specification is published in the \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} and attached to this thesis as \texttt{appsec-mvp-docs.zip}. It contains the source \gls{api} analysis, mapping derivations, runbooks, validation logs, and the full traceability matrix. The summary below gives the parts needed to evaluate the requirements contribution without reading the external specification. \autoref{tab:req-summary} names the requirement families, the evidence in the thesis, and the implementation trace used to evaluate each family. \autoref{tab:connector-req-snapshot} lists the stable connector requirement identifiers used by tests and by the published traceability matrix.
 
 The requirement identifiers are intentionally stable across sources. A source can mark a requirement as not applicable (for example, tools that only emit artifacts have no \gls{api} pagination or rate limit handling), but applicable requirements must be bound to tests. This is the bridge between the requirements specification contribution and the implementation evidence: the framework defines the identifiers and expected behavior, while \autoref{ch:implementation} reports how the \gls{mvp} satisfies or bounds them for each selected source.
 
-This thesis fills the gap with a vendor agnostic framework. It applies lakehouse architecture and the medallion pattern to ingest tool output, normalize it into a domain model, and serve it through \gls{olap} and \gls{oltp} interfaces. \autoref{ch:framework} presents the framework, and \autoref{ch:implementation} demonstrates its implementation.
+The gap identified above is addressed by a vendor agnostic framework. It applies lakehouse architecture and the medallion pattern to ingest tool output, normalize it into a domain model, and serve it through \gls{olap} and \gls{oltp} interfaces. \autoref{ch:framework} gives the design, and \autoref{ch:implementation} reports the \gls{mvp}.
 
 \begin{center}
 \begin{minipage}{\textwidth}
