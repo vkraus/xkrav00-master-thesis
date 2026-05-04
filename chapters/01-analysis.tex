@@ -1,7 +1,7 @@
 \chapter{Analysis}
 \label{ch:analysis}
 
-The analysis starts from the data that an application security platform has to integrate: inventories, development systems, security tools, vulnerability intelligence, and runtime telemetry. For each area, the chapter identifies the relevant interfaces, data models, and integration patterns. Technology choices are made later in \autoref{ch:framework} and \autoref{ch:implementation}.
+The analysis starts from the data that an application security platform has to integrate: inventories, development systems, security tools, vulnerability intelligence, and runtime telemetry. For each area, the chapter identifies the relevant interfaces, data models, and integration patterns. Technology choices are made later in the \hyperref[ch:framework]{Framework} and \hyperref[ch:implementation]{MVP Implementation} chapters.
 
 %%%%%%%%%%%
 %%% 1.1 %%%
@@ -52,7 +52,7 @@ Data quality in \glspl{cmdb} is a persistent concern~\cite{Gartner2021CMDB}. Rec
 
 Despite these difficulties, the application inventory is indispensable: without its business context, findings lack organizational meaning for prioritization and governance.
 
-Alternative platforms include BMC Helix, Device42, and the open source Ralph. Cloud native services such as AWS Config and Azure Resource Graph expose equivalent inventories for cloud resources, consumed through provider native \glspl{api} with IAM scoped credentials. The bronze ingestion pattern (\autoref{ch:framework}) applies to any source with an inventory \gls{api}.
+Alternative platforms include BMC Helix, Device42, and the open source Ralph. Cloud native services such as AWS Config and Azure Resource Graph expose equivalent inventories for cloud resources, consumed through provider native \glspl{api} with IAM scoped credentials. The bronze ingestion pattern from the \hyperref[ch:framework]{Framework} chapter applies to any source with an inventory \gls{api}.
 
 %%%%%%%%%%%
 %%% 1.2 %%%
@@ -71,7 +71,7 @@ For this thesis, the repository is the primary entity around which findings are 
 
 Development teams host Git repositories on cloud \gls{scm} platforms. GitHub is dominant (81\% adoption for code collaboration), followed by GitLab (36\%), Bitbucket, and Azure DevOps~\cite{StackOverflow2025, GitHub2025Octoverse}. Most large organizations run several platforms, so multi platform ingestion is a practical requirement.
 
-Beyond source code, \gls{scm} platforms expose security relevant metadata: primary language, last activity, visibility, archive status. Branch protection rules indicate development process maturity. Team and contributor assignments establish ownership feeding into the mapping from application to team in \autoref{sec:app-inventory}.
+Beyond source code, \gls{scm} platforms expose security relevant metadata: primary language, last activity, visibility, archive status. Branch protection rules indicate development process maturity. Team and contributor assignments establish ownership feeding into the mapping from application to team in the \hyperref[sec:app-inventory]{Asset Discovery and Inventory section}.
 
 These platforms share three API patterns: token based authentication (OAuth or \glspl{pat}), page or cursor pagination, and rate limits that require backoff. GitHub also exposes a GraphQL endpoint alongside its \gls{rest} \gls{api} (v3), with a 5\,000 requests per hour limit~\cite{GitHubAPI2024, GitHubRateLimits2024}. GitLab, Bitbucket, and Azure DevOps Repos provide comparable interfaces.
 
@@ -114,7 +114,7 @@ For data interchange, \gls{sarif} defines a \gls{json} based format for static a
     \item CycloneDX and \gls{spdx} cover software composition, not code level vulnerabilities.
     \item \gls{ocsf} serves security operations, not application security posture.
 \end{itemize}
-This gap motivates the normalization model in \autoref{ch:framework}.
+This gap motivates the normalization model in the \hyperref[ch:framework]{Framework} chapter.
 
 Static analysis tools examine source code and build artifacts without executing the application. Their findings point to repositories, files, and lines, so developers own them directly. Mobile application security testing is excluded, as the framework targets web applications and backend services.
 
@@ -153,9 +153,9 @@ Secret detection tools scan version control history for credentials, \gls{api} k
 \section{Dynamic Application Security Testing}
 \label{sec:dynamic-appsec}
 
-\Gls{dast} tests running applications by sending crafted \gls{http} requests and analyzing responses for vulnerability indicators~\cite{Stuttard2011}. It requires a deployed application and detects vulnerabilities that appear only at runtime, such as authentication bypass, server misconfiguration, and injection flaws. This section covers active scanning. \autoref{sec:runtime-security} covers passive telemetry.
+\Gls{dast} tests running applications by sending crafted \gls{http} requests and analyzing responses for vulnerability indicators~\cite{Stuttard2011}. It requires a deployed application and detects vulnerabilities that appear only at runtime, such as authentication bypass, server misconfiguration, and injection flaws. This section covers active scanning. The \hyperref[sec:runtime-security]{Runtime Security section} covers passive telemetry.
 
-The representative tools are \gls{owasp} \gls{zap} (open source) and Burp Suite Enterprise, both exposing a \gls{rest} \gls{api} for scan management and alert retrieval. Findings include the target \gls{url}, affected \gls{http} parameter, vulnerability type mapped to \gls{cwe}~\cite{CWE2024}, exploitation evidence, and confidence rating. The core integration challenge is that \gls{dast} findings are \gls{url} based, not code based. Mapping them to source repositories requires deployment metadata or inventory data from \autoref{sec:app-inventory}. Without that link, \gls{dast} findings can be attributed to applications but not to teams or code locations.
+The representative tools are \gls{owasp} \gls{zap} (open source) and Burp Suite Enterprise, both exposing a \gls{rest} \gls{api} for scan management and alert retrieval. Findings include the target \gls{url}, affected \gls{http} parameter, vulnerability type mapped to \gls{cwe}~\cite{CWE2024}, exploitation evidence, and confidence rating. The core integration challenge is that \gls{dast} findings are \gls{url} based, not code based. Mapping them to source repositories requires deployment metadata or inventory data from the \hyperref[sec:app-inventory]{Asset Discovery and Inventory section}. Without that link, \gls{dast} findings can be attributed to applications but not to teams or code locations.
 
 %%%%%%%%%%%%%
 %%% 1.5 %%%
@@ -164,11 +164,7 @@ The representative tools are \gls{owasp} \gls{zap} (open source) and Burp Suite 
 \section{Runtime Security}
 \label{sec:runtime-security}
 
-Runtime security covers passive telemetry from production workloads, sitting alongside the active scanning in \autoref{sec:dynamic-appsec} and completing the three detection tiers the framework uses: static, dynamic, and runtime. The representative tool in this tier is the \gls{waf}. It does not execute scans. It inspects live \gls{http} traffic and emits events when rules fire, marking exploitation attempts against a workload or endpoint and linking to applications through deployment metadata instead of source code coordinates. Broader runtime operations such as \gls{siem} driven incident response and general log analytics are adjacent but out of scope. The framework treats runtime security as one input tier among three, correlated with static and dynamic findings through the shared application inventory.
-
-%%% 1.5.1 %%%
-
-\subsection{Web Application Firewalls}
+Runtime security covers passive telemetry from production workloads, sitting alongside the active scanning in the \hyperref[sec:dynamic-appsec]{Dynamic Application Security Testing section} and completing the three detection tiers the framework uses: static, dynamic, and runtime. The representative tool in this tier is the \gls{waf}. It does not execute scans. It inspects live \gls{http} traffic and emits events when rules fire, marking exploitation attempts against a workload or endpoint and linking to applications through deployment metadata instead of source code coordinates. Broader runtime operations such as \gls{siem} driven incident response and general log analytics are adjacent but out of scope. The framework treats runtime security as one input tier among three, correlated with static and dynamic findings through the shared application inventory.
 
 \Glspl{waf} operate at the network perimeter, inspecting inbound \gls{http} traffic against rule sets such as the \gls{owasp} Core Rule Set~\cite{OWASPCRS2024}. They log blocked and flagged requests with matched rule, request details, and action taken. \gls{aws} \gls{waf} delivers full request logs to Amazon S3 through Kinesis Data Firehose, which the framework consumes as the primary path. The \inlinecode{GetSampledRequests} \gls{api} returns only a sampled subset and serves as a fallback (\href{https://vkraus.github.io/appsec-mvp/connectors/waf/aws-waf/}{source reference}). Cloudflare and Akamai expose comparable \gls{rest} \glspl{api} for log retrieval and configuration.
 
@@ -185,7 +181,7 @@ These platforms bundle \gls{ddos} protection alongside \gls{waf} capabilities. \
 
 The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-characteristics/}{source characteristics} page tabulates integration characteristics across the AppSec sources surveyed for the thesis.
 
-Several patterns emerge. \gls{rest} \glspl{api} with \gls{json} responses are dominant, but \gls{xml}, GraphQL, \gls{cli} output parsing, and manual uploads are all necessary. Standardization varies: \gls{sca} benefits from the \gls{cve}/\gls{nvd} ecosystem, \gls{sast} is partially standardized through \gls{sarif}, and secret scanning has no standard format. Update frequencies range from continuous dependency monitoring to periodic penetration tests. These characteristics define what the ingestion layer in \autoref{ch:framework} must accommodate.
+Several patterns emerge. \gls{rest} \glspl{api} with \gls{json} responses are dominant, but \gls{xml}, GraphQL, \gls{cli} output parsing, and manual uploads are all necessary. Standardization varies: \gls{sca} benefits from the \gls{cve}/\gls{nvd} ecosystem, \gls{sast} is partially standardized through \gls{sarif}, and secret scanning has no standard format. Update frequencies range from continuous dependency monitoring to periodic penetration tests. These characteristics define what the ingestion layer in the \hyperref[ch:framework]{Framework} chapter must accommodate.
 
 %%%%%%%%%%%
 %%% 1.7 %%%
@@ -210,7 +206,7 @@ The medallion architecture~\cite{Strengholt2025} organizes lakehouse data into t
 \end{itemize}
 This maps naturally to security data integration. Bronze captures raw tool output in source native schemas, silver normalizes findings into a vendor agnostic model, and gold computes aggregated risk metrics and enriched datasets stakeholders consume.
 
-A security data platform must serve two access patterns. \Gls{olap} queries power dashboards and trend analysis over large aggregated datasets. \Gls{oltp} access supports operational workflows such as issue tracker integration and real time risk lookups, where low latency reads and writes to individual records are essential. Both inform the serving architecture in \autoref{ch:framework}.
+A security data platform must serve two access patterns. \Gls{olap} queries power dashboards and trend analysis over large aggregated datasets. \Gls{oltp} access supports operational workflows such as issue tracker integration and real time risk lookups, where low latency reads and writes to individual records are essential. Both inform the serving architecture in the \hyperref[ch:framework]{Framework} chapter.
 
 %%% 1.7.2 %%%
 
@@ -242,8 +238,8 @@ The security domains analyzed above produce data about a common set of entities.
 \toprule
 \textbf{Entity} & \textbf{Role in the model} \\
 \midrule
-Applications     & Business unit from asset inventories (\autoref{sec:app-inventory}): name, owning team, criticality tier, lifecycle status, compliance scope. Spans repositories and deployment environments. \\
-Repositories     & Technical asset from \gls{scm} (\autoref{sec:sw-dev-analysis}): primary unit around which findings are grouped. \\
+Applications     & Business unit from asset inventories (\hyperref[sec:app-inventory]{Asset Discovery and Inventory section}): name, owning team, criticality tier, lifecycle status, compliance scope. Spans repositories and deployment environments. \\
+Repositories     & Technical asset from \gls{scm} (\hyperref[sec:sw-dev-analysis]{Software Development section}): primary unit around which findings are grouped. \\
 Findings         & Security issue from any tool category: severity, status, source tool, code location, rule identifier. Each traces to a specific scan. \\
 Vulnerabilities  & \gls{cve} identified issue enriched with three signals: \gls{cvss} from \gls{nvd}, exploitation probability from \gls{epss}, and \gls{cisa} \gls{kev} confirmed exploitation. Multiple findings may reference the same vulnerability. \\
 Teams            & Organizational ownership linking personnel to applications and remediation responsibility. \\
@@ -333,7 +329,7 @@ Stakeholders consume this data through different patterns:
     \item Security experts need drill down access to raw findings, audit trails, and cross tool correlation for triage.
     \item Leadership needs executive metrics: \gls{mttr}, \gls{sla} compliance, vulnerability density trends, and portfolio level comparisons.
 \end{itemize}
-These span the \gls{olap} and \gls{oltp} requirements from \autoref{sec:data-architecture} and drive the serving architecture in \autoref{ch:framework}.
+These span the \gls{olap} and \gls{oltp} requirements from the \hyperref[sec:data-architecture]{Data Platform Architecture section} and drive the serving architecture in the \hyperref[ch:framework]{Framework} chapter.
 
 %%%%%%%%%%%
 %%% 1.8 %%%
@@ -396,7 +392,7 @@ Enterprise scalability   & Yes     & Partial & --      & Yes     & Partial & -- 
 \end{minipage}
 \end{center}
 
-The surveyed approaches do not jointly satisfy the criteria in the form required by this thesis. The contribution is the combination of an application security domain model, a medallion pipeline, a connector contract, requirement traceability, and a Databricks reference implementation. The present work is itself partial on two criteria: the vendor agnostic claim holds at framework level but the reference implementation runs on Databricks alone, and lakehouse based enterprise scalability is supported by design but not empirically validated here (both noted in the Limitations section of the Conclusion). The academic sources reviewed in this chapter mainly support the detection and data engineering parts of the problem rather than a complete cross tool integration architecture~\cite{Chess2007, McGraw2006, Stuttard2011, Reis2022, Strengholt2025}.
+The surveyed approaches do not jointly satisfy the criteria in the form required by this thesis. The contribution is the combination of an application security domain model, a medallion pipeline, a connector contract, requirement traceability, and a Databricks reference implementation. The present work is itself partial on two criteria: the vendor agnostic claim holds at framework level but the reference implementation runs on Databricks alone, and lakehouse based enterprise scalability is supported by design but not empirically validated here (both noted in the \hyperref[sec:conclusion-limitations]{Limitations section}). The academic sources reviewed in this chapter mainly support the detection and data engineering parts of the problem rather than a complete cross tool integration architecture~\cite{Chess2007, McGraw2006, Stuttard2011, Reis2022, Strengholt2025}.
 
 %%%%%%%%%%%
 %%% 1.9 %%%
@@ -405,7 +401,7 @@ The surveyed approaches do not jointly satisfy the criteria in the form required
 \section{Selected Sources}
 \label{sec:selected-sources}
 
-The reference implementation in \autoref{ch:implementation} instantiates the framework against nine source systems chosen to cover the ingestion and integration patterns that the framework must support, while keeping the sample small enough to manage. The selection spans all three detection tiers: static testing, dynamic testing, and runtime security.
+The reference implementation in the \hyperref[ch:implementation]{MVP Implementation} chapter instantiates the framework against nine source systems chosen to cover the ingestion and integration patterns that the framework must support, while keeping the sample small enough to manage. The selection spans all three detection tiers: static testing, dynamic testing, and runtime security.
 
 \subsection{Selection Criteria}
 
@@ -419,7 +415,7 @@ The nine sources are selected based on five criteria:
     \item \textbf{Industry adoption.} Each tool is in widespread enterprise use.
 \end{enumerate}
 
-The selection therefore supports analytical generalization from observed integration patterns, not statistical generalization from a population of tools. The main bias is toward sources with accessible \glspl{api}, free tiers, and formats that can be exercised in a thesis setting. The Limitations section of the Conclusion names source categories not demonstrated, including SOAP, gRPC, syslog, Kafka event streams, binary telemetry, and push only webhook native sources.
+The selection therefore supports analytical generalization from observed integration patterns, not statistical generalization from a population of tools. The main bias is toward sources with accessible \glspl{api}, free tiers, and formats that can be exercised in a thesis setting. The \hyperref[sec:conclusion-limitations]{Limitations section} names source categories not demonstrated, including SOAP, gRPC, syslog, Kafka event streams, binary telemetry, and push only webhook native sources.
 
 A summary of the variation in incremental strategies among the selected sources is presented in \autoref{tab:incremental-strategies}.
 
@@ -463,7 +459,7 @@ Details for each source are on the \href{https://vkraus.github.io/appsec-mvp/con
 
 \subsection{Considered and Excluded}
 
-\autoref{tab:considered-excluded} enumerates the key tools that were considered and the criterion that excluded each. Tools marked \textbf{within scope, deferred} satisfy all criteria but are excluded based on the cap in Criterion~4. Onboarding them would simply be a repeat of the procedure per source in \autoref{sec:impl-methodology}.
+\autoref{tab:considered-excluded} enumerates the key tools that were considered and the criterion that excluded each. Tools marked \textbf{within scope, deferred} satisfy all criteria but are excluded based on the cap in Criterion~4. Onboarding them would simply be a repeat of the procedure per source in the \hyperref[sec:impl-methodology]{Methodology section}.
 
 \begin{center}
 \begin{minipage}{\textwidth}
@@ -481,7 +477,7 @@ Snyk              & \gls{sca} / \gls{sast} & C4  & \textbf{within scope, deferre
 GitGuardian       & secrets       & C4     & \textbf{within scope, deferred} (overlap with TruffleHog) \\
 GitLeaks          & secrets       & C4     & \textbf{within scope, deferred} (overlap with TruffleHog) \\
 Dependabot        & \gls{sca}           & C4     & \textbf{within scope, deferred}. GitHub native, overlap with Dependency-Track \\
-Jira              & issue tracker & C4     & \textbf{within scope, deferred}. Issue tracking is in the data model (\autoref{sec:data-entities}), MVP defers connector to keep the count at nine \\
+Jira              & issue tracker & C4     & \textbf{within scope, deferred}. Issue tracking is in the data model (\hyperref[sec:data-entities]{Domain Data Model section}), MVP defers connector to keep the count at nine \\
 Azure DevOps      & \gls{scm} / \gls{cicd} & C4 & \textbf{within scope, deferred} (overlap with GitHub and GitLab) \\
 Bitbucket Cloud   & \gls{scm}           & C4     & \textbf{within scope, deferred} \\
 Jenkins           & \gls{cicd}            & C2     & CI orchestrator, does not produce \gls{aspm} findings on its own \\
@@ -501,11 +497,11 @@ Across the nine sources, four record forms recur (ticket like, resource like, fi
 \section{Requirements Summary}
 \label{sec:req-summary}
 
-The analysis above produces the core requirements used by \autoref{ch:framework}. The complete requirements specification is published in the \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} and attached to this thesis as \texttt{appsec-mvp-docs.zip}. It contains the source \gls{api} analysis, mapping derivations, runbooks, validation logs, and the full traceability matrix. The summary below gives the parts needed to evaluate the requirements contribution without reading the external specification. \autoref{tab:req-summary} names the requirement families, the evidence in the thesis, and the implementation trace used to evaluate each family. \autoref{tab:connector-req-snapshot} lists the stable connector requirement identifiers used by tests and by the published traceability matrix.
+The analysis above produces the core requirements used by the \hyperref[ch:framework]{Framework} chapter. The complete requirements specification is published in the \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} and attached to this thesis as \texttt{appsec-mvp-docs.zip}. It contains the source \gls{api} analysis, mapping derivations, runbooks, validation logs, and the full traceability matrix. The summary below gives the parts needed to evaluate the requirements contribution without reading the external specification. \autoref{tab:req-summary} names the requirement families, the evidence in the thesis, and the implementation trace used to evaluate each family. \autoref{tab:connector-req-snapshot} lists the stable connector requirement identifiers used by tests and by the published traceability matrix.
 
-The requirement identifiers are intentionally stable across sources. A source can mark a requirement as not applicable (for example, tools that only emit artifacts have no \gls{api} pagination or rate limit handling), but applicable requirements must be bound to tests. This is the bridge between the requirements specification contribution and the implementation evidence: the framework defines the identifiers and expected behavior, while \autoref{ch:implementation} reports how the \gls{mvp} satisfies or bounds them for each selected source.
+The requirement identifiers are intentionally stable across sources. A source can mark a requirement as not applicable (for example, tools that only emit artifacts have no \gls{api} pagination or rate limit handling), but applicable requirements must be bound to tests. This is the bridge between the requirements specification contribution and the implementation evidence: the framework defines the identifiers and expected behavior, while the \hyperref[ch:implementation]{MVP Implementation} chapter reports how the \gls{mvp} satisfies or bounds them for each selected source.
 
-The gap identified above is addressed by a vendor agnostic framework. It applies lakehouse architecture and the medallion pattern to ingest tool output, normalize it into a domain model, and serve it through \gls{olap} and \gls{oltp} interfaces. \autoref{ch:framework} gives the design, and \autoref{ch:implementation} reports the \gls{mvp}.
+The gap identified above is addressed by a vendor agnostic framework. It applies lakehouse architecture and the medallion pattern to ingest tool output, normalize it into a domain model, and serve it through \gls{olap} and \gls{oltp} interfaces. The \hyperref[ch:framework]{Framework} chapter gives the design, and the \hyperref[ch:implementation]{MVP Implementation} chapter reports the \gls{mvp}.
 
 \begin{center}
 \begin{minipage}{\textwidth}
@@ -516,12 +512,12 @@ The gap identified above is addressed by a vendor agnostic framework. It applies
 \toprule
 \textbf{Requirement family} & \textbf{Requirement summary} & \textbf{Thesis evidence} \\
 \midrule
-Source coverage & Cover business application inventory, source repositories, static testing, software composition analysis, secrets, dynamic testing, and one runtime security source. & Source selection criteria and inventory in \autoref{sec:selected-sources}. Ingestion assignment in \autoref{sec:ingestion-category-assignment}. \\
-Source heterogeneity & Exercise \gls{rest}, GraphQL, managed connector, \gls{sdk}, \gls{dltool}, and artifact ingestion patterns, including multiple pagination and high water mark styles. & Cross source synthesis in \autoref{sec:cross-source-synthesis}. Connector categories in \autoref{sec:connector-abstraction}. \\
-Standard data model & Normalize heterogeneous records into bronze, silver, and gold layers, with a single findings fact table and relationship tables for application context and deduplication. & Medallion and schema patterns in \autoref{sec:medallion-arch} and \autoref{sec:schema-patterns}. Entity model in \autoref{sec:entity-model}. \\
-Connector contract & Standardize authentication, pagination, rate limits, high water marks, schema mapping, severity/status normalization, timestamp normalization, data quality, and deduplication. & Connector contract and testing requirements in \autoref{sec:connector-framework} and \autoref{sec:connector-testing}. REQ ID summary in \autoref{tab:connector-req-snapshot}. \\
-Serving and analytics & Provide Gold datasets ready for consumption and both analytical and operational serving paths. & Analytics and serving framework in \autoref{sec:analytics-serving}. MVP analytics evidence in \autoref{sec:impl-results}. \\
-Extensibility & Onboard a new source by resolving category, instantiating the module layout, encoding the mapping, testing, and running the skill chain with review. & Implementation methodology in \autoref{sec:impl-methodology}. AI instantiability evaluation in \autoref{sec:ai-eval}. \\
+Source coverage & Cover business application inventory, source repositories, static testing, software composition analysis, secrets, dynamic testing, and one runtime security source. & Source selection criteria and inventory in the \hyperref[sec:selected-sources]{Selected Sources section}. Ingestion assignment in the \hyperref[sec:ingestion-category-assignment]{Ingestion Category Assignment section}. \\
+Source heterogeneity & Exercise \gls{rest}, GraphQL, managed connector, \gls{sdk}, \gls{dltool}, and artifact ingestion patterns, including multiple pagination and high water mark styles. & Cross source synthesis in the \hyperref[sec:cross-source-synthesis]{Cross Source Synthesis section}. Connector categories in the \hyperref[sec:connector-abstraction]{Connector Abstraction section}. \\
+Standard data model & Normalize heterogeneous records into bronze, silver, and gold layers, with a single findings fact table and relationship tables for application context and deduplication. & Medallion and schema patterns in the \hyperref[sec:medallion-arch]{Medallion Architecture section} and \hyperref[sec:schema-patterns]{Schema Patterns section}. Entity model in the \hyperref[sec:entity-model]{Entity Model section}. \\
+Connector contract & Standardize authentication, pagination, rate limits, high water marks, schema mapping, severity/status normalization, timestamp normalization, data quality, and deduplication. & Connector contract and testing requirements in the \hyperref[sec:connector-framework]{Connector Framework section} and \hyperref[sec:connector-testing]{Connector Testing and Validation section}. REQ ID summary in \autoref{tab:connector-req-snapshot}. \\
+Serving and analytics & Provide Gold datasets ready for consumption and both analytical and operational serving paths. & Analytics and serving framework in the \hyperref[sec:analytics-serving]{Analytics and Serving Framework section}. MVP analytics evidence in the \hyperref[sec:impl-results]{Aggregate Results section}. \\
+Extensibility & Onboard a new source by resolving category, instantiating the module layout, encoding the mapping, testing, and running the skill chain with review. & Implementation methodology in the \hyperref[sec:impl-methodology]{Methodology section}. AI instantiability evaluation in the \hyperref[sec:ai-eval]{Evaluation of AI Instantiability section}. \\
 Validation and traceability & Bind implementation tests to stable requirement identifiers and publish PASS/N/A evidence per source. & Connector REQ IDs in \autoref{tab:connector-req-snapshot}. Implementation evidence matrix in \autoref{tab:impl-evidence-levels}. \\
 \bottomrule
 \end{tabularx}
@@ -530,7 +526,7 @@ Validation and traceability & Bind implementation tests to stable requirement id
 
 \begin{center}
 \begin{minipage}{\textwidth}
-\captionof{table}[Connector requirement identifiers]{Connector requirement identifiers used for traceability. The full matrix for each source is published in the \gls{mvp} documentation. \autoref{sec:impl-results} reports the evidence boundary in this thesis.}
+\captionof{table}[Connector requirement identifiers]{Connector requirement identifiers used for traceability. The full matrix for each source is published in the \gls{mvp} documentation. The \hyperref[sec:impl-results]{Aggregate Results section} reports the evidence boundary in this thesis.}
 \label{tab:connector-req-snapshot}
 \small
 \begin{tabularx}{\textwidth}{l l X}

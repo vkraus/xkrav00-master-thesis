@@ -1,21 +1,21 @@
 \chapter{MVP Implementation}
 \label{ch:implementation}
 
-The reference implementation instantiates the framework from \autoref{ch:framework} as a Declarative Automation Bundle, formerly Databricks Asset Bundle~\parencite{DatabricksDAB2026}. It covers the three connector categories plus the artifact ingestion pattern across the nine sources selected in \autoref{sec:selected-sources}: two \gls{scm} platforms, four scanners across static and dynamic testing, a \gls{cmdb}, a secrets tool, and a runtime security source. It is a minimum viable product. Open items are listed in \autoref{sec:impl-results}.
+The reference implementation instantiates the framework from the \hyperref[ch:framework]{Framework} chapter as a Declarative Automation Bundle, formerly Databricks Asset Bundle~\parencite{DatabricksDAB2026}. It covers the three connector categories plus the artifact ingestion pattern across the nine sources selected in the \hyperref[sec:selected-sources]{Selected Sources section}: two \gls{scm} platforms, four scanners across static and dynamic testing, a \gls{cmdb}, a secrets tool, and a runtime security source. It is a minimum viable product. Open items are listed in the \hyperref[sec:impl-results]{Aggregate Results section}.
 
-The contribution is twofold. The contract of three categories holds across all nine sources, and the resulting code fits one small repeating module layout. The chain of four skills was run across the nine source specifications and produced the connector modules, runtime artifacts, bundle fragments, tests, and documentation evidence, with reviewer subagent cycles catching named defect classes (\autoref{sec:iteration-summary}, \autoref{sec:ai-eval}). The implementation evidence is not identical for every source: some sources were exercised against live systems, some are backed only by fixtures, some Spark wrappers write Silver frames with rows, and some contract wrappers still return empty Silver frames while mapping helpers at row level are tested. \autoref{sec:impl-results} states those boundaries. \autoref{sec:impl-representative-connectors} shows two ends of the category range in concrete code: ServiceNow on Lakeflow Connect and GitHub on PyGitHub~\parencite{PyGithubDocs2025}.
+The contribution is twofold. The contract of three categories holds across all nine sources, and the resulting code fits one small repeating module layout. The chain of four skills was run across the nine source specifications and produced the connector modules, runtime artifacts, bundle fragments, tests, and documentation evidence, with reviewer subagent cycles catching named defect classes (\hyperref[sec:iteration-summary]{Iteration Summary section}, \hyperref[sec:ai-eval]{Evaluation of AI Instantiability section}). The implementation evidence is not identical for every source: some sources were exercised against live systems, some are backed only by fixtures, some Spark wrappers write Silver frames with rows, and some contract wrappers still return empty Silver frames while mapping helpers at row level are tested. The \hyperref[sec:impl-results]{Aggregate Results section} states those boundaries. The \hyperref[sec:impl-representative-connectors]{Representative Connectors section} shows one concrete example from each implemented ingestion type: ServiceNow on Lakeflow Connect, GitHub on PyGitHub~\parencite{PyGithubDocs2025}, SonarQube through \gls{dltool}, and \gls{owasp} \gls{zap} through the artifact path.
 
 \section{Methodology}
 \label{sec:impl-methodology}
 
-The implementation follows the procedure below for every source in \autoref{sec:selected-sources}:
+The implementation follows the procedure below for every source in the \hyperref[sec:selected-sources]{Selected Sources section}:
 
 \begin{enumerate}
-    \item \textbf{Resolve the ingestion category.} The source is matched against the three categories defined in \autoref{sec:connector-abstraction}. The evaluation order is fixed: Lakeflow Connect~\parencite{DatabricksLakeflowConnect2025} first, then a maintained Python \gls{sdk}, then \gls{dltool}. Tools that only ship a \gls{cli} fall outside the axis of three categories and follow the artifact pattern at the \gls{cicd} step described in \autoref{sec:ingestion-patterns}. \autoref{sec:ingestion-category-assignment} carries out this step for all nine sources.
+    \item \textbf{Resolve the ingestion category.} The source is matched against the three categories defined in the \hyperref[sec:connector-abstraction]{Connector Abstraction section}. The evaluation order is fixed: Lakeflow Connect~\parencite{DatabricksLakeflowConnect2025} first, then a maintained Python \gls{sdk}, then \gls{dltool}. Tools that only ship a \gls{cli} fall outside the axis of three categories and follow the artifact pattern at the \gls{cicd} step described in the \hyperref[sec:ingestion-patterns]{Ingestion Patterns section}. The \hyperref[sec:ingestion-category-assignment]{Ingestion Category Assignment section} carries out this step for all nine sources.
     \item \textbf{Instantiate the module layout for the connector.} Every connector carries the same files under \inlinecode{src/connectors/<source>/}: \inlinecode{ingest.py}, \inlinecode{transform.py}, \inlinecode{mapping.yml}, \inlinecode{config.yml}, \inlinecode{severity.yml}, and \inlinecode{status.yml}. Bundle resources, tests, and the secret loading script are colocated with the connector code. For Lakeflow Connect sources, \inlinecode{ingest.py} is reduced to a module docstring and ingestion is declared in the bundle fragment as a \inlinecode{pipelines} resource with an \inlinecode{ingestion\_definition}.
-    \item \textbf{Use the mapping artifact as the transformation specification.} The \inlinecode{mapping.yml} file for the connector records the intended column derivation from bronze to silver given by the \href{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/}{published mapping requirements}. Severity and status lookups live in the connector folder as \inlinecode{severity.yml} and \inlinecode{status.yml}. \inlinecode{src/platform/silver.py} provides severity rank and status bucket normalization helpers and deduplication utilities shared across connectors. The current \gls{mvp} keeps the mapping as the authoritative artifact but applies it through Python helpers and Spark code for each source rather than through a generic YAML applicator. Several connectors have tested helpers at row level while their Spark contract wrapper still returns an empty frame with the target schema. \autoref{sec:future-work} carries the declarative applicator and wrapper completion as a thread.
-    \item \textbf{Test in the layered strategy from \autoref{sec:connector-testing}.} Tests divide along the signature of the code they exercise. Row level logic in pure Python (parser logic, mapping application, \gls{hwm} state, dedup key construction) runs locally against \inlinecode{list[dict]} fixtures with no \inlinecode{SparkSession}. DataFrame logic (transformations, envelope stamping, schema enforcement) runs through a session scoped Databricks Connect fixture that attaches to a remote workspace, so the test runtime matches the production runtime. Tests live under \inlinecode{src/connectors/<source>/tests/} and are linked to requirement IDs through \inlinecode{@pytest.mark.requirement} markers.
-    \item \textbf{Run the skill chain pass for the source.} The Claude Code skill chain (analyze-source, provision-source, generate-connector, validate-implementation) executes against the source and writes evidence rows to the documentation site: an Implementation log entry per pass and a Validation table keyed by requirement IDs. Each skill pass is then reviewed by a separate subagent (one for spec compliance, one for code quality), whose findings are folded back as follow up commits before the next source moves forward. \autoref{sec:iteration-summary} records the defect classes the reviewer cycle caught.
+    \item \textbf{Use the mapping artifact as the transformation specification.} The \inlinecode{mapping.yml} file for the connector records the intended column derivation from bronze to silver given by the \href{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/}{published mapping requirements}. Severity and status lookups live in the connector folder as \inlinecode{severity.yml} and \inlinecode{status.yml}. \inlinecode{src/platform/silver.py} provides severity rank and status bucket normalization helpers and deduplication utilities shared across connectors. The current \gls{mvp} keeps the mapping as the authoritative artifact but applies it through Python helpers and Spark code for each source rather than through a generic YAML applicator. Several connectors have tested helpers at row level while their Spark contract wrapper still returns an empty frame with the target schema. The corresponding backlog item appears in the \hyperref[sec:future-work]{Future Work section}.
+    \item \textbf{Test in the layered strategy from the \hyperref[sec:connector-testing]{Connector Testing and Validation section}.} Tests divide along the signature of the code they exercise. Row level logic in pure Python (parser logic, mapping application, \gls{hwm} state, dedup key construction) runs locally against \inlinecode{list[dict]} fixtures with no \inlinecode{SparkSession}. DataFrame logic (transformations, envelope stamping, schema enforcement) runs through a session scoped Databricks Connect fixture that attaches to a remote workspace, so the test runtime matches the production runtime. Tests live under \inlinecode{src/connectors/<source>/tests/} and are linked to requirement IDs through \inlinecode{@pytest.mark.requirement} markers.
+    \item \textbf{Run the skill chain pass for the source.} The Claude Code skill chain (analyze-source, provision-source, generate-connector, validate-implementation) executes against the source and writes evidence rows to the documentation site: an Implementation log entry per pass and a Validation table keyed by requirement IDs. Each skill pass is then reviewed by a separate subagent (one for spec compliance, one for code quality), whose findings are folded back as follow up commits before the next source moves forward. The \hyperref[sec:iteration-summary]{Iteration Summary section} records the defect classes the reviewer cycle caught.
 \end{enumerate}
 
 The procedure is repeatable because the source category is resolved before generation and the connector folder layout stays fixed across categories. A generator that emits the layout for a new source only needs to vary \inlinecode{ingest.py} and the bundle resource kind. The \href{https://vkraus.github.io/appsec-mvp/}{documentation site} makes the run auditable by recording the Implementation log and Validation table for each source.
@@ -39,9 +39,9 @@ The repository is organized into three install layers with no upward or sideways
 
 \subsection{Component colocation}
 
-Inside the \gls{mvp} implementation repository, every component (the platform, each connector, the analytics layer) owns its code, its tests, its bundle resources, its scripts, and (for connectors that bring up source systems) an optional Terraform runtime. Adding a new source is one new folder under \inlinecode{src/connectors/}. There are no top level \inlinecode{tests/}, \inlinecode{config/}, \inlinecode{resources/}, \inlinecode{sql/}, or \inlinecode{infra/terraform/} directories. \autoref{lst:mvp-tree} shows the realized layout with one connector of each category expanded.
+Inside the \gls{mvp} implementation repository, every component (the platform, each connector, the analytics layer) owns its code, its tests, its bundle resources, its scripts, and (for connectors that bring up source systems) an optional Terraform runtime. Adding a new source is one new folder under \inlinecode{src/connectors/}. There are no top level \inlinecode{tests/}, \inlinecode{config/}, \inlinecode{resources/}, \inlinecode{sql/}, or \inlinecode{infra/terraform/} directories. \autoref{lst:mvp-tree} shows the realized layout with two connector examples expanded.
 
-\begin{lstlisting}[caption={[Realized MVP project layout]Realized MVP project layout. One connector of each category is expanded. The others follow the same layout.},label={lst:mvp-tree}]
+\begin{lstlisting}[caption={[Realized MVP project layout]Realized MVP project layout. Two connector examples are expanded. The others follow the same layout.},label={lst:mvp-tree}]
 appsec-mvp/
 |-- databricks.yml                       # bundle root
 |-- pyproject.toml                       # package metadata
@@ -88,7 +88,7 @@ The bundle resources for each source are colocated: \inlinecode{src/connectors/<
 \section{Ingestion Category Assignment}
 \label{sec:ingestion-category-assignment}
 
-Each source is resolved to one of the three ingestion categories defined in \autoref{sec:connector-abstraction} before its connector module is written. The evaluation order is Lakeflow Connect, then \gls{sdk}, then \gls{dltool}. \Gls{cli} only tools fall outside the three categories and follow the \gls{cicd} step artifact pattern (\autoref{sec:ingestion-patterns}). The full per source functional requirements live on the documentation site. The reference links below cite the deciding factor only.
+Each source is resolved to one of the three ingestion categories defined in the \hyperref[sec:connector-abstraction]{Connector Abstraction section} before its connector module is written. The evaluation order is Lakeflow Connect, then \gls{sdk}, then \gls{dltool}. \Gls{cli} only tools fall outside the three categories and follow the \gls{cicd} step artifact pattern (\hyperref[sec:ingestion-patterns]{Ingestion Patterns section}). The full per source functional requirements live on the documentation site. The reference links below cite the deciding factor only.
 
 \begin{itemize}
     \item \textbf{ServiceNow}: Lakeflow Connect. Supported natively by the platform~\href{https://vkraus.github.io/appsec-mvp/connectors/cmdb/servicenow/}{(source reference)}, so \inlinecode{ingest.py} carries only the contract wrapper and the bundle fragment declares the pipeline.
@@ -135,12 +135,12 @@ TruffleHog & Artifact path & \gls{cicd} to Volume & \Gls{cli} tool with no serve
 \end{minipage}
 \end{center}
 
-Across the nine sources, one resolves to Lakeflow Connect (ServiceNow), three to an \gls{sdk} (GitHub, GitLab, \gls{aws} \gls{waf}), two to \gls{dltool} (SonarQube, Dependency-Track), and three to the artifact path of \autoref{sec:ingestion-patterns} (Semgrep, TruffleHog, \gls{owasp} \gls{zap}).
+Across the nine sources, one resolves to Lakeflow Connect (ServiceNow), three to an \gls{sdk} (GitHub, GitLab, \gls{aws} \gls{waf}), two to \gls{dltool} (SonarQube, Dependency-Track), and three to the artifact path of the \hyperref[sec:ingestion-patterns]{Ingestion Patterns section} (Semgrep, TruffleHog, \gls{owasp} \gls{zap}).
 
 \section{Representative Connectors}
 \label{sec:impl-representative-connectors}
 
-Two connectors show the category range. ServiceNow represents the Lakeflow Connect case, where \inlinecode{ingest.py} reduces to a thin contract wrapper and the bundle fragment carries the ingestion specification. GitHub represents the \gls{sdk} case, where \inlinecode{ingest.py} composes client calls into iterators over bronze records.
+Four connectors show the implementation range. ServiceNow represents the Lakeflow Connect case, where \inlinecode{ingest.py} reduces to a thin contract wrapper and the bundle fragment carries the ingestion specification. GitHub represents the \gls{sdk} case, where \inlinecode{ingest.py} composes client calls into iterators over bronze records. SonarQube represents the \gls{dltool} case, where tested Python helpers cover authentication, pagination, rate limits, and high water marks while the Spark transform writes \inlinecode{silver.findings} rows. \Gls{owasp} \gls{zap} represents the artifact path, where a \gls{cicd} report or daemon scan lands in bronze and a Spark transform explodes alerts into URL based findings.
 
 \subsection{ServiceNow: Lakeflow Connect Pipeline}
 \label{sec:impl-servicenow-connector}
@@ -196,16 +196,78 @@ def build_github_client(token: str) -> Github:
     return Github(auth=auth, retry=retry, per_page=100)
 \end{lstlisting}
 
-PyGitHub absorbs the cross cutting concerns of authentication, pagination, and retry. \inlinecode{GithubRetry}, a \inlinecode{urllib3.Retry} subclass shipped with the library, recognizes GitHub's secondary rate limit signal that arrives as \gls{http}~403 with a \inlinecode{Retry-After} header. A plain \inlinecode{Retry(status\_forcelist=[429, 5xx])} does not cover that path. The incremental state contract from the framework (REQ-ING-HWM) maps onto a built in PyGitHub mechanism: resource accessors such as \inlinecode{Repository.get\_pulls(state="closed", since=hwm\_value)} accept a \inlinecode{since} parameter, so high water mark filtering pushes down to the \gls{api} call instead of running client side. The page size is set to PyGitHub's documented maximum of 100 to minimize round trips.
+PyGitHub absorbs the cross cutting concerns of authentication, pagination, and retry. \inlinecode{GithubRetry}, a \inlinecode{urllib3.Retry} subclass shipped with the library, recognizes the secondary GitHub rate limit signal that arrives as \gls{http}~403 with a \inlinecode{Retry-After} header. A plain \inlinecode{Retry(status\_forcelist=[429, 5xx])} does not cover that path. The incremental state contract from the framework (REQ-ING-HWM) maps onto a built in PyGitHub mechanism: resource accessors such as \inlinecode{Repository.get\_pulls(state="closed", since=hwm\_value)} accept a \inlinecode{since} parameter, so high water mark filtering pushes down to the \gls{api} call instead of running client side. The page size is set to the documented PyGitHub maximum of 100 to minimize round trips.
 
-The tests under \inlinecode{src/connectors/github/tests/} fake PyGitHub at the object graph level rather than at the \gls{http} level. A test fixture builds \inlinecode{MagicMock} instances modeled on PyGitHub's \inlinecode{Github}, \inlinecode{Organization}, \inlinecode{Repository}, and \inlinecode{PaginatedList} classes, each exposing the attributes the production code calls. The contract under test is the composition of \gls{sdk} calls in the connector, not the \gls{http} behavior of the library.
+The tests under \inlinecode{src/connectors/github/tests/} fake PyGitHub at the object graph level rather than at the \gls{http} level. A test fixture builds \inlinecode{MagicMock} instances modeled on the PyGitHub \inlinecode{Github}, \inlinecode{Organization}, \inlinecode{Repository}, and \inlinecode{PaginatedList} classes, each exposing the attributes the production code calls. The contract under test is the composition of \gls{sdk} calls in the connector, not the \gls{http} behavior of the library.
+
+\subsection{SonarQube: dltool REST Module}
+\label{sec:impl-sonarqube-connector}
+
+The SonarQube connector represents the \gls{dltool} path. SonarQube exposes a paginated \gls{rest} Web \gls{api} rather than a maintained Python \gls{sdk}, and Lakeflow Connect has no native SonarQube source in the \gls{mvp} environment. The \inlinecode{ingest.py} module therefore keeps the connector contract in Python and delegates the source traversal to the \inlinecode{rest\_api} source pattern. The public helpers make the contract testable without a live server: \inlinecode{resolve\_token} binds REQ-ING-AUTH to the platform secret scope, \inlinecode{iter\_issue\_pages} follows the \inlinecode{p}/\inlinecode{ps} pagination model shown in \autoref{lst:sonarqube-ingest}, \inlinecode{call\_with\_backoff} implements retry on rate limit responses, and \inlinecode{advance\_hwm} advances the native \inlinecode{updateDate} high water mark.
+
+\begin{lstlisting}[language=Python,caption={[SonarQube issue page iterator]\texttt{src/connectors/sonarqube/ingest.py} (excerpt)},label={lst:sonarqube-ingest}]
+def iter_issue_pages(fetch_page, *, page_size: int = 500):
+    first = fetch_page(1, page_size)
+    total = int(first.get("paging", {}).get("total", 0))
+    issues = first.get("issues") or []
+    yield issues
+
+    if total <= page_size:
+        return
+    if total > 10_000:
+        raise RuntimeError(
+            "sonarqube: issue search exceeds the 10,000 row cap"
+        )
+
+    pages_remaining = -(-total // page_size) - 1
+    for idx in range(2, 2 + pages_remaining):
+        page = fetch_page(idx, page_size)
+        yield page.get("issues") or []
+\end{lstlisting}
+
+The transform is more complete than the other \gls{dltool} source in the sample. \inlinecode{transform.py} parses bronze issue payloads, filters SonarQube \inlinecode{CODE\_SMELL} records out of the security findings stream, splits the \inlinecode{component} value into repository and file path, normalizes severity and status through colocated lookup files, and emits rows with the \inlinecode{silver.findings} schema. This makes SonarQube the clearest \gls{dltool} example: it shows the hand written boundary code that remains around a generated \gls{rest} source, and it also demonstrates a Spark transform that writes Silver findings.
+
+\subsection{OWASP ZAP: Artifact and Daemon Path}
+\label{sec:impl-zap-connector}
+
+The \gls{owasp} \gls{zap} connector represents the artifact path. The common path is a \gls{json} report produced by \inlinecode{zap-baseline.py}, \inlinecode{zap-full-scan.py}, or \inlinecode{zap-api-scan.py} in a \gls{cicd} step and written under the configured \inlinecode{cicd/zap/} prefix. The same module also supports an on demand daemon path against the ZAP \gls{rest} \gls{api}. \inlinecode{classify\_trigger} separates the two trigger contexts, \inlinecode{iter\_paged\_alerts} handles offset pagination for daemon alerts, and \inlinecode{ingest\_contract} routes the configured path into the bronze table. \autoref{lst:zap-ingest} shows the two ingestion decisions that are specific to ZAP: routing an input to an artifact or daemon trigger context, and reading daemon alerts until the endpoint returns a short page.
+
+\begin{lstlisting}[language=Python,caption={[OWASP ZAP trigger routing and alert paging]\texttt{src/connectors/owasp\_zap/ingest.py} (excerpt)},label={lst:zap-ingest}]
+def classify_trigger(path_or_url: str) -> str:
+    object_storage_schemes = ("s3://", "s3a://", "abfss://", "gs://")
+    if path_or_url.startswith(object_storage_schemes):
+        if "/cicd/zap/" in path_or_url:
+            return "cicd"
+    if path_or_url.startswith(("http://", "https://")):
+        return "on_demand"
+    raise ValueError(f"cannot route ZAP source {path_or_url!r}")
+
+
+def iter_paged_alerts(fetch_json, base_url, *, baseurl, apikey):
+    start = 0
+    page_size = 5000
+    while True:
+        url = build_alerts_url(
+            base_url, baseurl=baseurl, apikey=apikey,
+            start=start, count=page_size
+        )
+        alerts = (fetch_json(url) or {}).get("alerts") or []
+        if not alerts:
+            return
+        yield from alerts
+        if len(alerts) < page_size:
+            return
+        start += page_size
+\end{lstlisting}
+
+The ZAP transform illustrates why artifact ingestion is still part of the framework even though it sits outside the three source category order. The bronze payload is a nested scan report with \inlinecode{site}, \inlinecode{alerts}, and \inlinecode{instances} arrays. \inlinecode{transform.py} explodes that structure to one Silver row per alert instance, maps the ZAP risk vocabulary to the standard severity model, normalizes missing \gls{cwe} placeholders to null, and stores the affected \gls{url} instead of file and line coordinates. The output is a URL based \gls{dast} finding that can later be joined to deployment and application context.
 
 \section{Aggregate Results}
 \label{sec:impl-results}
 
 All nine sources have a connector folder under \inlinecode{src/connectors/<source>/}. Each folder contains configuration, ingest and transform modules, mappings, severity and status lookups, bundle resources, secret loading scripts, source runtime where applicable, and colocated tests.
 
-Evidence is recorded at two levels. Each source page on the documentation site contains an Implementation log and a Validation table keyed by requirement IDs that map to \inlinecode{@pytest.mark.requirement} markers. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{catalog} combines those rows into one requirement by source view with PASS or N/A cells. The ten requirement identifiers (\inlinecode{REQ-ING-AUTH}, \inlinecode{REQ-ING-PAG}, \inlinecode{REQ-ING-RL}, \inlinecode{REQ-ING-HWM}, \inlinecode{REQ-TRF-MAP}, \inlinecode{REQ-TRF-SEV}, \inlinecode{REQ-TRF-STS}, \inlinecode{REQ-TRF-TS}, \inlinecode{REQ-DQ}, \inlinecode{REQ-DEDUP}) structure the matrix and form the evidence trail behind the \gls{ai} claim defended in \autoref{sec:ai-eval}.
+Evidence is recorded at two levels. Each source page on the documentation site contains an Implementation log and a Validation table keyed by requirement IDs that map to \inlinecode{@pytest.mark.requirement} markers. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{catalog} combines those rows into one requirement by source view with PASS or N/A cells. The ten requirement identifiers (\inlinecode{REQ-ING-AUTH}, \inlinecode{REQ-ING-PAG}, \inlinecode{REQ-ING-RL}, \inlinecode{REQ-ING-HWM}, \inlinecode{REQ-TRF-MAP}, \inlinecode{REQ-TRF-SEV}, \inlinecode{REQ-TRF-STS}, \inlinecode{REQ-TRF-TS}, \inlinecode{REQ-DQ}, \inlinecode{REQ-DEDUP}) structure the matrix and form the evidence trail behind the \gls{ai} claim defended in the \hyperref[sec:ai-eval]{Evaluation of AI Instantiability section}.
 
 \autoref{tab:impl-evidence-levels} separates the artifact claim from runtime evidence. A "working connector" has several levels in the \gls{mvp}: generated module present, requirement bound tests present, live source exercised, and Spark transform wired to write Silver rows.
 
@@ -284,7 +346,7 @@ The platform layer is ahead of the original four table demonstration. It declare
 
 The analytics layer is implemented as evidence for the thesis rather than as a production service. It includes five Gold datasets (\inlinecode{app\_risk\_posture\_daily}, \inlinecode{mttr\_by\_source\_severity\_weekly}, \inlinecode{coverage\_matrix}, \inlinecode{dedup\_link\_overlap}, and \inlinecode{cwe\_owasp\_heatmap}), one Gold view (\inlinecode{app\_repo\_findings\_open}), two Online Table resources, suppression rules, and a Databricks App exposing score lookup and policy checks before commit. Tests cover pure Python aggregation helpers, Spark write paths where marked, suppression logic, and mocked application queries. The thesis does not claim production deployment, production latency, or model training evidence.
 
-At commit \inlinecode{e58bb7c} the source tree contains 38 \inlinecode{test\_*.py} files and 413 test functions under \inlinecode{src/connectors/}, \inlinecode{src/platform/}, and \inlinecode{src/analytics/}. The count includes tests that require live systems and N/A marker tests. The Limitations section states which paths are backed by fixtures or deferred.
+At commit \inlinecode{e58bb7c} the source tree contains 38 \inlinecode{test\_*.py} files and 413 test functions under \inlinecode{src/connectors/}, \inlinecode{src/platform/}, and \inlinecode{src/analytics/}. The count includes tests that require live systems and N/A marker tests. The \hyperref[sec:conclusion-limitations]{Limitations section} states which paths are backed by fixtures or deferred.
 
 
 \section{Discussion}
@@ -292,21 +354,21 @@ At commit \inlinecode{e58bb7c} the source tree contains 38 \inlinecode{test\_*.p
 
 \subsection{Contract of three categories}
 
-Every source in the sample resolved to one of the three connector categories or to the artifact ingestion pattern of \autoref{sec:ingestion-patterns}. No source required another connector category. The Lakeflow Connect and \gls{sdk} cases produce visibly different layouts: ServiceNow has no Python ingestion file of substance, while GitHub has a small flat \inlinecode{ingest.py} composed of \gls{sdk} calls. Both preserve the module layout prescribed by the framework, with platform lock in on one side and per source client knowledge on the other.
+Every source in the sample resolved to one of the three connector categories or to the artifact ingestion pattern of the \hyperref[sec:ingestion-patterns]{Ingestion Patterns section}. No source required another connector category. The Lakeflow Connect and \gls{sdk} cases produce visibly different layouts: ServiceNow has no Python ingestion file of substance, while GitHub has a small flat \inlinecode{ingest.py} composed of \gls{sdk} calls. Both preserve the module layout prescribed by the framework, with platform lock in on one side and per source client knowledge on the other.
 
 \subsection{Declarative mapping}
 
-Connectors share severity and status normalization helpers in \inlinecode{src/platform/silver.py} and keep lookup tables as YAML alongside the connector code. The \inlinecode{mapping.yml} files document the intended derivation for every source. In the current \gls{mvp}, the mapping is applied by Python helpers and Spark code for each source rather than by a generic declarative applicator. SonarQube and \gls{owasp} \gls{zap} demonstrate Spark transforms that write rows to \inlinecode{silver.findings}. Several other connectors still expose Spark wrappers that return only the target schema while their mapping helpers at row level are tested. Aligning the \gls{mvp} with the declarative mapping prescription of \autoref{sec:transformation-patterns} is a \autoref{sec:future-work} thread.
+Connectors share severity and status normalization helpers in \inlinecode{src/platform/silver.py} and keep lookup tables as YAML alongside the connector code. The \inlinecode{mapping.yml} files document the intended derivation for every source. In the current \gls{mvp}, the mapping is applied by Python helpers and Spark code for each source rather than by a generic declarative applicator. SonarQube and \gls{owasp} \gls{zap} demonstrate Spark transforms that write rows to \inlinecode{silver.findings}. Several other connectors still expose Spark wrappers that return only the target schema while their mapping helpers at row level are tested. Aligning the \gls{mvp} with the declarative mapping prescription of the \hyperref[sec:transformation-patterns]{Transformation Patterns section} is recorded in the \hyperref[sec:future-work]{Future Work section}.
 
 \subsection{Iteration Summary}
 \label{sec:iteration-summary}
 
-Review caught the iterations below. Each one is classified against the acceptance criterion in \autoref{sec:ai-eval}: \textbf{framework gap} (a specification extension would have prevented the issue and would generalize), \textbf{source specific issue} (not generalizable beyond one source), or \textbf{environment setup} (setup or infrastructure outside framework scope). Earlier iterations before the structural redesign exposed three framework gaps: a hand written shared \gls{http} primitive that introduced an unsanctioned fourth ingestion category, a missing boundary validator on incremental state inputs, and a misconfigured retry policy on the GitHub client. The redesign closed all three by enforcing the layering rule of \autoref{sec:impl-layering-rule} and by binding the connector contract to the colocated test suite. The findings below are from the reviewer cycle after the redesign.
+Review caught the iterations below. Each one is classified against the acceptance criterion in the \hyperref[sec:ai-eval]{Evaluation of AI Instantiability section}: \textbf{framework gap} (a specification extension would have prevented the issue and would generalize), \textbf{source specific issue} (not generalizable beyond one source), or \textbf{environment setup} (setup or infrastructure outside framework scope). Earlier iterations before the structural redesign exposed three framework gaps: a hand written shared \gls{http} primitive that introduced an unsanctioned fourth ingestion category, a missing boundary validator on incremental state inputs, and a misconfigured retry policy on the GitHub client. The redesign closed all three by enforcing the layering rule of the \hyperref[sec:impl-layering-rule]{Layering rule section} and by binding the connector contract to the colocated test suite. The findings below are from the reviewer cycle after the redesign.
 
 \begin{itemize}
     \item \textbf{Layering boundary that the redesign closed.} The layout before the redesign mixed top level \inlinecode{tests/}, \inlinecode{config/}, \inlinecode{resources/}, \inlinecode{sql/}, and \inlinecode{infra/terraform/} folders, and the platform layer predeclared resources for specific connectors. This permitted exactly the failure mode that the unsanctioned fourth ingestion category had exposed. The redesign moved every component to its own folder, deleted the predeclared resources from the platform layer, and stated the layering rule explicitly. \textbf{Framework gap.} The framework now states three install layers with no upward or sideways setup code dependencies, and the data level \gls{scm} first ordering is recorded separately as a job time constraint.
 
-    \item \textbf{Schema drift between \gls{sql} \gls{ddl} and PySpark types.} Splitting the \inlinecode{sql/} tree into per layer ownership exposed inconsistencies between the \gls{ddl} for the silver tables and the \inlinecode{StructType} definitions in \inlinecode{src/platform/schemas.py}. The reviewer flagged the drift, and the implementation now includes schema/DDL contract tests for the realized Silver subset. Connector side writers for \inlinecode{silver.repositories} remain partial, and \inlinecode{silver.app\_repo\_mapping} is populated by the platform name and application code linker rather than by every source side relationship path. \textbf{Framework gap.} The framework should hold a single source of truth for silver schemas. \autoref{sec:future-work} carries the consolidation as a thread.
+    \item \textbf{Schema drift between \gls{sql} \gls{ddl} and PySpark types.} Splitting the \inlinecode{sql/} tree into per layer ownership exposed inconsistencies between the \gls{ddl} for the silver tables and the \inlinecode{StructType} definitions in \inlinecode{src/platform/schemas.py}. The reviewer flagged the drift, and the implementation now includes schema/DDL contract tests for the realized Silver subset. Connector side writers for \inlinecode{silver.repositories} remain partial, and \inlinecode{silver.app\_repo\_mapping} is populated by the platform name and application code linker rather than by every source side relationship path. \textbf{Framework gap.} The framework should hold a single source of truth for silver schemas. The consolidation is recorded in the \hyperref[sec:future-work]{Future Work section}.
 
     \item \textbf{Secret scope mismatch in the GitHub ingest entry.} The post deploy bootstrap script defines a secret scope named \inlinecode{mvp-connectors}. The GitHub ingest entry point read from a scope named \inlinecode{appsec}, a residue from an earlier prototype. The reviewer caught the mismatch during the bootstrap script review. \textbf{Environment setup.} The fix aligned the entry point with the documented scope name.
 
@@ -317,4 +379,4 @@ Review caught the iterations below. Each one is classified against the acceptanc
     \item \textbf{IRSA OIDC trust policy gaps.} Migrating each connector Terraform runtime under \inlinecode{src/connectors/<source>/runtime/} exposed incomplete trust policy details on the IAM Roles for Service Accounts (IRSA) bindings. The reviewer required full trust policy declarations and explicit framework user inputs for OIDC issuer URLs. \textbf{Environment setup.} The corrections concern \gls{aws} account setup and are documented per connector under the \inlinecode{runtime/README.md} file.
 \end{itemize}
 
-Two of the six findings after the redesign classify as framework gaps. Both name a specific consolidation the framework should hold (the layering rule, a single source of truth for silver schemas). Three classify as environment setup and one as a source specific issue. The reviewer cycle caught all six before the commits landed, which is the empirical evidence behind the claim that the skill chain plus reviewer pattern catches named defect classes. \autoref{sec:ai-eval} lifts these findings to a defended claim about where the framework holds and where it admits further specification.
+Two of the six findings after the redesign classify as framework gaps. Both name a specific consolidation the framework should hold (the layering rule, a single source of truth for silver schemas). Three classify as environment setup and one as a source specific issue. The reviewer cycle caught all six before the commits landed, which is the empirical evidence behind the claim that the skill chain plus reviewer pattern catches named defect classes. The \hyperref[sec:ai-eval]{Evaluation of AI Instantiability section} lifts these findings to a defended claim about where the framework holds and where it admits further specification.
