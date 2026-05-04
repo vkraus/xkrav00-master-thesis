@@ -2,7 +2,7 @@
 \chapter{Framework}
 \label{ch:framework}
 
-\autoref{ch:analysis} produced the source patterns and requirements. The framework turns them into three design parts: deployment architecture, medallion data model, and connector and analytics contracts. The design targets the Databricks Lakehouse while separating general patterns from platform specific choices. \autoref{ch:implementation} then instantiates it.
+The \hyperref[ch:analysis]{Analysis} chapter produced the source patterns and requirements. The framework turns them into three design parts: deployment architecture, medallion data model, and connector and analytics contracts. The design targets the Databricks Lakehouse while separating general patterns from platform specific choices. The \hyperref[ch:implementation]{MVP Implementation} chapter then instantiates it.
 
 %%%%%%%%%%%
 %%% 2.1 %%%
@@ -12,7 +12,7 @@
 
 The architecture is described through three views: the Databricks stack, the runtime components, and the bronze, silver, and gold data layers. These views cover the requirements from domain analysis: heterogeneous source ingestion, vendor agnostic normalization, dual \gls{olap}/\gls{oltp} serving, and extension to new data sources and analytics.
 
-A further design principle applies to the framework artifacts: every template defined in this chapter (schema patterns, mappings, connector contract) is declarative, not procedural, so that an \gls{ai} coding agent reading the specification has enough material to produce a candidate connector implementation. The published skill catalog, which sits in the \gls{mvp} documentation and wraps these templates into executable prompts, is evaluated separately in \autoref{sec:ai-eval}.
+A further design principle applies to the framework artifacts: every template defined in this chapter (schema patterns, mappings, connector contract) is declarative, not procedural, so that an \gls{ai} coding agent reading the specification has enough material to produce a candidate connector implementation. The published skill catalog, which sits in the \gls{mvp} documentation and wraps these templates into executable prompts, is evaluated separately in the \hyperref[sec:ai-eval]{Evaluation of AI Instantiability section}.
 
 %%% 2.1.1 %%%
 
@@ -21,9 +21,9 @@ A further design principle applies to the framework artifacts: every template de
 
 The framework targets the Databricks platform on \gls{aws}. Databricks separates storage from compute: data resides in object storage and compute scales independently. This reduces costs for uneven workloads typical for security data integration~\cite{Armbrust2021}.
 
-The four platform components are Delta Lake, Unity Catalog, Lakeflow Declarative Pipelines, and Lakebase. \textbf{Delta Lake}~\cite{Armbrust2020, Lee2024} is the open table format providing the storage layer for all three medallion tiers, with \gls{acid} transactions, schema enforcement, schema evolution, and time travel. \textbf{Unity Catalog}~\cite{DatabricksUC2025} manages a three level namespace (\inlinecode{catalog.schema.table}) mapped to the medallion layout (one catalog per environment, schemas per source for bronze, per domain for silver and gold), with fine grained access control and automated lineage. \textbf{\Gls{ldp}}~\cite{DatabricksLDP2025} declares pipelines as Python or \gls{sql} functions, embeds data quality expectations as declarative constraints with quarantine on violation, and processes incrementally through change data feed. \textbf{Lakebase}~\cite{DatabricksLakebase2026} is a serverless Postgres operational database integrated with the Databricks platform and provides the \gls{oltp} serving layer required by \autoref{sec:data-architecture}.
+The four platform components are Delta Lake, Unity Catalog, Lakeflow Declarative Pipelines, and Lakebase. \textbf{Delta Lake}~\cite{Armbrust2020, Lee2024} is the open table format providing the storage layer for all three medallion tiers, with \gls{acid} transactions, schema enforcement, schema evolution, and time travel. \textbf{Unity Catalog}~\cite{DatabricksUC2025} manages a three level namespace (\inlinecode{catalog.schema.table}) mapped to the medallion layout (one catalog per environment, schemas per source for bronze, per domain for silver and gold), with fine grained access control and automated lineage. \textbf{\Gls{ldp}}~\cite{DatabricksLDP2025} declares pipelines as Python or \gls{sql} functions, embeds data quality expectations as declarative constraints with quarantine on violation, and processes incrementally through change data feed. \textbf{Lakebase}~\cite{DatabricksLakebase2026} is a serverless Postgres operational database integrated with the Databricks platform and provides the \gls{oltp} serving layer required by the \hyperref[sec:data-architecture]{Data Platform Architecture section}.
 
-Running all four on one platform yields governance, lineage, and compute benefits that would require significant integration across separate tools. The platform also lines up with Lakewatch, the Databricks \gls{siem} analyzed in \autoref{sec:lakewatch}: both use the lakehouse and Unity Catalog governance, opening a possible path for the framework gold outputs (risk scores, remediation status) to enrich Lakewatch threat detection and for Lakewatch runtime events to feed back as a finding source.
+Running all four on one platform yields governance, lineage, and compute benefits that would require significant integration across separate tools. The platform also lines up with Lakewatch, the Databricks \gls{siem} analyzed in the \hyperref[sec:lakewatch]{Databricks Lakewatch section}: both use the lakehouse and Unity Catalog governance, opening a possible path for the framework gold outputs (risk scores, remediation status) to enrich Lakewatch threat detection and for Lakewatch runtime events to feed back as a finding source.
 
 %%% 2.1.2 %%%
 
@@ -34,11 +34,11 @@ Five tiers organize the framework, illustrated in \autoref{fig:component-design}
 
 \input{figures/component-design}
 
-\textbf{Data sources} are the external systems analyzed in \autoref{ch:analysis}: application inventories, \gls{scm} platforms, \gls{cicd} tools, security scanners, and vulnerability databases. They are outside the framework boundary. The framework consumes their \glspl{api} but does not control them.
+\textbf{Data sources} are the external systems analyzed in the \hyperref[ch:analysis]{Analysis} chapter: application inventories, \gls{scm} platforms, \gls{cicd} tools, security scanners, and vulnerability databases. They are outside the framework boundary. The framework consumes their \glspl{api} but does not control them.
 
-\textbf{Ingestion tier} contains connectors that extract data from sources and store it in the bronze layer. Three connector categories serve different integration scenarios. Lakeflow Connect uses a declarative managed ingestion pattern. \gls{sdk} connectors use source provided client libraries for programmatic extraction. \gls{rest} \gls{api} connectors use the open source \gls{dltool} library for sources which lack Lakeflow Connect or dedicated \gls{sdk}. A separate artifact ingestion pattern applies to \gls{cli} only tools that emit a report file during a continuous integration step and is documented in \autoref{sec:ingestion-patterns}. All connectors share common concerns: authentication, pagination, rate limiting, and incremental state. The connector framework in \autoref{sec:connector-framework} defines these patterns.
+\textbf{Ingestion tier} contains connectors that extract data from sources and store it in the bronze layer. Three connector categories serve different integration scenarios. Lakeflow Connect uses a declarative managed ingestion pattern. \gls{sdk} connectors use source provided client libraries for programmatic extraction. \gls{rest} \gls{api} connectors use the open source \gls{dltool} library for sources which lack Lakeflow Connect or dedicated \gls{sdk}. A separate artifact ingestion pattern applies to \gls{cli} only tools that emit a report file during a continuous integration step and is documented in the \hyperref[sec:ingestion-patterns]{Ingestion Patterns section}. All connectors share common concerns: authentication, pagination, rate limiting, and incremental state. The connector framework in the \hyperref[sec:connector-framework]{Connector Framework section} defines these patterns.
 
-\textbf{Processing tier} implements the medallion architecture (\autoref{sec:medallion-arch}). Delta Lake provides the storage layer. \gls{ldp} orchestrates the transformations. Bronze stores raw ingested data in source native schemas. Silver normalizes it into the vendor agnostic entity and finding model defined in \autoref{sec:data-entities}. Gold computes aggregated metrics, \gls{ml} enriched scores, and consumption ready datasets. Unity Catalog governs access and tracks lineage across all three layers.
+\textbf{Processing tier} implements the medallion architecture (\hyperref[sec:medallion-arch]{Medallion Architecture section}). Delta Lake provides the storage layer. \gls{ldp} orchestrates the transformations. Bronze stores raw ingested data in source native schemas. Silver normalizes it into the vendor agnostic entity and finding model defined in the \hyperref[sec:data-entities]{Domain Data Model section}. Gold computes aggregated metrics, \gls{ml} enriched scores, and consumption ready datasets. Unity Catalog governs access and tracks lineage across all three layers.
 
 \textbf{Serving tier} exposes processed data to downstream consumers. \gls{sql} warehouses serve \gls{olap} queries for dashboards and analytics. Lakebase serves \gls{oltp} workloads: low latency lookups and operational \glspl{api}. A \gls{rest} \gls{api} layer provides \gls{http} access to the \gls{oltp} store.
 
@@ -49,7 +49,7 @@ Five tiers organize the framework, illustrated in \autoref{fig:component-design}
 \subsection{Medallion Architecture}
 \label{sec:medallion-arch}
 
-The processing tier applies the medallion architecture pattern from \autoref{sec:data-architecture}. Each layer is a Delta Lake schema within a single Unity Catalog, providing unified governance and cross layer lineage. \autoref{fig:medallion-design} illustrates the layer structure and transformations between them.
+The processing tier applies the medallion architecture pattern from the \hyperref[sec:data-architecture]{Data Platform Architecture section}. Each layer is a Delta Lake schema within a single Unity Catalog, providing unified governance and cross layer lineage. \autoref{fig:medallion-design} illustrates the layer structure and transformations between them.
 
 \begin{center}
 \begin{minipage}{\textwidth}
@@ -121,11 +121,11 @@ Bronze stores raw data from each source with no business logic, in a per source 
 
 \subsubsection{Silver Layer}
 
-Silver is the system of record. Transformations normalize source data into the vendor agnostic domain model from \autoref{sec:data-entities}, applying severity harmonization, entity normalization, timestamp standardization, and deduplication. The layer holds entity tables (dimensions), the single \inlinecode{silver.findings} fact table (\autoref{sec:silver-findings-design}), and relationship tables for many to many links. \Gls{ldp} expectations enforce constraints declaratively, and violators go to quarantine.
+Silver is the system of record. Transformations normalize source data into the vendor agnostic domain model from the \hyperref[sec:data-entities]{Domain Data Model section}, applying severity harmonization, entity normalization, timestamp standardization, and deduplication. The layer holds entity tables (dimensions), the single \inlinecode{silver.findings} fact table (\hyperref[sec:silver-findings-design]{Finding Table section}), and relationship tables for many to many links. \Gls{ldp} expectations enforce constraints declaratively, and violators go to quarantine.
 
 \subsubsection{Gold Layer}
 
-Gold computes consumption ready datasets from silver. Aggregation tables compute metrics (risk scores, team remediation rates, \gls{mttr}, \gls{sla} compliance, time series). \Gls{ml} enriched tables store model outputs (composite risk scores, false positive predictions, remediation time estimates) per the patterns in \autoref{sec:analytics-patterns}. Gold uses incremental refresh where possible, and full refresh applies for metrics needing global recomputation.
+Gold computes consumption ready datasets from silver. Aggregation tables compute metrics (risk scores, team remediation rates, \gls{mttr}, \gls{sla} compliance, time series). \Gls{ml} enriched tables store model outputs (composite risk scores, false positive predictions, remediation time estimates) per the patterns in the \hyperref[sec:analytics-patterns]{Analytics Patterns section}. Gold uses incremental refresh where possible, and full refresh applies for metrics needing global recomputation.
 
 %%%%%%%%%%%
 %%% 2.2 %%%
@@ -134,20 +134,20 @@ Gold computes consumption ready datasets from silver. Aggregation tables compute
 \section{Data Model}
 \label{sec:data-model}
 
-The conceptual domain model from \autoref{sec:data-entities} is mapped to physical tables across the three medallion layers. The schema patterns produce the entity, finding, relationship, reference, and aggregation tables used by the framework.
+The conceptual domain model from the \hyperref[sec:data-entities]{Domain Data Model section} is mapped to physical tables across the three medallion layers. The schema patterns produce the entity, finding, relationship, reference, and aggregation tables used by the framework.
 
 %%% 2.2.1 %%%
 
 \subsection{Source Synthesis}
 
-The schema patterns are derived from the \glspl{api} of the nine sources introduced in \autoref{sec:selected-sources}, not chosen in advance. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{capability matrix} and \href{https://vkraus.github.io/appsec-mvp/connectors/}{connector hub} provide the source facts this section maps onto concrete Entity, Finding, and Relationship schemas.
+The schema patterns are derived from the \glspl{api} of the nine sources introduced in the \hyperref[sec:selected-sources]{Selected Sources section}, not chosen in advance. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{capability matrix} and \href{https://vkraus.github.io/appsec-mvp/connectors/}{connector hub} provide the source facts this section maps onto concrete Entity, Finding, and Relationship schemas.
 
 %%% 2.2.2 %%%
 
 \subsection{Schema Patterns}
 \label{sec:schema-patterns}
 
-Schema patterns standardize how tables are created at each medallion layer. \autoref{fig:record-lifecycle} walks a single SonarQube \gls{sast} finding through the layers and shows the metadata envelope from \autoref{sec:bronze-pattern}.
+Schema patterns standardize how tables are created at each medallion layer. \autoref{fig:record-lifecycle} walks a single SonarQube \gls{sast} finding through the layers and shows the metadata envelope from the \hyperref[sec:bronze-pattern]{Bronze envelope section}.
 
 \begin{center}
 \begin{minipage}{\textwidth}
@@ -161,13 +161,13 @@ Schema patterns standardize how tables are created at each medallion layer. \aut
 \subsubsection{Bronze envelope}
 \label{sec:bronze-pattern}
 
-Every bronze table carries a uniform metadata envelope: four columns shared across connectors (\inlinecode{\_ingestion\_timestamp}, \inlinecode{\_source\_system}, \inlinecode{\_batch\_id}, \inlinecode{\_raw\_payload}) and a fifth (\inlinecode{\_hwm\_value}) on incremental only tables (\autoref{sec:ingestion-patterns}). When the framework owns the bronze schema (artifact sources such as \gls{owasp} \gls{zap} and Semgrep), a helper stamps the envelope before the write. When an ingestion managed service owns the table (Lakeflow Connect, as in ServiceNow), a downstream \gls{sql} view projects the same five columns on top of the managed table using the service run identifier and timestamp. Downstream readers see the same envelope regardless of ingestion path.
+Every bronze table carries a uniform metadata envelope: four columns shared across connectors (\inlinecode{\_ingestion\_timestamp}, \inlinecode{\_source\_system}, \inlinecode{\_batch\_id}, \inlinecode{\_raw\_payload}) and a fifth (\inlinecode{\_hwm\_value}) on incremental only tables (\hyperref[sec:ingestion-patterns]{Ingestion Patterns section}). When the framework owns the bronze schema (artifact sources such as \gls{owasp} \gls{zap} and Semgrep), a helper stamps the envelope before the write. When an ingestion managed service owns the table (Lakeflow Connect, as in ServiceNow), a downstream \gls{sql} view projects the same five columns on top of the managed table using the service run identifier and timestamp. Downstream readers see the same envelope regardless of ingestion path.
 
 Additional source native columns sit alongside the raw payload via schema on read. New fields are accepted through additive evolution. Tables are partitioned by ingestion date.
 
 \subsubsection{Silver entity pattern}
 
-Entity tables store normalized dimension data. The natural key plus source system identifies a record origin, and the surrogate key provides a stable foreign key target even when source identifiers change~\parencite{Kimball2013}. The framework specifies the \gls{scd}-2 pattern (\inlinecode{valid\_from}, \inlinecode{valid\_to}) for tracking entity history~\parencite{Kimball2013, Inmon2005}. The reference implementation in \autoref{ch:implementation} simplifies to \gls{scd}-1 (overwrite on update) since the \gls{mvp} scenarios do not exercise point in time queries. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/\#silver-entity-mapping-requirements}{mapping table} is published in the \gls{mvp} documentation.
+Entity tables store normalized dimension data. The natural key plus source system identifies a record origin, and the surrogate key provides a stable foreign key target even when source identifiers change~\parencite{Kimball2013}. The framework specifies the \gls{scd}-2 pattern (\inlinecode{valid\_from}, \inlinecode{valid\_to}) for tracking entity history~\parencite{Kimball2013, Inmon2005}. The reference implementation in the \hyperref[ch:implementation]{MVP Implementation} chapter simplifies to \gls{scd}-1 (overwrite on update) since the \gls{mvp} scenarios do not exercise point in time queries. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/\#silver-entity-mapping-requirements}{mapping table} is published in the \gls{mvp} documentation.
 
 The Bronze to Silver step quarantines a record when (1) the Bronze record failed \gls{json} parse at landing, (2) a required field is null (\inlinecode{natural\_key}, \inlinecode{source\_system}, \inlinecode{valid\_from}), or (3) a mandatory lookup yields no match. Optional field nulls and safe casts are accepted with a data quality warning. The same rule applies to finding tables.
 
@@ -175,7 +175,7 @@ For \gls{cmdb} entities, related tables (\inlinecode{cmdb\_rel\_ci}, group and u
 
 \subsubsection{Silver finding pattern}
 
-The single Silver Finding table \inlinecode{silver.findings} (rationale in \autoref{sec:silver-findings-design}) stores normalized fact data for every category. Each target field unions over the native fields of the finding emitting sources, with inapplicable fields stored as \inlinecode{NULL}. The \inlinecode{mapping.yml} for each source (\autoref{sec:transformation-patterns}) makes each mapping explicit, including the \inlinecode{category} discriminator. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/\#silver-finding-mapping-requirements}{mapping tables} are published in the \gls{mvp} documentation.
+The single Silver Finding table \inlinecode{silver.findings} stores normalized fact data for every category. The rationale is given in the \hyperref[sec:silver-findings-design]{Finding Table section}. Each target field unions over the native fields of the finding emitting sources, with inapplicable fields stored as \inlinecode{NULL}. The \inlinecode{mapping.yml} for each source (\hyperref[sec:transformation-patterns]{Transformation Patterns section}) makes each mapping explicit, including the \inlinecode{category} discriminator. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/canonical-mapping/\#silver-finding-mapping-requirements}{mapping tables} are published in the \gls{mvp} documentation.
 
 \subsubsection{Deduplication}
 
@@ -202,7 +202,7 @@ Aggregation tables follow a grain, metric, period structure~\parencite{Kimball20
 \subsection{Entity Model}
 \label{sec:entity-model}
 
-The silver layer instantiates the schema patterns as concrete tables in four groups: entities (dimensions), findings (facts), reference data, and relationships. \autoref{fig:silver-erd} shows a representative subset that exercises every relationship type. The prescription totals 15 domain tables across the four groups. The \gls{mvp} in \autoref{ch:implementation} realizes four of those prescribed domain tables (\inlinecode{applications}, \inlinecode{repositories}, \inlinecode{findings}, and \inlinecode{app\_repo\_mapping}) plus three supporting Silver tables (\inlinecode{finding\_location}, \inlinecode{hwm}, and \inlinecode{suppression\_rules}). Together they form the current core Silver subset sufficient to demonstrate the medallion contract. Population of the remaining prescribed domain tables is recorded as Future Work in \autoref{sec:future-work}.
+The silver layer instantiates the schema patterns as concrete tables in four groups: entities (dimensions), findings (facts), reference data, and relationships. \autoref{fig:silver-erd} shows a representative subset that exercises every relationship type. The prescription totals 15 domain tables across the four groups. The \gls{mvp} described in the \hyperref[ch:implementation]{MVP Implementation} chapter realizes four of those prescribed domain tables (\inlinecode{applications}, \inlinecode{repositories}, \inlinecode{findings}, and \inlinecode{app\_repo\_mapping}) plus three supporting Silver tables (\inlinecode{finding\_location}, \inlinecode{hwm}, and \inlinecode{suppression\_rules}). Together they form the current core Silver subset sufficient to demonstrate the medallion contract. Population of the remaining prescribed domain tables is recorded in the \hyperref[sec:future-work]{Future Work section}.
 
 \input{figures/silver-erd}
 
@@ -219,7 +219,7 @@ A single table is preferred over per category tables because the silver mapping 
 
 \subsubsection{Reference and Relationship Tables}
 
-Three reference tables hold external intelligence: \inlinecode{vulnerabilities} (\gls{cve} records with \gls{cvss} from the \gls{nvd}), \inlinecode{epss\_scores} (daily \gls{epss} probabilities per \gls{cve}), and \inlinecode{kev\_entries} (\gls{cisa} \gls{kev} catalog). They are refreshed on schedule and linked to findings through \gls{cve} identifiers, supporting the three signal enrichment described in \autoref{sec:static-appsec}.
+Three reference tables hold external intelligence: \inlinecode{vulnerabilities} (\gls{cve} records with \gls{cvss} from the \gls{nvd}), \inlinecode{epss\_scores} (daily \gls{epss} probabilities per \gls{cve}), and \inlinecode{kev\_entries} (\gls{cisa} \gls{kev} catalog). They are refreshed on schedule and linked to findings through \gls{cve} identifiers, supporting the three signal enrichment described in the \hyperref[sec:static-appsec]{Static Application Security section}.
 
 Three relationship tables implement the cross object mappings: \inlinecode{app\_repo\_mapping} (applications to repositories, many to many), \inlinecode{finding\_cve\_mapping} (findings to \gls{cve} records), and \inlinecode{dedup\_links} (duplicate findings across tools, with one reference record). Silver tables and connectors do not line up one to one. Each table can be fed by multiple connectors and each connector feeds multiple tables.
 
@@ -228,7 +228,7 @@ Three relationship tables implement the cross object mappings: \inlinecode{app\_
 \subsection{Aggregation Model}
 \label{sec:aggregation-model}
 
-Four gold tables target the stakeholder needs identified in \autoref{sec:data-entities}, each following the gold aggregation pattern from \autoref{sec:schema-patterns}.
+Four gold tables target the stakeholder needs identified in the \hyperref[sec:data-entities]{Domain Data Model section}, each following the gold aggregation pattern from the \hyperref[sec:schema-patterns]{Schema Patterns section}.
 
 \begin{itemize}
     \item \textbf{\inlinecode{app\_risk\_scores}}: composite risk per application per period. Open finding counts by severity, a weighted risk score combining severity, \gls{epss} probability and application criticality tier, \gls{sla} compliance, and a trend indicator. Serves application owners.
@@ -254,7 +254,7 @@ Deployment assumes a working Databricks environment. Account onboarding, workspa
 
 The \textbf{Databricks tier} owns every workspace resource the bundle format covers natively: catalogs, schemas, volumes, jobs, \gls{ldp} pipelines, notebooks, permissions, cluster attachments, and the Lakeflow Connect connection objects. Declarative Automation Bundles, formerly Databricks Asset Bundles, declare these alongside the source code, so one \inlinecode{databricks bundle deploy} recreates the workspace state for a new environment~\cite{DatabricksDAB2026}. The handful of Databricks objects the bundle format does not yet have a native type for (the secret scope container, Unity Catalog storage credential, and Unity Catalog external location) are created by a small post deploy shell script colocated with the platform layer at \inlinecode{src/platform/scripts/bootstrap.sh}. The framework deliberately keeps a single state owner per resource. Mixing the bundle with the Databricks Terraform provider would split state ownership for the same Databricks objects across two state stores and create promotion drift.
 
-The \textbf{source side tier} owns cloud infrastructure for each connector that needs to bring up its source system or supporting cloud resources (S3 buckets, \gls{iam} roles, OIDC trust policies, source side VMs). Each connector ships a Terraform runtime under \inlinecode{src/connectors/<source>/}\allowbreak\inlinecode{runtime/}, scoped to that connector and never referencing Databricks resources. This keeps the layering rule of \autoref{sec:impl-layering-rule} clean: per connector setup code has no upward or sideways dependencies. Organizations preferring Pulumi or OpenTofu can substitute those at this tier without touching the Databricks tier.
+The \textbf{source side tier} owns cloud infrastructure for each connector that needs to bring up its source system or supporting cloud resources (S3 buckets, \gls{iam} roles, OIDC trust policies, source side VMs). Each connector ships a Terraform runtime under \inlinecode{src/connectors/<source>/}\allowbreak\inlinecode{runtime/}, scoped to that connector and never referencing Databricks resources. This keeps the layering rule of the \hyperref[sec:impl-layering-rule]{Layering rule section} clean: per connector setup code has no upward or sideways dependencies. Organizations preferring Pulumi or OpenTofu can substitute those at this tier without touching the Databricks tier.
 
 One bundle exists per target, with three targets structuring the promotion path (development, staging, production). Each target overrides the catalog name, secret scope, and compute target. Both tiers are declarative, so the same flow moves a change through the three environments without hand editing.
 
@@ -263,9 +263,9 @@ One bundle exists per target, with three targets structuring the promotion path 
 \subsection{Project Structure}
 \label{sec:project-structure}
 
-The project is a monorepo: \inlinecode{src/} for pipeline source code, \inlinecode{tests/} for the test suite, \inlinecode{config/} for lookup tables, and bundle files at the root. The Unity Catalog layout mirrors the medallion layers (\autoref{sec:medallion-arch}) with one catalog per environment (\inlinecode{appsec\_dev}, \inlinecode{appsec\_staging}, \inlinecode{appsec\_prod}). Source specific bronze and silver tables live in \inlinecode{bronze\_<source>} and \inlinecode{silver\_<source>} schemas. Cross source silver and gold tables live in unqualified \inlinecode{silver} and \inlinecode{gold} schemas whose names encode the analytic, not the source. Pipeline names mirror their source module (\inlinecode{ingest\_<source>}, \inlinecode{transform\_<source>\_silver}). Column names use \inlinecode{snake\_case} throughout. These conventions let governance rules target tables and pipelines by name pattern.
+The project is a monorepo: \inlinecode{src/} for pipeline source code, \inlinecode{tests/} for the test suite, \inlinecode{config/} for lookup tables, and bundle files at the root. The Unity Catalog layout mirrors the medallion layers (\hyperref[sec:medallion-arch]{Medallion Architecture section}) with one catalog per environment (\inlinecode{appsec\_dev}, \inlinecode{appsec\_staging}, \inlinecode{appsec\_prod}). Source specific bronze and silver tables live in \inlinecode{bronze\_<source>} and \inlinecode{silver\_<source>} schemas. Cross source silver and gold tables live in unqualified \inlinecode{silver} and \inlinecode{gold} schemas whose names encode the analytic, not the source. Pipeline names mirror their source module (\inlinecode{ingest\_<source>}, \inlinecode{transform\_<source>\_silver}). Column names use \inlinecode{snake\_case} throughout. These conventions let governance rules target tables and pipelines by name pattern.
 
-Each connector module under \inlinecode{src/connectors/\{source\}/} carries the same artifacts (\autoref{sec:connector-abstraction}): \inlinecode{ingest.py}, \inlinecode{transform.py}, \inlinecode{mapping.yml}, \inlinecode{config.yml}, and a colocated \inlinecode{tests/} folder. Silver to gold transformations group by analytic rather than by source because a single gold table can consume data from multiple connectors.
+Each connector module under \inlinecode{src/connectors/\{source\}/} carries the same artifacts (\hyperref[sec:connector-abstraction]{Connector Abstraction section}): \inlinecode{ingest.py}, \inlinecode{transform.py}, \inlinecode{mapping.yml}, \inlinecode{config.yml}, and a colocated \inlinecode{tests/} folder. Silver to gold transformations group by analytic rather than by source because a single gold table can consume data from multiple connectors.
 
 Secrets sit in the platform secret scope and are referenced by name. Nonsensitive settings (severity, status lookups) sit colocated with the connector code as YAML. Tuning these values is a configuration change, not a code change. Full layout with a worked example is on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/project-layout/}{layout page}.
 
@@ -274,7 +274,7 @@ Secrets sit in the platform secret scope and are referenced by name. Nonsensitiv
 \subsection{Pipeline Orchestration}
 \label{sec:orchestration}
 
-Lakeflow Jobs schedules pipeline execution~\cite{DatabricksLakeflowJobs2026}. A job groups tasks into a \gls{dag} with explicit dependencies. Jobs are defined in the bundle alongside the resources they operate on, so scheduling promotes through the deployment path of \autoref{sec:deployment-strategy}.
+Lakeflow Jobs schedules pipeline execution~\cite{DatabricksLakeflowJobs2026}. A job groups tasks into a \gls{dag} with explicit dependencies. Jobs are defined in the bundle alongside the resources they operate on, so scheduling promotes through the deployment path of the \hyperref[sec:deployment-strategy]{Deployment Strategy section}.
 
 One job per connector handles two sequential tasks: ingest into bronze, then transform to silver. This gives each connector an independent failure domain. Gold layer analytics run as separate jobs that list their upstream connector jobs as dependencies, so a gold job starts only after the required silver data is fresh.
 
@@ -284,13 +284,13 @@ Source characteristics drive frequency: high change sources (\gls{scm}, scanners
 
 \subsection{Monitoring and Observability}
 
-Monitoring handles whether pipelines are working over time. The platform provides system tables for job execution history, pipeline events, and compute utilization~\cite{DatabricksObservability2026}. The framework tracks three dimensions: \textbf{data freshness} (last successful ingestion timestamp against thresholds from the scheduling frequency in \autoref{sec:orchestration}), \textbf{pipeline health} (success rate, mean run duration, retry frequency, quarantine volume, with a rising quarantine rate preceding data quality issues), and \textbf{data quality trends} (violations of \gls{ldp} expectations over time). Alerts fire at job level (individual failures) and system level (aggregate degradation such as multiple connectors stale simultaneously). Thresholds and delivery channels are configuration, so framework users tune sensitivity without redeploying pipelines.
+Monitoring handles whether pipelines are working over time. The platform provides system tables for job execution history, pipeline events, and compute utilization~\cite{DatabricksObservability2026}. The framework tracks three dimensions: \textbf{data freshness} (last successful ingestion timestamp against thresholds from the scheduling frequency in the \hyperref[sec:orchestration]{Pipeline Orchestration section}), \textbf{pipeline health} (success rate, mean run duration, retry frequency, quarantine volume, with a rising quarantine rate preceding data quality issues), and \textbf{data quality trends} (violations of \gls{ldp} expectations over time). Alerts fire at job level (individual failures) and system level (aggregate degradation such as multiple connectors stale simultaneously). Thresholds and delivery channels are configuration, so framework users tune sensitivity without redeploying pipelines.
 
 %%% 2.3.5 %%%
 
 \subsection{Testing and Validation}
 
-Deployment level verification covers the environment and codebase. Component level patterns live in \autoref{sec:connector-testing} and \autoref{sec:analytics-testing}. The \gls{cicd} pipeline enforces linting, formatting, and unit tests over isolated helpers (severity lookups, timestamp parsers, schema mapping). After deployment, smoke tests confirm Unity Catalog objects, compute resources, secret scopes, and \gls{ldp} pipelines exist with the expected configuration.
+Deployment level verification covers the environment and codebase. Component level patterns live in the \hyperref[sec:connector-testing]{Connector Testing and Validation section} and \hyperref[sec:analytics-testing]{Analytics Testing and Validation section}. The \gls{cicd} pipeline enforces linting, formatting, and unit tests over isolated helpers (severity lookups, timestamp parsers, schema mapping). After deployment, smoke tests confirm Unity Catalog objects, compute resources, secret scopes, and \gls{ldp} pipelines exist with the expected configuration.
 
 Tests are linked to requirement identifiers via pytest markers (\inlinecode{@pytest.mark.requirement("REQ-TRF-SEV")}) drawn from the \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/}{requirement catalog}. The \href{https://vkraus.github.io/appsec-mvp/platform/reference/catalog/\#per-source-traceability-matrix}{source traceability matrix} applies uniformly across environment, connector, and analytics testing.
 
@@ -301,9 +301,9 @@ Tests are linked to requirement identifiers via pytest markers (\inlinecode{@pyt
 \section{Connector Framework}
 \label{sec:connector-framework}
 
-The connector framework defines how data moves from the sources analyzed in \autoref{ch:analysis} into the medallion layers from \autoref{sec:medallion-arch}. \autoref{sec:component-design} introduced three connector categories (Lakeflow Connect, \gls{sdk}, and \gls{rest} \gls{api} with \gls{dltool}). This section specifies the common abstraction they share, the patterns for landing data in bronze, and the patterns for transforming it to silver. The goal is a repeatable recipe: adding a new source implements a well defined set of concerns against a new \gls{api}, not a pipeline redesign.
+The connector framework defines how data moves from the sources analyzed in the \hyperref[ch:analysis]{Analysis} chapter into the medallion layers from the \hyperref[sec:medallion-arch]{Medallion Architecture section}. The \hyperref[sec:component-design]{Component Design section} introduced three connector categories (Lakeflow Connect, \gls{sdk}, and \gls{rest} \gls{api} with \gls{dltool}). This section specifies the common abstraction they share, the patterns for landing data in bronze, and the patterns for transforming it to silver. The goal is a repeatable recipe: adding a new source implements a well defined set of concerns against a new \gls{api}, not a pipeline redesign.
 
-\autoref{fig:data-plane-flow} gives the end to end view refined by the subsections below: ingest, transform, and aggregate tasks along the spine, quarantine branches where validation can fail, and the state and dedup annotations that the framework commits to.
+\autoref{fig:data-plane-flow} gives the end to end view refined by the \hyperref[sec:connector-abstraction]{Connector Abstraction section}, \hyperref[sec:ingestion-patterns]{Ingestion Patterns section}, and \hyperref[sec:transformation-patterns]{Transformation Patterns section}: ingest, transform, and aggregate tasks along the spine, quarantine branches where validation can fail, and the state and dedup annotations that the framework commits to.
 
 \input{figures/data-plane-flow}
 
@@ -312,7 +312,7 @@ The connector framework defines how data moves from the sources analyzed in \aut
 \subsection{Connector Abstraction}
 \label{sec:connector-abstraction}
 
-Every connector handles the same cross cutting concerns, but the three categories from \autoref{sec:component-design} differ in how much work the developer performs versus the platform or library.
+Every connector handles the same cross cutting concerns, but the three categories from the \hyperref[sec:component-design]{Component Design section} differ in how much work the developer performs versus the platform or library.
 
 \subsubsection{Connector Categories}
 
@@ -324,7 +324,7 @@ The three categories rank in a preference order set by how many of the five cros
     \item \textbf{\Gls{rest} \gls{api} with \gls{dltool}.} The open source \gls{dltool} library provides prebuilt authentication, pagination, and incremental loading components composed declaratively. The developer specifies endpoints, schema mapping, and extraction parameters. More connector code than the prior two categories, but mechanical concerns still sit in tested library components rather than hand written \gls{http}.
 \end{enumerate}
 
-Each step shifts more concerns from platform custody into connector code. Hand written \gls{http} clients sit outside the order entirely and are not sanctioned: they reintroduce every concern the three categories above delegate. \autoref{ch:implementation} demonstrates all three categories. \autoref{fig:connector-decision} summarizes the selection.
+Each step shifts more concerns from platform custody into connector code. Hand written \gls{http} clients sit outside the order entirely and are not sanctioned: they reintroduce every concern the three categories above delegate. The \hyperref[ch:implementation]{MVP Implementation} chapter demonstrates all three categories. \autoref{fig:connector-decision} summarizes the selection.
 
 \input{figures/connector-decision}
 
@@ -341,25 +341,25 @@ Each step shifts more concerns from platform custody into connector code. Hand w
 \subsubsection{Connector Contract}
 \label{sec:connector-contract}
 
-Every connector module exposes two entry points. \inlinecode{ingest} accepts a run identifier and state object, pulls new records, and returns a batch descriptor with the rows landed and the advanced high water mark. \inlinecode{transform} accepts a bronze dataframe and returns a silver dataframe conforming to the entity or finding pattern (\autoref{sec:schema-patterns}). Neither writes to silver itself. The pipeline runner persists the returned dataframe, so both entry points are testable with in memory fixtures. For artifact path connectors whose source specific ingestion primitive already uses the \inlinecode{ingest} symbol, the contract wrapper is exposed as \inlinecode{ingest\_contract}.
+Every connector module exposes two entry points. \inlinecode{ingest} accepts a run identifier and state object, pulls new records, and returns a batch descriptor with the rows landed and the advanced high water mark. \inlinecode{transform} accepts a bronze dataframe and returns a silver dataframe conforming to the entity or finding pattern (\hyperref[sec:schema-patterns]{Schema Patterns section}). Neither writes to silver itself. The pipeline runner persists the returned dataframe, so both entry points are testable with in memory fixtures. For artifact path connectors whose source specific ingestion primitive already uses the \inlinecode{ingest} symbol, the contract wrapper is exposed as \inlinecode{ingest\_contract}.
 
 The state object has a fixed structure across categories: high water mark value, source system identifier, and optional backfill parameters. The runner loads state before \inlinecode{ingest} and persists it after a successful write, giving consistent resume semantics regardless of category. Lakeflow Connect connectors satisfy the contract through platform configuration. \Gls{sdk} and \gls{rest} \gls{api} connectors implement the two operations directly.
 
 \subsubsection{Connector Artifacts}
 
-Adding a connector populates the module template from \autoref{sec:project-structure} with the same set of artifacts across all three categories:
+Adding a connector populates the module template from the \hyperref[sec:project-structure]{Project Structure section} with the same set of artifacts across all three categories:
 
 \begin{enumerate}
     \item \inlinecode{config.yml}: source parameters (base \gls{url}, endpoints, pagination strategy, rate limit, high water mark column, target bronze table).
     \item A secret scope entry registering the connector credential, referenced from \inlinecode{config.yml}.
     \item \inlinecode{ingest.py}: implements \inlinecode{ingest(run\_id, state) -> batch}. Lakeflow Connect connectors leave this empty and declare the resource in the bundle fragment. \Gls{sdk} connectors delegate to the client library, and \gls{dltool} connectors compose prebuilt components.
-    \item \inlinecode{transform.py}: implements \inlinecode{transform(bronze\_df) -> silver\_df} targeting the silver table for the category (\autoref{sec:entity-model}).
+    \item \inlinecode{transform.py}: implements \inlinecode{transform(bronze\_df) -> silver\_df} targeting the silver table for the category (\hyperref[sec:entity-model]{Entity Model section}).
     \item \inlinecode{mapping.yml}, \inlinecode{severity.yml}, \inlinecode{status.yml}: declarative column expressions and lookups, maintained as configuration so vocabulary updates do not require a pipeline redeploy.
-    \item A bundle fragment under \inlinecode{resources/} declaring the two task connector job (\autoref{sec:ingestion-patterns}).
-    \item \inlinecode{tests/}: ingestion and transformation tests per \autoref{sec:connector-testing}.
+    \item A bundle fragment under \inlinecode{resources/} declaring the two task connector job (\hyperref[sec:ingestion-patterns]{Ingestion Patterns section}).
+    \item \inlinecode{tests/}: ingestion and transformation tests per the \hyperref[sec:connector-testing]{Connector Testing and Validation section}.
 \end{enumerate}
 
-Silver and gold do not change: the silver tables from \autoref{sec:entity-model} take the new source through the schema mapping and gold analytics keep working.
+Silver and gold do not change: the silver tables from the \hyperref[sec:entity-model]{Entity Model section} take the new source through the schema mapping and gold analytics keep working.
 
 %%% 2.4.2 %%%
 
@@ -370,15 +370,15 @@ Ingestion moves data from source \glspl{api} into bronze. All connectors follow 
 
 \subsubsection{Common landing pattern}
 
-Every ingestion run produces append only writes to the target bronze table. The full \gls{api} response is preserved in \inlinecode{\_raw\_payload} alongside the bronze envelope columns (\autoref{sec:schema-patterns}). No field filtering or transformation occurs. Bronze is an exact copy. The batch identifier enables idempotent replays: a failed run reexecutes the same batch and overwrites only those records. For sources where merge semantics are appropriate (e.g., \gls{cmdb} entity snapshots), the connector upserts on the natural identifier. Records failing structural validation at landing (malformed \gls{json}, unexpected schema changes) are routed to quarantine tables per source with raw payload, error, and batch identifier. No record is silently dropped~\cite{DAMA2017,Reis2022}.
+Every ingestion run produces append only writes to the target bronze table. The full \gls{api} response is preserved in \inlinecode{\_raw\_payload} alongside the bronze envelope columns (\hyperref[sec:schema-patterns]{Schema Patterns section}). No field filtering or transformation occurs. Bronze is an exact copy. The batch identifier enables idempotent replays: a failed run reexecutes the same batch and overwrites only those records. For sources where merge semantics are appropriate (e.g., \gls{cmdb} entity snapshots), the connector upserts on the natural identifier. Records failing structural validation at landing (malformed \gls{json}, unexpected schema changes) are routed to quarantine tables per source with raw payload, error, and batch identifier. No record is silently dropped~\cite{DAMA2017,Reis2022}.
 
 \subsubsection{Bronze table template}
 
-Every bronze table follows the same structure extending the schema pattern from \autoref{sec:schema-patterns}. The \inlinecode{\_hwm\_value} column carries the high water mark per record, making the resume position auditable and supporting targeted rebuilds. Tables are partitioned by ingestion date. The naming convention is \inlinecode{appsec\_<env>.bronze\_<source>.<entity>} (for example, \inlinecode{appsec\_prod.bronze\_github.code\_scanning\_alerts}). A connector author fills in three blanks per entity: source name, entity name, and high water mark source field.
+Every bronze table follows the same structure extending the schema pattern from the \hyperref[sec:schema-patterns]{Schema Patterns section}. The \inlinecode{\_hwm\_value} column carries the high water mark per record, making the resume position auditable and supporting targeted rebuilds. Tables are partitioned by ingestion date. The naming convention is \inlinecode{appsec\_<env>.bronze\_<source>.<entity>} (for example, \inlinecode{appsec\_prod.bronze\_github.code\_scanning\_alerts}). A connector author fills in three blanks per entity: source name, entity name, and high water mark source field.
 
 \subsubsection{Connector job template}
 
-Every connector instantiates the same Lakeflow Job layout (\autoref{sec:orchestration}): a two task \gls{dag} where ingest produces bronze and transform consumes it to produce silver, with the transform task declaring a hard dependency on the ingest task. Retry configuration is identical across connectors (three attempts, capped exponential backoff). The bundle fragment exposes a fixed set of parameters (source name, target catalog, high water mark reset flag, cron expression). The full fragment is on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/connector-job-template/}{job template}.
+Every connector instantiates the same Lakeflow Job layout (\hyperref[sec:orchestration]{Pipeline Orchestration section}): a two task \gls{dag} where ingest produces bronze and transform consumes it to produce silver, with the transform task declaring a hard dependency on the ingest task. Retry configuration is identical across connectors (three attempts, capped exponential backoff). The bundle fragment exposes a fixed set of parameters (source name, target catalog, high water mark reset flag, cron expression). The full fragment is on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/connector-job-template/}{job template}.
 
 The common landing pattern and bronze table template apply uniformly across categories. Parameters for each source live in \inlinecode{src/connectors/\{source\}/config.yml}. Category specific notes (incremental strategy preference for \gls{scm}, scanner deployment styles, \gls{cmdb} relationship traversal) are on the \href{https://vkraus.github.io/appsec-mvp/platform/reference/source-capability-matrix/}{capability matrix}.
 
@@ -387,7 +387,7 @@ The common landing pattern and bronze table template apply uniformly across cate
 \subsection{Transformation Patterns}
 \label{sec:transformation-patterns}
 
-Transformations move data from bronze to the silver entity and finding tables from \autoref{sec:entity-model}. Each transformation is a \gls{ldp} pipeline reading from one or more bronze tables and writing to a silver table. Five patterns compose the path from bronze to silver.
+Transformations move data from bronze to the silver entity and finding tables from the \hyperref[sec:entity-model]{Entity Model section}. Each transformation is a \gls{ldp} pipeline reading from one or more bronze tables and writing to a silver table. Five patterns compose the path from bronze to silver.
 
 \subsubsection{Schema mapping}
 
@@ -398,7 +398,7 @@ Each connector has a schema mapping that extracts typed columns from the bronze 
 Three rules bring source data to a common form:
 
 \begin{itemize}
-    \item \textbf{Severity harmonization.} Tools use different scales (catalogued in \autoref{sec:selected-sources}). The framework maps each native scale to a four level model (critical, high, medium, low) through per tool lookup tables. Undocumented or missing values fall through to a configurable default (\inlinecode{medium}) and trigger a data quality warning.
+    \item \textbf{Severity harmonization.} Tools use different scales (catalogued in the \hyperref[sec:selected-sources]{Selected Sources section}). The framework maps each native scale to a four level model (critical, high, medium, low) through per tool lookup tables. Undocumented or missing values fall through to a configurable default (\inlinecode{medium}) and trigger a data quality warning.
     \item \textbf{Status normalization.} Lifecycle states vary across tools. A per tool status mapping translates them to a five state model (open, confirmed, resolved, false\_positive, wontfix).
     \item \textbf{Timestamp standardization.} All timestamps are parsed during schema mapping and stored as \gls{utc} datetime columns.
 \end{itemize}
@@ -409,11 +409,11 @@ Three rules bring source data to a common form:
 
 \subsubsection{Deduplication application}
 
-Deduplication keys are defined in the Silver Finding pattern (\autoref{sec:schema-patterns}). The transformation runs a post mapping dedup pass that writes \inlinecode{dedup\_links} records for every overlapping pair sharing a \inlinecode{repository\_id}. Deduplicated findings are not deleted. The link preserves traceability while establishing the reference finding. No fuzzy matching is performed, and line number divergence is handled at Gold via \inlinecode{finding\_group\_id}.
+Deduplication keys are defined in the Silver Finding pattern (\hyperref[sec:schema-patterns]{Schema Patterns section}). The transformation runs a post mapping dedup pass that writes \inlinecode{dedup\_links} records for every overlapping pair sharing a \inlinecode{repository\_id}. Deduplicated findings are not deleted. The link preserves traceability while establishing the reference finding. No fuzzy matching is performed, and line number divergence is handled at Gold via \inlinecode{finding\_group\_id}.
 
 \subsubsection{Business context attribution}
 
-Findings are linked to business applications through the \inlinecode{app\_repo\_mapping} relationship table. Because the mapping is many to many, findings inherit application context through a join instead of a direct foreign key, which enables the per application aggregations in \autoref{sec:aggregation-model}. The primary authoritative mapping is expected from the \gls{cmdb} connector when the inventory carries repository relationships. The relationship table can also be populated by deterministic supplemental linkers (for example application code matching in repository names, used by the \gls{mvp}) or by automated inference in the \gls{ml} workflows from \autoref{sec:analytics-patterns}.
+Findings are linked to business applications through the \inlinecode{app\_repo\_mapping} relationship table. Because the mapping is many to many, findings inherit application context through a join instead of a direct foreign key, which enables the per application aggregations in the \hyperref[sec:aggregation-model]{Aggregation Model section}. The primary authoritative mapping is expected from the \gls{cmdb} connector when the inventory carries repository relationships. The relationship table can also be populated by deterministic supplemental linkers (for example application code matching in repository names, used by the \gls{mvp}) or by automated inference in the \gls{ml} workflows from the \hyperref[sec:analytics-patterns]{Analytics Patterns section}.
 
 The framework treats attribution as a data quality outcome rather than a binary join. Relationship records preserve the link source and an attribution state so downstream consumers can distinguish authoritative, supplemental, inferred, and failed matches. \autoref{tab:attribution-state-model} defines the states and required downstream behavior.
 
@@ -458,7 +458,7 @@ Connector tests live beside the connector at \inlinecode{src/connectors/\{source
     \item \inlinecode{REQ-DEDUP}: deduplication for every applicable tool overlap pair (omitted when the connector category does not participate in dedup).
 \end{itemize}
 
-The framework target is that new connectors do not merge until every applicable marker above passes in \gls{cicd}. \autoref{ch:implementation} reports the evidence level reached by the \gls{mvp} connectors and names the paths that require live systems or remain deferred.
+The framework target is that new connectors do not merge until every applicable marker above passes in \gls{cicd}. The \hyperref[ch:implementation]{MVP Implementation} chapter reports the evidence level reached by the \gls{mvp} connectors and names the paths that require live systems or remain deferred.
 
 %%%%%%%%%%%
 %%% 2.5 %%%
@@ -467,14 +467,14 @@ The framework target is that new connectors do not merge until every applicable 
 \section{Analytics and Serving Framework}
 \label{sec:analytics-serving}
 
-The final stage turns Silver data into Gold outputs for stakeholders. \autoref{sec:aggregation-model} defined \textbf{which} Gold tables exist. The sections below define \textbf{how} those tables are computed and how results reach analytical, operational, and event driven consumers.
+The final stage turns Silver data into Gold outputs for stakeholders. The \hyperref[sec:aggregation-model]{Aggregation Model section} defined \textbf{which} Gold tables exist. The \hyperref[sec:analytics-patterns]{Analytics Patterns section} and \hyperref[sec:serving-patterns]{Serving Patterns section} define \textbf{how} those tables are computed and how results reach analytical, operational, and event driven consumers.
 
 %%% 2.5.1 %%%
 
 \subsection{Analytics Patterns}
 \label{sec:analytics-patterns}
 
-Gold layer computations fall into two categories: rule based analytics applying deterministic formulas to silver data, and \gls{ml} driven analytics learning patterns from historical data. Both produce outputs following the gold aggregation pattern from \autoref{sec:schema-patterns} and run under the \emph{aggregate task} of the data plane (\autoref{fig:data-plane-flow}).
+Gold layer computations fall into two categories: rule based analytics applying deterministic formulas to silver data, and \gls{ml} driven analytics learning patterns from historical data. Both produce outputs following the gold aggregation pattern from the \hyperref[sec:schema-patterns]{Schema Patterns section} and run under the \emph{aggregate task} of the data plane (\autoref{fig:data-plane-flow}).
 
 \subsubsection{Extension blueprint}
 
@@ -488,14 +488,14 @@ Three patterns cover the rule based work. \textbf{Composite scoring} combines si
 
 \Gls{ml} analytics learn from historical silver and gold data. The framework supports four use cases: \textbf{composite risk scoring} learns which signal combinations preceded security incidents, \textbf{false positive prediction} estimates probability from historical triage decisions, \textbf{remediation time estimation} predicts \gls{mttr} for \gls{sla} forecasting, and \textbf{anomaly detection} flags spikes in finding volume or severity shifts. The exploit prediction direction draws on the published \gls{epss} methodology~\parencite{Jacobs2020}.
 
-Framework commitments across the four are narrow. Outputs land in Gold tables under the aggregation pattern, every run is tracked in MLflow with the run ID recorded on output rows, and retraining ships in the same \gls{dab} bundle as ingestion so deploys and rollbacks are atomic. Feature Store supplies reusable feature tables, and Model Serving caches real time inference results in Lakebase~\cite{MLflow2025,DatabricksFeatureEng2025}. Feature selection, splits, algorithms, and cadence are left to \autoref{ch:implementation}.
+Framework commitments across the four are narrow. Outputs land in Gold tables under the aggregation pattern, every run is tracked in MLflow with the run ID recorded on output rows, and retraining ships in the same \gls{dab} bundle as ingestion so deploys and rollbacks are atomic. Feature Store supplies reusable feature tables, and Model Serving caches real time inference results in Lakebase~\cite{MLflow2025,DatabricksFeatureEng2025}. Feature selection, splits, algorithms, and cadence are left to the \hyperref[ch:implementation]{MVP Implementation} chapter.
 
 %%% 2.5.2 %%%
 
 \subsection{Serving Patterns}
 \label{sec:serving-patterns}
 
-The serving layer delivers gold outputs to the data consumers from \autoref{sec:component-design}. Three delivery modes address different access patterns and latency requirements.
+The serving layer delivers gold outputs to the data consumers from the \hyperref[sec:component-design]{Component Design section}. Three delivery modes address different access patterns and latency requirements.
 
 \subsubsection{Analytical serving}
 
@@ -513,7 +513,7 @@ Event driven serving pushes data to external systems instead of waiting for quer
 
 \textbf{Threshold based notifications} alert stakeholders when metrics cross configured boundaries (risk score, new \gls{kev} listing, \gls{sla} drop) through configured channels.
 
-\textbf{\gls{siem} and \gls{soar} feeds} push events to platforms such as Lakewatch (\autoref{sec:lakewatch}) via \gls{cdc} on gold tables. The Lakewatch path is a compatibility direction, not implementation evidence, because the author did not have access to the Lakewatch Private Preview.
+\textbf{\gls{siem} and \gls{soar} feeds} push events to platforms such as Lakewatch (\hyperref[sec:lakewatch]{Databricks Lakewatch section}) via \gls{cdc} on gold tables. The Lakewatch path is a compatibility direction, not implementation evidence, because the author did not have access to the Lakewatch Private Preview.
 
 \textbf{Bidirectional synchronization} flows external status updates back to silver via scheduled polling or webhooks, so gold remediation metrics reflect actual resolution progress.
 
@@ -524,14 +524,15 @@ Event driven serving pushes data to external systems instead of waiting for quer
 
 Rule based analytics are validated by snapshot comparison. Each test supplies silver inputs with known values and confirms the gold output matches expected exactly via PySpark DataFrame assertions. Test cases cover computation boundaries (zero findings, all critical, missing enrichment, period bucketing at month boundaries, threshold tier cutoffs) plus a refresh idempotency case that runs the pipeline twice on the same input.
 
-\Gls{ml} analytics are validated by held out evaluation and drift monitoring. MLflow's \inlinecode{evaluate()} computes accuracy, precision, recall, and F1, and \inlinecode{validate\_evaluation\_results()} gates promotion against configured thresholds and the registered baseline~\cite{MLflow2025}. In production, prediction distribution comparisons flag drift before model quality degrades. Serving endpoints are exercised through \gls{http} clients to verify correctness and latency against the targets in \autoref{sec:serving-patterns}.
+\Gls{ml} analytics are validated by held out evaluation and drift monitoring. MLflow's \inlinecode{evaluate()} computes accuracy, precision, recall, and F1, and \inlinecode{validate\_evaluation\_results()} gates promotion against configured thresholds and the registered baseline~\cite{MLflow2025}. In production, prediction distribution comparisons flag drift before model quality degrades. Serving endpoints are exercised through \gls{http} clients to verify correctness and latency against the targets in the \hyperref[sec:serving-patterns]{Serving Patterns section}.
 
-The complete framework suite covers every gold table (metric correctness, boundaries, idempotency), every \gls{ml} model (convergence, accuracy, drift, promotion gating), and every serving endpoint (correctness and latency). The \gls{mvp} instantiates the rule based part of this target and reports its concrete analytics evidence in \autoref{sec:impl-results}. \Gls{ml} model training and production serving latency evidence remain outside the submitted implementation.
+The complete framework suite covers every gold table (metric correctness, boundaries, idempotency), every \gls{ml} model (convergence, accuracy, drift, promotion gating), and every serving endpoint (correctness and latency). The \gls{mvp} instantiates the rule based part of this target and reports its concrete analytics evidence in the \hyperref[sec:impl-results]{Aggregate Results section}. \Gls{ml} model training and production serving latency evidence remain outside the submitted implementation.
 
 \section{Extension Blueprint and AI Assistance}
+\label{sec:extension-blueprint-ai}
 
 AI assisted extension is built into the artifact design. Connector files, analytics jobs, and tests are templates with fixed inputs and expected outputs. The \href{https://vkraus.github.io/appsec-mvp/}{\gls{mvp} documentation} packages the procedure as four Claude Code skills: \inlinecode{analyze-source}, \inlinecode{provision-source}, \inlinecode{generate-connector}, and \inlinecode{validate-implementation}. The first skill writes the source reference sections from official \gls{api} documentation. The second emits source runtime infrastructure. The third produces the connector artifacts and Databricks runtime layout. The fourth runs the test suite until requirements from the specification are mapped to passing tests. A data file for each source at \inlinecode{src/connectors/<source>/operational.yml} records deployment values such as cloud account, secret scope name, and target bronze table. Missing fields are gathered during a skill run, so the framework user does not have to know the schema upfront.
 
 It was a conscious design decision that the set consists of four skills rather than a dedicated skill for every combination of role and application security category. This follows the recommended pattern for skills that span multiple variants of the same task~\parencite{Anthropic2026SkillsBestPractices}. Each \inlinecode{SKILL.md} carries the role wide procedure. Guidance per category lives one level deeper, in a \inlinecode{references/<category>.md} file that the agent reads on demand. The seven application security categories are \inlinecode{cmdb}, \inlinecode{scm}, \inlinecode{sast}, \inlinecode{sca}, \inlinecode{secret}, \inlinecode{dast}, and \inlinecode{waf}.
 
-This structure inherits two properties from the underlying skills mechanism~\parencite{Anthropic2025AgentSkills, AgentSkills2026Spec}. The metadata overhead in the agent system prompt remains fixed at four descriptions, regardless of how many categories are eventually added to the framework. The procedure is authored once and shared across categories. \autoref{ch:implementation} reports on the execution of the catalog against the selected sources. The approach of this thesis relies on modern \gls{ai} assistance for connector construction. A well specified framework plus a compact skill set makes the integration layer reproducibly constructible, with full traceability from test to requirement directly in the specification.
+This structure inherits two properties from the underlying skills mechanism~\parencite{Anthropic2025AgentSkills, AgentSkills2026Spec}. The metadata overhead in the agent system prompt remains fixed at four descriptions, regardless of how many categories are eventually added to the framework. The procedure is authored once and shared across categories. The \hyperref[ch:implementation]{MVP Implementation} chapter reports on the execution of the catalog against the selected sources. The approach of this thesis relies on modern \gls{ai} assistance for connector construction. A well specified framework plus a compact skill set makes the integration layer reproducibly constructible, with full traceability from test to requirement directly in the specification.
